@@ -14,7 +14,8 @@ import {
   Settings,
   Home,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 
 export function Layout() {
@@ -69,6 +70,18 @@ export function Layout() {
               >
                 <Home className="w-4 h-4" />
                 <span>首页</span>
+              </Link>
+              
+              <Link 
+                to="/articles" 
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
+                  isActivePath('/articles') 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>文章</span>
               </Link>
               
               {isAuthenticated && (
@@ -144,6 +157,10 @@ export function Layout() {
                       <PenTool className="mr-2 h-4 w-4" />
                       <span>写博客</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>账户设置</span>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -200,6 +217,15 @@ export function Layout() {
                 >
                   <Home className="w-4 h-4" />
                   <span>首页</span>
+                </Link>
+                
+                <Link 
+                  to="/articles" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>文章</span>
                 </Link>
                 
                 {isAuthenticated ? (

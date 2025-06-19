@@ -7,6 +7,7 @@ interface AuthContextType extends AuthState {
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => Promise<boolean>;
+  updatePassword: (currentPassword: string, newPassword: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -144,12 +145,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // 更新密码
+  const updatePassword = (currentPassword: string, newPassword: string): boolean => {
+    if (!authState.user) return false;
+
+    try {
+      // 验证当前密码
+      const users = UserStorage.getUsers();
+      const fullUser = users.find(u => u.id === authState.user!.id);
+      if (!fullUser || fullUser.password !== currentPassword) {
+        return false;
+      }
+
+      // 更新密码
+      const success = UserStorage.updateUser(authState.user.id, { password: newPassword });
+      return success;
+    } catch (error) {
+      console.error('更新密码失败:', error);
+      return false;
+    }
+  };
+
   const value: AuthContextType = {
     ...authState,
     login,
     register,
     logout,
     updateUser,
+    updatePassword,
   };
 
   return (

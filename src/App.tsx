@@ -14,6 +14,8 @@ import { WriteBlog } from '@/pages/WriteBlog';
 import { Dashboard } from '@/pages/Dashboard';
 import { Search } from '@/pages/Search';
 import { CategoryPage } from '@/pages/CategoryPage';
+import { ArticleList } from '@/pages/ArticleList';
+import { UserSettings } from '@/pages/UserSettings';
 import { NotFound } from '@/pages/NotFound';
 
 function App() {
@@ -49,6 +51,7 @@ function App() {
             {/* Public routes */}
             <Route index element={<Home />} />
             <Route path="blog/:id" element={<BlogDetail />} />
+            <Route path="articles" element={<ArticleList />} />
             <Route path="search" element={<Search />} />
             <Route path="category/:category" element={<CategoryPage />} />
 
@@ -74,6 +77,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="settings" 
+              element={
+                <ProtectedRoute>
+                  <UserSettings />
                 </ProtectedRoute>
               } 
             />

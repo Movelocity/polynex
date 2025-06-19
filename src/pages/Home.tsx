@@ -15,7 +15,8 @@ import {
   Clock, 
   TrendingUp,
   BookOpen,
-  PenTool
+  PenTool,
+  BarChart3
 } from 'lucide-react';
 
 export function Home() {
@@ -103,32 +104,34 @@ export function Home() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <Card className="text-center bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-blue-600 mb-2">{totalBlogs}</div>
-            <div className="text-sm text-blue-700">篇文章</div>
-          </CardContent>
-        </Card>
-        <Card className="text-center bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-purple-600 mb-2">{totalViews}</div>
-            <div className="text-sm text-purple-700">总阅读量</div>
-          </CardContent>
-        </Card>
-        <Card className="text-center bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-green-600 mb-2">{categories.length}</div>
-            <div className="text-sm text-green-700">个分类</div>
-          </CardContent>
-        </Card>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <div className="space-y-6">
+            {/* Stats Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  站点统计
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">文章总数</span>
+                  <span className="font-semibold text-blue-600">{totalBlogs}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">总阅读量</span>
+                  <span className="font-semibold text-purple-600">{totalViews}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">分类数量</span>
+                  <span className="font-semibold text-green-600">{categories.length}</span>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Categories */}
             <Card>
               <CardHeader>
