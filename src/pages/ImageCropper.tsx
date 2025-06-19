@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, RotateCw, Crop, Edit, Download, ArrowLeft, Settings } from 'lucide-react';
+import { Upload, RotateCw, Crop, Edit, Download, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 // 新增：下载组件
-function ImageDownloader({ imageUrl, onBack }: { imageUrl: string; onBack: () => void }) {
+function ImageDownloader({ imageUrl }: { imageUrl: string}) {
   const [downloadWidth, setDownloadWidth] = useState(800);
   const [downloadHeight, setDownloadHeight] = useState(600);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
@@ -75,23 +75,17 @@ function ImageDownloader({ imageUrl, onBack }: { imageUrl: string; onBack: () =>
 
   return (
     <div className="space-y-6">
-      {/* 图片预览 */}
-      <div className="flex justify-center">
-        <img 
-          src={imageUrl} 
-          alt="裁剪结果" 
-          className="max-w-full max-h-96 rounded-lg border border-slate-200"
-        />
-      </div>
-
       {/* 下载设置 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">下载设置</CardTitle>
-          <CardDescription>调整图片尺寸后下载</CardDescription>
+          <div className="flex gap-2 items-baseline">
+            <span className="text-lg font-bold">下载设置</span>
+            <CardDescription>调整图片尺寸后下载</CardDescription>
+          </div>
+          {/* <CardTitle className="text-lg">下载设置</CardTitle> */}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-rows-2 gap-4">
             <div>
               <Label htmlFor="width">宽度 (px)</Label>
               <Input
@@ -127,14 +121,10 @@ function ImageDownloader({ imageUrl, onBack }: { imageUrl: string; onBack: () =>
             <Label htmlFor="aspectRatio">保持宽高比</Label>
           </div>
 
-          <div className="flex gap-3">
-            <Button onClick={handleDownload} className="flex-1">
+          <div className="flex gap-3 justify-center">
+            <Button onClick={handleDownload} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
               <Download className="w-4 h-4 mr-2" />
               下载图片
-            </Button>
-            <Button variant="outline" onClick={onBack}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              重新裁剪
             </Button>
           </div>
         </CardContent>
@@ -308,7 +298,7 @@ export function ImageCropper() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">图片裁剪工具</h1>
+        
         <p className="mt-2 text-slate-600">上传图片并裁剪成所需尺寸</p>
       </div>
 
@@ -316,6 +306,43 @@ export function ImageCropper() {
         {/* 主要操作区域 */}
         <div className="lg:col-span-2">
           <Card>
+            <CardHeader>
+              <div className="flex justify-between">
+                <span className="text-2xl font-bold text-slate-900">图片裁剪工具</span>
+                { proxyImage && mode !== 'cropping' && (
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={()=>{mode === 'preview'? reset() : backToPreview()}}>
+                      <RotateCw className="w-4 h-4" />
+                    </Button>
+                    <Button onClick={handleStartCropping}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      裁剪
+                    </Button>
+                  </div>
+                  )
+                }
+                {mode === 'cropping' && (
+                  <div className="mt-4 flex gap-3 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={backToPreview}
+                      disabled={isProcessing}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      取消
+                    </Button>
+                    <Button
+                      onClick={handleFinishCropping}
+                      disabled={isProcessing}
+                    >
+                      <Crop className="w-4 h-4 mr-2" />
+                      {isProcessing ? '处理中...' : '确认裁剪'}
+                    </Button>
+                  </div>
+                  )
+                }
+              </div>
+            </CardHeader>
             <CardContent className="p-6">
               {!proxyImage ? (
                 <div
@@ -349,16 +376,6 @@ export function ImageCropper() {
                       className="max-w-full max-h-96 rounded-lg border border-slate-200"
                     />
                   </div>
-                  <div className="flex gap-3">
-                    <Button onClick={handleStartCropping} className="flex-1">
-                      <Edit className="w-4 h-4 mr-2" />
-                      裁剪编辑
-                    </Button>
-                    <Button variant="outline" onClick={reset}>
-                      <RotateCw className="w-4 h-4 mr-2" />
-                      重新上传
-                    </Button>
-                  </div>
                 </div>
               ) : mode === 'cropping' ? (
                 // 裁剪模式
@@ -375,32 +392,18 @@ export function ImageCropper() {
                       />
                     )}
                   </div>
-                  
-                  <div className="mt-4 flex gap-3">
-                    <Button
-                      onClick={handleFinishCropping}
-                      disabled={isProcessing}
-                      className="flex-1"
-                    >
-                      <Crop className="w-4 h-4 mr-2" />
-                      {isProcessing ? '处理中...' : '确认裁剪'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={backToPreview}
-                      disabled={isProcessing}
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      返回预览
-                    </Button>
-                  </div>
                 </div>
               ) : mode === 'result' && croppedImage ? (
                 // 结果模式
-                <ImageDownloader 
-                  imageUrl={croppedImage} 
-                  onBack={backToPreview}
-                />
+                <div className="space-y-6">
+                  <div className="w-full max-w-full overflow-auto rounded-lg bg-slate-50 flex justify-center p-4">
+                    <img 
+                      src={croppedImage} 
+                      alt="裁剪结果" 
+                      className="max-w-full max-h-96 rounded-lg border border-slate-200"
+                    />
+                  </div>
+                </div>
               ) : null}
             </CardContent>
           </Card>
@@ -409,33 +412,9 @@ export function ImageCropper() {
         {/* 控制面板 */}
         <div className="space-y-4">
           {/* 图片信息 */}
-          {imageDimensions && (
+          {mode === 'result' && croppedImage && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">图片信息</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">原始尺寸：</span>
-                    <span className="font-medium">
-                      {imageDimensions.originalWidth} × {imageDimensions.originalHeight}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">显示尺寸：</span>
-                    <span className="font-medium">
-                      {Math.round(imageDimensions.displayWidth)} × {Math.round(imageDimensions.displayHeight)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">缩放比例：</span>
-                    <span className="font-medium">
-                      {(imageDimensions.scale * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
+              <ImageDownloader imageUrl={croppedImage} />
             </Card>
           )}
 
@@ -501,20 +480,20 @@ export function ImageCropper() {
                   <Label className="text-sm font-medium mb-3 block">裁剪区域</Label>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-slate-600">位置：</span>
+                      <span className="text-slate-600">原始尺寸：</span>
                       <span className="font-medium">
-                        ({Math.round(cropArea.x)}, {Math.round(cropArea.y)})
+                        {imageDimensions.originalWidth} × {imageDimensions.originalHeight}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-600">尺寸：</span>
+                      <span className="text-slate-600">位置：</span>
                       <span className="font-medium">
-                        {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
+                        ({Math.round(cropArea.x / imageDimensions.scale)}, {Math.round(cropArea.y / imageDimensions.scale)})
                       </span>
                     </div>
                     {imageDimensions && (
                       <div className="flex justify-between">
-                        <span className="text-slate-600">实际尺寸：</span>
+                        <span className="text-slate-600">裁剪尺寸：</span>
                         <span className="font-medium">
                           {Math.round(cropArea.width / imageDimensions.scale)} × {Math.round(cropArea.height / imageDimensions.scale)}
                         </span>
