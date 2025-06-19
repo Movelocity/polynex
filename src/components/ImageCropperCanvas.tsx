@@ -66,6 +66,30 @@ export function ImageCropperCanvas({
     };
   }, [displayScale]);
 
+  const getCanvasScale = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { scaleX: 1, scaleY: 1 };
+    
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    return { scaleX, scaleY };
+  }, []);
+
+  const getCanvasCoordinates = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const { scaleX, scaleY } = getCanvasScale();
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    return { x, y };
+  }, [getCanvasScale]);
+
   const displayCropArea = toDisplayCoords(cropArea);
 
   useEffect(() => {
@@ -141,12 +165,7 @@ export function ImageCropperCanvas({
   }, [displayCropArea]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasCoordinates(e);
 
     const handle = getHandleAtPosition(x, y);
     if (handle) {
@@ -155,15 +174,13 @@ export function ImageCropperCanvas({
       setDragStart({ x, y });
       setInitialCropArea({ ...displayCropArea });
     }
-  }, [displayCropArea, getHandleAtPosition]);
+  }, [displayCropArea, getHandleAtPosition, getCanvasCoordinates]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasCoordinates(e);
 
     if (!isDragging) {
       const handle = getHandleAtPosition(x, y);
@@ -242,7 +259,7 @@ export function ImageCropperCanvas({
       const originalCropArea = toOriginalCoords(newCropArea);
       onCropAreaChange(originalCropArea);
     }
-  }, [isDragging, dragHandle, dragStart, initialCropArea, actualSize, getHandleAtPosition, onCropAreaChange, toOriginalCoords]);
+  }, [isDragging, dragHandle, dragStart, initialCropArea, actualSize, getHandleAtPosition, onCropAreaChange, toOriginalCoords, getCanvasCoordinates]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
