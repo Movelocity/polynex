@@ -1,12 +1,11 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useImageCrop } from '@/hooks/useImageCrop';
 import { ImageCropperCanvas } from '@/components/ImageCropperCanvas';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Download, RotateCw, Crop, Image as ImageIcon } from 'lucide-react';
+import { Upload, RotateCw, Crop } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export function ImageCropper() {
@@ -23,7 +22,23 @@ export function ImageCropper() {
 
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [maxWidth, setMaxWidth] = useState(800);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 处理窗口尺寸变化
+  useEffect(() => {
+    const updateMaxWidth = () => {
+      const screenWidth = window.innerWidth;
+      setMaxWidth(Math.min(800, screenWidth - 100));
+    };
+
+    updateMaxWidth();
+    window.addEventListener('resize', updateMaxWidth);
+    
+    return () => {
+      window.removeEventListener('resize', updateMaxWidth);
+    };
+  }, []);
 
   // 处理文件上传
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,7 +170,7 @@ export function ImageCropper() {
   }, [cropArea, imageDimensions, updateCropArea]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">图片裁剪工具</h1>
         <p className="mt-2 text-slate-600">上传图片并裁剪成所需尺寸</p>
@@ -189,16 +204,20 @@ export function ImageCropper() {
                   />
                 </div>
               ) : (
-                <div>
-                  {imageDimensions && (
-                    <ImageCropperCanvas
-                      imageUrl={proxyImage}
-                      cropArea={cropArea}
-                      onCropAreaChange={handleCropAreaChange}
-                      containerWidth={imageDimensions.displayWidth}
-                      containerHeight={imageDimensions.displayHeight}
-                    />
-                  )}
+                <div className="relative">
+                  {/* 图片容器 - 添加最大尺寸约束和响应式处理 */}
+                  <div className="w-full max-w-full overflow-auto rounded-lg bg-slate-50 flex justify-center p-4">
+                    {imageDimensions && (
+                      <ImageCropperCanvas
+                        imageUrl={proxyImage}
+                        cropArea={cropArea}
+                        onCropAreaChange={handleCropAreaChange}
+                        containerWidth={imageDimensions.displayWidth}
+                        containerHeight={imageDimensions.displayHeight}
+                        maxContainerWidth={maxWidth}
+                      />
+                    )}
+                  </div>
                   
                   <div className="mt-4 flex gap-3">
                     <Button

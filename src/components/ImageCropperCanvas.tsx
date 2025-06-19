@@ -13,6 +13,7 @@ interface ImageCropperCanvasProps {
   onCropAreaChange: (area: CropArea) => void;
   containerWidth: number;
   containerHeight: number;
+  maxContainerWidth?: number;
 }
 
 type DragHandle = 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null;
@@ -22,7 +23,8 @@ export function ImageCropperCanvas({
   cropArea,
   onCropAreaChange,
   containerWidth,
-  containerHeight
+  containerHeight,
+  maxContainerWidth = 800
 }: ImageCropperCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -30,7 +32,42 @@ export function ImageCropperCanvas({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [initialCropArea, setInitialCropArea] = useState<CropArea>(cropArea);
 
-  // 绘制图片和裁剪框
+  const getActualDisplaySize = useCallback(() => {
+    let displayWidth = containerWidth;
+    let displayHeight = containerHeight;
+    
+    if (displayWidth > maxContainerWidth) {
+      const scale = maxContainerWidth / displayWidth;
+      displayWidth = maxContainerWidth;
+      displayHeight = displayHeight * scale;
+    }
+    
+    return { displayWidth, displayHeight };
+  }, [containerWidth, containerHeight, maxContainerWidth]);
+
+  const actualSize = getActualDisplaySize();
+  const displayScale = actualSize.displayWidth / containerWidth;
+
+  const toDisplayCoords = useCallback((area: CropArea) => {
+    return {
+      x: area.x * displayScale,
+      y: area.y * displayScale,
+      width: area.width * displayScale,
+      height: area.height * displayScale
+    };
+  }, [displayScale]);
+
+  const toOriginalCoords = useCallback((area: CropArea) => {
+    return {
+      x: area.x / displayScale,
+      y: area.y / displayScale,
+      width: area.width / displayScale,
+      height: area.height / displayScale
+    };
+  }, [displayScale]);
+
+  const displayCropArea = toDisplayCoords(cropArea);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -42,35 +79,29 @@ export function ImageCropperCanvas({
     img.src = imageUrl;
 
     img.onload = () => {
-      // 清空画布
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 绘制图片
-      ctx.drawImage(img, 0, 0, containerWidth, containerHeight);
+      ctx.drawImage(img, 0, 0, actualSize.displayWidth, actualSize.displayHeight);
 
-      // 绘制半透明遮罩
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 清除裁剪区域的遮罩（显示原图）
-      ctx.clearRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+      ctx.clearRect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
 
-      // 绘制裁剪框边框
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2;
-      ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+      ctx.strokeRect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
 
-      // 绘制裁剪框把手
       const handleSize = 8;
       const handles = [
-        { x: cropArea.x - handleSize / 2, y: cropArea.y - handleSize / 2 }, // nw
-        { x: cropArea.x + cropArea.width - handleSize / 2, y: cropArea.y - handleSize / 2 }, // ne
-        { x: cropArea.x - handleSize / 2, y: cropArea.y + cropArea.height - handleSize / 2 }, // sw
-        { x: cropArea.x + cropArea.width - handleSize / 2, y: cropArea.y + cropArea.height - handleSize / 2 }, // se
-        { x: cropArea.x + cropArea.width / 2 - handleSize / 2, y: cropArea.y - handleSize / 2 }, // n
-        { x: cropArea.x + cropArea.width / 2 - handleSize / 2, y: cropArea.y + cropArea.height - handleSize / 2 }, // s
-        { x: cropArea.x - handleSize / 2, y: cropArea.y + cropArea.height / 2 - handleSize / 2 }, // w
-        { x: cropArea.x + cropArea.width - handleSize / 2, y: cropArea.y + cropArea.height / 2 - handleSize / 2 }, // e
+        { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
+        { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
+        { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
+        { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
+        { x: displayCropArea.x + displayCropArea.width / 2 - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
+        { x: displayCropArea.x + displayCropArea.width / 2 - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
+        { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y + displayCropArea.height / 2 - handleSize / 2 },
+        { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y + displayCropArea.height / 2 - handleSize / 2 },
       ];
 
       ctx.fillStyle = '#fff';
@@ -78,43 +109,37 @@ export function ImageCropperCanvas({
         ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
       });
 
-      // 绘制裁剪区域内的图片
       ctx.save();
       ctx.beginPath();
-      ctx.rect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+      ctx.rect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
       ctx.clip();
-      ctx.drawImage(img, 0, 0, containerWidth, containerHeight);
+      ctx.drawImage(img, 0, 0, actualSize.displayWidth, actualSize.displayHeight);
       ctx.restore();
     };
-  }, [imageUrl, cropArea, containerWidth, containerHeight]);
+  }, [imageUrl, displayCropArea, actualSize]);
 
-  // 获取鼠标位置对应的拖拽把手
   const getHandleAtPosition = useCallback((x: number, y: number): DragHandle => {
-    const handleSize = 16; // 把手的点击区域
+    const handleSize = 16;
     const halfSize = handleSize / 2;
 
-    // 角把手
-    if (Math.abs(x - cropArea.x) < halfSize && Math.abs(y - cropArea.y) < halfSize) return 'nw';
-    if (Math.abs(x - (cropArea.x + cropArea.width)) < halfSize && Math.abs(y - cropArea.y) < halfSize) return 'ne';
-    if (Math.abs(x - cropArea.x) < halfSize && Math.abs(y - (cropArea.y + cropArea.height)) < halfSize) return 'sw';
-    if (Math.abs(x - (cropArea.x + cropArea.width)) < halfSize && Math.abs(y - (cropArea.y + cropArea.height)) < halfSize) return 'se';
+    if (Math.abs(x - displayCropArea.x) < halfSize && Math.abs(y - displayCropArea.y) < halfSize) return 'nw';
+    if (Math.abs(x - (displayCropArea.x + displayCropArea.width)) < halfSize && Math.abs(y - displayCropArea.y) < halfSize) return 'ne';
+    if (Math.abs(x - displayCropArea.x) < halfSize && Math.abs(y - (displayCropArea.y + displayCropArea.height)) < halfSize) return 'sw';
+    if (Math.abs(x - (displayCropArea.x + displayCropArea.width)) < halfSize && Math.abs(y - (displayCropArea.y + displayCropArea.height)) < halfSize) return 'se';
 
-    // 边把手
-    if (Math.abs(x - (cropArea.x + cropArea.width / 2)) < halfSize && Math.abs(y - cropArea.y) < halfSize) return 'n';
-    if (Math.abs(x - (cropArea.x + cropArea.width / 2)) < halfSize && Math.abs(y - (cropArea.y + cropArea.height)) < halfSize) return 's';
-    if (Math.abs(x - cropArea.x) < halfSize && Math.abs(y - (cropArea.y + cropArea.height / 2)) < halfSize) return 'w';
-    if (Math.abs(x - (cropArea.x + cropArea.width)) < halfSize && Math.abs(y - (cropArea.y + cropArea.height / 2)) < halfSize) return 'e';
+    if (Math.abs(x - (displayCropArea.x + displayCropArea.width / 2)) < halfSize && Math.abs(y - displayCropArea.y) < halfSize) return 'n';
+    if (Math.abs(x - (displayCropArea.x + displayCropArea.width / 2)) < halfSize && Math.abs(y - (displayCropArea.y + displayCropArea.height)) < halfSize) return 's';
+    if (Math.abs(x - displayCropArea.x) < halfSize && Math.abs(y - (displayCropArea.y + displayCropArea.height / 2)) < halfSize) return 'w';
+    if (Math.abs(x - (displayCropArea.x + displayCropArea.width)) < halfSize && Math.abs(y - (displayCropArea.y + displayCropArea.height / 2)) < halfSize) return 'e';
 
-    // 裁剪框内部
-    if (x >= cropArea.x && x <= cropArea.x + cropArea.width &&
-        y >= cropArea.y && y <= cropArea.y + cropArea.height) {
+    if (x >= displayCropArea.x && x <= displayCropArea.x + displayCropArea.width &&
+        y >= displayCropArea.y && y <= displayCropArea.y + displayCropArea.height) {
       return 'move';
     }
 
     return null;
-  }, [cropArea]);
+  }, [displayCropArea]);
 
-  // 处理鼠标按下
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -128,11 +153,10 @@ export function ImageCropperCanvas({
       setIsDragging(true);
       setDragHandle(handle);
       setDragStart({ x, y });
-      setInitialCropArea({ ...cropArea });
+      setInitialCropArea({ ...displayCropArea });
     }
-  }, [cropArea, getHandleAtPosition]);
+  }, [displayCropArea, getHandleAtPosition]);
 
-  // 处理鼠标移动
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -141,7 +165,6 @@ export function ImageCropperCanvas({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // 更新鼠标样式
     if (!isDragging) {
       const handle = getHandleAtPosition(x, y);
       switch (handle) {
@@ -169,7 +192,6 @@ export function ImageCropperCanvas({
       }
     }
 
-    // 处理拖拽
     if (isDragging && dragHandle) {
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
@@ -178,8 +200,8 @@ export function ImageCropperCanvas({
 
       switch (dragHandle) {
         case 'move':
-          newCropArea.x = Math.max(0, Math.min(containerWidth - newCropArea.width, initialCropArea.x + dx));
-          newCropArea.y = Math.max(0, Math.min(containerHeight - newCropArea.height, initialCropArea.y + dy));
+          newCropArea.x = Math.max(0, Math.min(actualSize.displayWidth - newCropArea.width, initialCropArea.x + dx));
+          newCropArea.y = Math.max(0, Math.min(actualSize.displayHeight - newCropArea.height, initialCropArea.y + dy));
           break;
         case 'nw':
           newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
@@ -189,45 +211,44 @@ export function ImageCropperCanvas({
           break;
         case 'ne':
           newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
-          newCropArea.width = Math.max(20, Math.min(containerWidth - initialCropArea.x, initialCropArea.width + dx));
+          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
           newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
           break;
         case 'sw':
           newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
           newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
-          newCropArea.height = Math.max(20, Math.min(containerHeight - initialCropArea.y, initialCropArea.height + dy));
+          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
           break;
         case 'se':
-          newCropArea.width = Math.max(20, Math.min(containerWidth - initialCropArea.x, initialCropArea.width + dx));
-          newCropArea.height = Math.max(20, Math.min(containerHeight - initialCropArea.y, initialCropArea.height + dy));
+          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
+          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
           break;
         case 'n':
           newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
           newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
           break;
         case 's':
-          newCropArea.height = Math.max(20, Math.min(containerHeight - initialCropArea.y, initialCropArea.height + dy));
+          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
           break;
         case 'w':
           newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
           newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
           break;
         case 'e':
-          newCropArea.width = Math.max(20, Math.min(containerWidth - initialCropArea.x, initialCropArea.width + dx));
+          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
           break;
       }
 
-      onCropAreaChange(newCropArea);
+      const originalCropArea = toOriginalCoords(newCropArea);
+      onCropAreaChange(originalCropArea);
     }
-  }, [isDragging, dragHandle, dragStart, initialCropArea, containerWidth, containerHeight, getHandleAtPosition, onCropAreaChange]);
+  }, [isDragging, dragHandle, dragStart, initialCropArea, actualSize, getHandleAtPosition, onCropAreaChange, toOriginalCoords]);
 
-  // 处理鼠标释放
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setDragHandle(null);
   }, []);
 
-  // 处理鼠标离开画布
   const handleMouseLeave = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
@@ -236,15 +257,22 @@ export function ImageCropperCanvas({
   }, [isDragging]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={containerWidth}
-      height={containerHeight}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      className="border border-slate-200 rounded-lg"
-    />
+    <div className="flex justify-center">
+      <canvas
+        ref={canvasRef}
+        width={actualSize.displayWidth}
+        height={actualSize.displayHeight}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        className="border border-slate-200 rounded-lg max-w-full h-auto"
+        style={{ 
+          maxWidth: '100%',
+          height: 'auto',
+          display: 'block'
+        }}
+      />
+    </div>
   );
 } 
