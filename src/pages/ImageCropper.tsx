@@ -5,18 +5,157 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, RotateCw, Crop } from 'lucide-react';
+import { Upload, RotateCw, Crop, Edit, Download, ArrowLeft, Settings } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+
+// 新增：下载组件
+function ImageDownloader({ imageUrl, onBack }: { imageUrl: string; onBack: () => void }) {
+  const [downloadWidth, setDownloadWidth] = useState(800);
+  const [downloadHeight, setDownloadHeight] = useState(600);
+  const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
+  const [originalAspectRatio, setOriginalAspectRatio] = useState(1);
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      const aspectRatio = img.width / img.height;
+      setOriginalAspectRatio(aspectRatio);
+      setDownloadWidth(img.width);
+      setDownloadHeight(img.height);
+    };
+    img.src = imageUrl;
+  }, [imageUrl]);
+
+  const handleWidthChange = useCallback((value: number) => {
+    setDownloadWidth(value);
+    if (maintainAspectRatio) {
+      setDownloadHeight(Math.round(value / originalAspectRatio));
+    }
+  }, [maintainAspectRatio, originalAspectRatio]);
+
+  const handleHeightChange = useCallback((value: number) => {
+    setDownloadHeight(value);
+    if (maintainAspectRatio) {
+      setDownloadWidth(Math.round(value * originalAspectRatio));
+    }
+  }, [maintainAspectRatio, originalAspectRatio]);
+
+  const handleDownload = useCallback(async () => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = downloadWidth;
+      canvas.height = downloadHeight;
+
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, downloadWidth, downloadHeight);
+        
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/jpeg', 0.95);
+        link.download = `resized-image-${downloadWidth}x${downloadHeight}-${Date.now()}.jpg`;
+        link.click();
+
+        toast({
+          title: '成功',
+          description: `图片已下载 (${downloadWidth}×${downloadHeight})`
+        });
+      };
+      img.src = imageUrl;
+    } catch (error) {
+      toast({
+        title: '错误',
+        description: '下载失败',
+        variant: 'destructive'
+      });
+    }
+  }, [imageUrl, downloadWidth, downloadHeight]);
+
+  return (
+    <div className="space-y-6">
+      {/* 图片预览 */}
+      <div className="flex justify-center">
+        <img 
+          src={imageUrl} 
+          alt="裁剪结果" 
+          className="max-w-full max-h-96 rounded-lg border border-slate-200"
+        />
+      </div>
+
+      {/* 下载设置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">下载设置</CardTitle>
+          <CardDescription>调整图片尺寸后下载</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="width">宽度 (px)</Label>
+              <Input
+                id="width"
+                type="number"
+                value={downloadWidth}
+                onChange={(e) => handleWidthChange(Number(e.target.value))}
+                min="1"
+                max="4000"
+              />
+            </div>
+            <div>
+              <Label htmlFor="height">高度 (px)</Label>
+              <Input
+                id="height"
+                type="number"
+                value={downloadHeight}
+                onChange={(e) => handleHeightChange(Number(e.target.value))}
+                min="1"
+                max="4000"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="aspectRatio"
+              checked={maintainAspectRatio}
+              onChange={(e) => setMaintainAspectRatio(e.target.checked)}
+              className="rounded"
+            />
+            <Label htmlFor="aspectRatio">保持宽高比</Label>
+          </div>
+
+          <div className="flex gap-3">
+            <Button onClick={handleDownload} className="flex-1">
+              <Download className="w-4 h-4 mr-2" />
+              下载图片
+            </Button>
+            <Button variant="outline" onClick={onBack}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              重新裁剪
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export function ImageCropper() {
   const {
     proxyImage,
+    croppedImage,
     cropArea,
     imageDimensions,
     isLoading,
+    mode,
     loadImage,
     updateCropArea,
-    getCroppedImage,
+    startCropping,
+    finishCropping,
+    backToPreview,
     reset
   } = useImageCrop();
 
@@ -112,23 +251,20 @@ export function ImageCropper() {
     updateCropArea(newArea);
   }, [aspectRatio, cropArea, imageDimensions, updateCropArea]);
 
-  // 处理裁剪并下载
-  const handleCrop = useCallback(async () => {
+  // 处理开始裁剪
+  const handleStartCropping = useCallback(() => {
+    startCropping();
+  }, [startCropping]);
+
+  // 处理完成裁剪
+  const handleFinishCropping = useCallback(async () => {
     setIsProcessing(true);
     try {
-      const croppedImage = await getCroppedImage();
-      if (croppedImage) {
-        // 创建下载链接
-        const link = document.createElement('a');
-        link.href = croppedImage;
-        link.download = `cropped-image-${Date.now()}.jpg`;
-        link.click();
-
-        toast({
-          title: '成功',
-          description: '图片已裁剪并下载'
-        });
-      }
+      await finishCropping();
+      toast({
+        title: '成功',
+        description: '图片裁剪完成'
+      });
     } catch (error) {
       toast({
         title: '错误',
@@ -138,7 +274,7 @@ export function ImageCropper() {
     } finally {
       setIsProcessing(false);
     }
-  }, [getCroppedImage]);
+  }, [finishCropping]);
 
   // 设置预设宽高比
   const setPresetAspectRatio = useCallback((ratio: number | null) => {
@@ -203,9 +339,30 @@ export function ImageCropper() {
                     className="hidden"
                   />
                 </div>
-              ) : (
+              ) : mode === 'preview' ? (
+                // 预览模式
+                <div className="space-y-4">
+                  <div className="flex justify-center">
+                    <img 
+                      src={proxyImage} 
+                      alt="图片预览" 
+                      className="max-w-full max-h-96 rounded-lg border border-slate-200"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button onClick={handleStartCropping} className="flex-1">
+                      <Edit className="w-4 h-4 mr-2" />
+                      裁剪编辑
+                    </Button>
+                    <Button variant="outline" onClick={reset}>
+                      <RotateCw className="w-4 h-4 mr-2" />
+                      重新上传
+                    </Button>
+                  </div>
+                </div>
+              ) : mode === 'cropping' ? (
+                // 裁剪模式
                 <div className="relative">
-                  {/* 图片容器 - 添加最大尺寸约束和响应式处理 */}
                   <div className="w-full max-w-full overflow-auto rounded-lg bg-slate-50 flex justify-center p-4">
                     {imageDimensions && (
                       <ImageCropperCanvas
@@ -221,24 +378,30 @@ export function ImageCropper() {
                   
                   <div className="mt-4 flex gap-3">
                     <Button
-                      onClick={handleCrop}
+                      onClick={handleFinishCropping}
                       disabled={isProcessing}
                       className="flex-1"
                     >
                       <Crop className="w-4 h-4 mr-2" />
-                      {isProcessing ? '处理中...' : '裁剪并下载'}
+                      {isProcessing ? '处理中...' : '确认裁剪'}
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={reset}
+                      onClick={backToPreview}
                       disabled={isProcessing}
                     >
-                      <RotateCw className="w-4 h-4 mr-2" />
-                      重新上传
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      返回预览
                     </Button>
                   </div>
                 </div>
-              )}
+              ) : mode === 'result' && croppedImage ? (
+                // 结果模式
+                <ImageDownloader 
+                  imageUrl={croppedImage} 
+                  onBack={backToPreview}
+                />
+              ) : null}
             </CardContent>
           </Card>
         </div>
@@ -276,8 +439,8 @@ export function ImageCropper() {
             </Card>
           )}
 
-          {/* 裁剪设置 */}
-          {proxyImage && (
+          {/* 裁剪设置 - 只在裁剪模式显示 */}
+          {mode === 'cropping' && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">裁剪设置</CardTitle>
@@ -369,10 +532,29 @@ export function ImageCropper() {
               <CardTitle className="text-lg">使用说明</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-slate-600">
-              <p>• 拖拽裁剪框调整位置</p>
-              <p>• 拖拽边角调整大小</p>
-              <p>• 选择预设宽高比快速调整</p>
-              <p>• 大图片会自动缩放显示，但裁剪时使用原图</p>
+              {mode === 'preview' && (
+                <>
+                  <p>• 图片已上传完成</p>
+                  <p>• 点击"裁剪编辑"开始裁剪</p>
+                  <p>• 可以重新上传其他图片</p>
+                </>
+              )}
+              {mode === 'cropping' && (
+                <>
+                  <p>• 拖拽裁剪框调整位置</p>
+                  <p>• 拖拽边角调整大小</p>
+                  <p>• 选择预设宽高比快速调整</p>
+                  <p>• 大图片会自动缩放显示，但裁剪时使用原图</p>
+                </>
+              )}
+              {mode === 'result' && (
+                <>
+                  <p>• 裁剪已完成</p>
+                  <p>• 可以调整输出尺寸</p>
+                  <p>• 支持保持宽高比缩放</p>
+                  <p>• 点击下载保存图片</p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

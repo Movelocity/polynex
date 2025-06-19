@@ -15,15 +15,23 @@ interface ImageDimensions {
   scale: number;
 }
 
+// 新增：模式枚举
+export type CropperMode = 'preview' | 'cropping' | 'result';
+
 export interface UseImageCropReturn {
   originalImage: string | null;
   proxyImage: string | null;
+  croppedImage: string | null; // 新增：裁剪后的图片
   cropArea: CropArea;
   imageDimensions: ImageDimensions | null;
   isLoading: boolean;
+  mode: CropperMode; // 新增：当前模式
   loadImage: (base64: string) => Promise<void>;
   updateCropArea: (area: CropArea) => void;
   getCroppedImage: () => Promise<string | null>;
+  startCropping: () => void; // 新增：开始裁剪模式
+  finishCropping: () => Promise<void>; // 新增：完成裁剪，进入结果模式
+  backToPreview: () => void; // 新增：返回预览模式
   reset: () => void;
 }
 
@@ -32,9 +40,11 @@ const MAX_DISPLAY_WIDTH = 1000;
 export function useImageCrop(): UseImageCropReturn {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [proxyImage, setProxyImage] = useState<string | null>(null);
+  const [croppedImage, setCroppedImage] = useState<string | null>(null); // 新增
   const [cropArea, setCropArea] = useState<CropArea>({ x: 0, y: 0, width: 100, height: 100 });
   const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [mode, setMode] = useState<CropperMode>('preview'); // 新增
   
   const originalImageRef = useRef<HTMLImageElement | null>(null);
   const proxyImageRef = useRef<HTMLImageElement | null>(null);
@@ -112,6 +122,10 @@ export function useImageCrop(): UseImageCropReturn {
         width: size,
         height: size
       });
+
+      // 重置为预览模式
+      setMode('preview');
+      setCroppedImage(null);
     } catch (error) {
       console.error('Failed to load image:', error);
     } finally {
@@ -159,13 +173,35 @@ export function useImageCrop(): UseImageCropReturn {
     return canvas.toDataURL('image/jpeg', 0.95);
   }, [cropArea, imageDimensions]);
 
+  // 新增：开始裁剪模式
+  const startCropping = useCallback(() => {
+    setMode('cropping');
+  }, []);
+
+  // 新增：完成裁剪，进入结果模式
+  const finishCropping = useCallback(async () => {
+    const cropped = await getCroppedImage();
+    if (cropped) {
+      setCroppedImage(cropped);
+      setMode('result');
+    }
+  }, [getCroppedImage]);
+
+  // 新增：返回预览模式
+  const backToPreview = useCallback(() => {
+    setMode('preview');
+    setCroppedImage(null);
+  }, []);
+
   // 重置
   const reset = useCallback(() => {
     setOriginalImage(null);
     setProxyImage(null);
+    setCroppedImage(null); // 新增
     setCropArea({ x: 0, y: 0, width: 100, height: 100 });
     setImageDimensions(null);
     setIsLoading(false);
+    setMode('preview'); // 新增
     originalImageRef.current = null;
     proxyImageRef.current = null;
   }, []);
@@ -173,12 +209,17 @@ export function useImageCrop(): UseImageCropReturn {
   return {
     originalImage,
     proxyImage,
+    croppedImage, // 新增
     cropArea,
     imageDimensions,
     isLoading,
+    mode, // 新增
     loadImage,
     updateCropArea,
     getCroppedImage,
+    startCropping, // 新增
+    finishCropping, // 新增
+    backToPreview, // 新增
     reset
   };
 } 
