@@ -54,3 +54,7 @@
 5. ✅ 路由和导航更新 - 更新了App.tsx路由配置和Layout.tsx导航链接
 
 
+[x] 有的页面高度不足，导致全局 footer飘在页面中间，需要思考解决办法
+  - 修改Layout.tsx的CSS布局，使用Flexbox确保footer始终在页面底部
+  - 将最外层容器设为 flex flex-col，main元素使用 flex-1 自动填充剩余空间
+  - 移除footer的上边距，让其自动被推到底部
