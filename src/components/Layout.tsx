@@ -15,7 +15,8 @@ import {
   Home,
   Menu,
   X,
-  FileText
+  FileText,
+  Wrench
 } from 'lucide-react';
 
 export function Layout() {
@@ -82,6 +83,18 @@ export function Layout() {
               >
                 <FileText className="w-4 h-4" />
                 <span>文章</span>
+              </Link>
+              
+              <Link 
+                to="/tools/image-cropper" 
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
+                  location.pathname.startsWith('/tools') 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                <Wrench className="w-4 h-4" />
+                <span>工具</span>
               </Link>
               
               {isAuthenticated && (
@@ -226,6 +239,15 @@ export function Layout() {
                 >
                   <FileText className="w-4 h-4" />
                   <span>文章</span>
+                </Link>
+                
+                <Link 
+                  to="/tools/image-cropper" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Wrench className="w-4 h-4" />
+                  <span>工具</span>
                 </Link>
                 
                 {isAuthenticated ? (

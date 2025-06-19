@@ -16,6 +16,7 @@ import { Search } from '@/pages/Search';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ArticleList } from '@/pages/ArticleList';
 import { UserSettings } from '@/pages/UserSettings';
+import { ImageCropper } from '@/pages/ImageCropper';
 import { NotFound } from '@/pages/NotFound';
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
             <Route path="articles" element={<ArticleList />} />
             <Route path="search" element={<Search />} />
             <Route path="category/:category" element={<CategoryPage />} />
+            <Route path="tools/image-cropper" element={<ImageCropper />} />
 
             {/* Protected routes */}
             <Route 

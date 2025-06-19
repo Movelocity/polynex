@@ -24,13 +24,30 @@
 3. ✅ 用户设置页面 - 创建了账户设置页面，包含个人信息查看和密码修改功能
 4. ✅ Markdown预览优化 - 改进了写作页面的Markdown预览，使用与博客详情页面相同的渲染组件
 
-[x] bug 修复
-```
-http://localhost:5173/articles
-Something went wrong.
-A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
-Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
-    at http://localhost:5173/node_modules/.vite/deps/@radix-ui_react-select.js?v=2d5e35f9:904:13
-    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-HBJ3AJOL.js?v=2d5e35f9:11596:26)
-```
-- ✅ 已修复：将分类筛选器的"所有分类"选项的value从空字符串改为"all"
+基本博客功能已开发完毕。接下来要开发一些网页工具
+
+[x] 图片裁剪。
+  - 不使用radix以外的组件库，手写图片处理逻辑，
+  - 流程包括图片上传，画布调整，图片缩放（默认保持aspect），裁剪框调整
+  - 性能优化：处理阶段仅展示最大1000像素宽度的图片，即时原图再大也不会有性能问题。裁剪操作结束后返回图片时，将裁剪操作等比例应用到原图。
+  - "核心"组件逻辑：接收base64图片，返回确认结果时回调最终图片。图片处理与视图渲染分离，图片处理在 hook 中进行
+  - 注意事项：图片代理操作很关键，图片处理中，原图和代理图都要保管好。
+
+## 已完成的图片裁剪工具功能：
+1. ✅ 自定义 hook (`useImageCrop`) - 处理图片加载、缩放、裁剪逻辑
+2. ✅ Canvas 组件 (`ImageCropperCanvas`) - 渲染裁剪框，支持拖拽调整位置和大小
+3. ✅ 主页面 (`ImageCropper`) - 提供完整的用户界面
+4. ✅ 性能优化 - 大图自动缩放到1000px以内显示，裁剪时使用原图
+5. ✅ 功能特性：
+   - 支持拖放和点击上传
+   - 可调整裁剪框位置和大小
+   - 预设宽高比（自由、1:1、16:9、4:3、3:2、9:16）
+   - 实时显示裁剪区域信息
+   - 裁剪后自动下载
+
+## 后续可以开发的工具：
+[ ] 图片压缩工具 - 批量压缩图片，支持调整质量和尺寸
+[ ] Markdown编辑器增强 - 支持更多快捷键和实时预览
+[ ] 代码格式化工具 - 支持多种编程语言的代码美化
+[ ] 颜色选择器工具 - 提供多种颜色格式转换
+[ ] 正则表达式测试工具 - 实时测试和验证正则表达式
