@@ -8,13 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { BlogCard } from '@/components/ui/BlogCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Calendar, 
   PenTool, 
   FileText, 
   TrendingUp,
@@ -73,6 +70,12 @@ export function Dashboard() {
       console.error('更新状态失败:', error);
     }
   };
+
+  const handleEdit = (blogId: string) => {
+    navigate(`/edit/${blogId}`);
+  };
+  
+  const [deleteConfirmBlog, setDeleteConfirmBlog] = useState<Blog | null>(null);
 
   // 筛选博客
   const filteredBlogs = blogs.filter(blog => {
@@ -226,127 +229,49 @@ export function Dashboard() {
               {filteredBlogs.length > 0 ? (
                 <div className="space-y-4">
                   {filteredBlogs.map((blog) => (
-                    <Card key={blog.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Badge 
-                                variant={blog.status === 'published' ? 'default' : 'secondary'}
-                                className={blog.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}
-                              >
-                                {blog.status === 'published' ? '已发布' : '草稿'}
-                              </Badge>
-                              <Badge variant="outline">{blog.category}</Badge>
-                            </div>
-                            
-                            <h3 className="text-xl font-semibold text-slate-800 mb-2">
-                              {blog.status === 'published' ? (
-                                <Link 
-                                  to={`/blog/${blog.id}`} 
-                                  className="hover:text-blue-600 transition-colors"
-                                >
-                                  {blog.title}
-                                </Link>
-                              ) : (
-                                blog.title
-                              )}
-                            </h3>
-                            
-                            <p className="text-slate-600 mb-3 line-clamp-2">
-                              {blog.summary}
-                            </p>
-                            
-                            <div className="flex items-center space-x-4 text-sm text-slate-500">
-                              <div className="flex items-center">
-                                <Calendar className="w-4 h-4 mr-1" />
-                                创建：{formatDate(blog.createTime)}
-                              </div>
-                              {blog.updateTime !== blog.createTime && (
-                                <div className="flex items-center">
-                                  <Clock className="w-4 h-4 mr-1" />
-                                  更新：{formatDate(blog.updateTime)}
-                                </div>
-                              )}
-                              <div className="flex items-center">
-                                <Eye className="w-4 h-4 mr-1" />
-                                {blog.views} 次阅读
-                              </div>
-                            </div>
-                            
-                            {blog.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-3">
-                                {blog.tags.map((tag, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 ml-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/edit/${blog.id}`)}
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              编辑
-                            </Button>
-                            
-                            {blog.status === 'draft' ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleToggleStatus(blog.id, 'published')}
-                              >
-                                发布
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleToggleStatus(blog.id, 'draft')}
-                              >
-                                撤回
-                              </Button>
-                            )}
-                            
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-1" />
-                                  删除
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>确认删除</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    您确定要删除文章《{blog.title}》吗？此操作无法撤销。
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>取消</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteBlog(blog.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    删除
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <BlogCard
+                      key={blog.id}
+                      blog={blog}
+                      layout="list"
+                      showActions={true}
+                      showStatus={true}
+                      showUpdateTime={true}
+                      summaryLines={2}
+                      maxTags={5}
+                      onEdit={handleEdit}
+                      onToggleStatus={handleToggleStatus}
+                      onDelete={(blogId) => setDeleteConfirmBlog(blog)}
+                    />
                   ))}
+                  
+                  {/* Delete Confirmation Dialog */}
+                  <AlertDialog 
+                    open={deleteConfirmBlog !== null} 
+                    onOpenChange={(open) => !open && setDeleteConfirmBlog(null)}
+                  >
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>确认删除</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          您确定要删除文章《{deleteConfirmBlog?.title}》吗？此操作无法撤销。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (deleteConfirmBlog) {
+                              handleDeleteBlog(deleteConfirmBlog.id);
+                              setDeleteConfirmBlog(null);
+                            }
+                          }}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          删除
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ) : (
                 <div className="text-center py-16">
