@@ -116,9 +116,9 @@ export function BlogDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
       {/* Navigation */}
-      <div className="mb-8">
+      <div className="">
         <Button 
           variant="ghost" 
           onClick={() => navigate(-1)}

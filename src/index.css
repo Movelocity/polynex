@@ -27,8 +27,34 @@
   }
 }
 
-
-
 img {
   object-position: top;
+}
+
+.item-title {
+  position: relative;
+  display: inline-block;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  cursor: pointer
+}
+
+.item-title:after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: #7693e9;
+  visibility: hidden;
+  transition: transform .3s ease;
+  transform: scaleX(0)
+}
+
+.item-title:hover {
+  cursor: pointer
+}
+
+.item-title:hover:after {
+  visibility: visible;
+  transform: scaleX(1)
 }

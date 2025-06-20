@@ -80,9 +80,9 @@ export function Home() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      <div className="text-center mb-12">
+      {/* <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
           分享你的故事
         </h1>
@@ -102,11 +102,11 @@ export function Home() {
             加入我们
           </Button>
         </div>
-      </div>
+      </div> */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-8">
         {/* Sidebar */}
-        <div className="lg:col-span-1">
+        <div className="md:col-span-1 lg:col-span-1">
           <div className="space-y-6">
             {/* Stats Card */}
             <Card>
@@ -198,10 +198,10 @@ export function Home() {
         </div>
 
         {/* Main Content */}
-        <div className="lg:col-span-3">
+        <div className="md:col-span-2 xl:col-span-3">
           {/* Blog Grid */}
           {currentBlogs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
               {currentBlogs.map((blog) => (
                 <Card key={blog.id} className="group hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
                   <CardHeader>
@@ -213,7 +213,7 @@ export function Home() {
                       </div>
                     </div>
                     <CardTitle className="group-hover:text-blue-600 transition-colors">
-                      <Link to={`/blog/${blog.id}`}>
+                      <Link className="item-title" to={`/blog/${blog.id}`}>
                         {blog.title}
                       </Link>
                     </CardTitle>
