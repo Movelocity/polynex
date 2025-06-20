@@ -99,7 +99,7 @@ export function UserSettings() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
@@ -156,12 +156,12 @@ export function UserSettings() {
                 </div>
               </div>
 
-              <Alert>
+              {/* <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   目前暂不支持修改用户名和邮箱。如需修改，请联系管理员。
                 </AlertDescription>
-              </Alert>
+              </Alert> */}
             </CardContent>
           </Card>
         </TabsContent>

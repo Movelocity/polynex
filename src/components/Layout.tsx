@@ -73,7 +73,7 @@ export function Layout() {
                 <span>首页</span>
               </Link>
               
-              <Link 
+              {/* <Link 
                 to="/articles" 
                 className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
                   isActivePath('/articles') 
@@ -83,7 +83,7 @@ export function Layout() {
               >
                 <FileText className="w-4 h-4" />
                 <span>文章</span>
-              </Link>
+              </Link> */}
               
               <Link 
                 to="/tools" 

@@ -1,12 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { BlogStorage, CategoryStorage } from '@/utils/storage';
 import { Blog, Category } from '@/types';
-import { formatDate } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
 import { BlogCard } from '@/components/ui/BlogCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

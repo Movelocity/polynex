@@ -116,7 +116,7 @@ export function BlogDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
       {/* Navigation */}
       <div className="">
         <Button 
@@ -130,7 +130,7 @@ export function BlogDetail() {
       </div>
 
       {/* Article Header */}
-      <Card className="mb-8 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+      <Card className="mb-8 border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="pb-6">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <Badge variant="secondary" className="bg-blue-100 text-blue-700">

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, RotateCw, Crop, Edit, Download, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 // 新增：下载组件
 function ImageDownloader({ imageUrl }: { imageUrl: string}) {
@@ -298,8 +299,16 @@ export function ImageCropper() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        
-        <p className="mt-2 text-slate-600">上传图片并裁剪成所需尺寸</p>
+        <div className="flex items-center space-x-4 mb-4">
+          <Link 
+            to="/tools" 
+            className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            返回工具列表
+          </Link>
+        </div>
+        <p className="text-slate-600">上传图片并裁剪成所需尺寸</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

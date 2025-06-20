@@ -123,184 +123,178 @@ export function Dashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-          <Avatar className="w-16 h-16">
-            <AvatarImage src={user.avatar} alt={user.username} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-xl">
-              {user.username[0]?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800">欢迎回来，{user.username}</h1>
-            <p className="text-slate-600">管理您的博客内容</p>
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        
+        {/* side */}
+        <div className="col-span-1 space-y-4">
+          <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={user.avatar} alt={user.username} />
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-xl">
+                {user.username[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">欢迎回来，{user.username}</h1>
+              <p className="text-slate-600">管理您的博客内容</p>
+            </div>
+          </div>
+          {/* Stats */}
+          <div className="hidden lg:flex flex-col gap-4">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-600 text-sm font-medium">总文章</p>
+                    <p className="text-3xl font-bold text-blue-700">{stats.total}</p>
+                  </div>
+                  <FileText className="w-8 h-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-600 text-sm font-medium">已发布</p>
+                    <p className="text-3xl font-bold text-green-700">{stats.published}</p>
+                  </div>
+                  <BookOpen className="w-8 h-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-yellow-600 text-sm font-medium">草稿</p>
+                    <p className="text-3xl font-bold text-yellow-700">{stats.draft}</p>
+                  </div>
+                  <Clock className="w-8 h-8 text-yellow-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-600 text-sm font-medium">总阅读量</p>
+                    <p className="text-3xl font-bold text-purple-700">{stats.totalViews}</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-        
-        <Button 
-          onClick={() => navigate('/write')}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-        >
-          <PenTool className="w-4 h-4 mr-2" />
-          写新文章
-        </Button>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-600 text-sm font-medium">总文章</p>
-                <p className="text-3xl font-bold text-blue-700">{stats.total}</p>
-              </div>
-              <FileText className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-600 text-sm font-medium">已发布</p>
-                <p className="text-3xl font-bold text-green-700">{stats.published}</p>
-              </div>
-              <BookOpen className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-yellow-600 text-sm font-medium">草稿</p>
-                <p className="text-3xl font-bold text-yellow-700">{stats.draft}</p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-600 text-sm font-medium">总阅读量</p>
-                <p className="text-3xl font-bold text-purple-700">{stats.totalViews}</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Blog Management */}
-      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <BarChart3 className="w-6 h-6 mr-2" />
-            我的文章
-          </CardTitle>
-          <CardDescription>
-            管理您发布的所有文章
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">
-                全部 ({stats.total})
-              </TabsTrigger>
-              <TabsTrigger value="published">
-                已发布 ({stats.published})
-              </TabsTrigger>
-              <TabsTrigger value="draft">
-                草稿 ({stats.draft})
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={activeTab} className="mt-6">
-              {filteredBlogs.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredBlogs.map((blog) => (
-                    <BlogCard
-                      key={blog.id}
-                      blog={blog}
-                      layout="list"
-                      showActions={true}
-                      showStatus={true}
-                      showUpdateTime={true}
-                      summaryLines={2}
-                      maxTags={5}
-                      onEdit={handleEdit}
-                      onToggleStatus={handleToggleStatus}
-                      onDelete={(blogId) => setDeleteConfirmBlog(blog)}
-                    />
-                  ))}
-                  
-                  {/* Delete Confirmation Dialog */}
-                  <AlertDialog 
-                    open={deleteConfirmBlog !== null} 
-                    onOpenChange={(open) => !open && setDeleteConfirmBlog(null)}
-                  >
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>确认删除</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          您确定要删除文章《{deleteConfirmBlog?.title}》吗？此操作无法撤销。
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => {
-                            if (deleteConfirmBlog) {
-                              handleDeleteBlog(deleteConfirmBlog.id);
-                              setDeleteConfirmBlog(null);
-                            }
-                          }}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          删除
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-12 h-12 text-slate-400" />
+        {/* Blog Management */}
+        <Card className="col-span-4 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BarChart3 className="w-6 h-6 mr-2" />
+              我的文章
+            </CardTitle>
+            <CardDescription>
+              管理您发布的所有文章
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all">
+                  全部 ({stats.total})
+                </TabsTrigger>
+                <TabsTrigger value="published">
+                  已发布 ({stats.published})
+                </TabsTrigger>
+                <TabsTrigger value="draft">
+                  草稿 ({stats.draft})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value={activeTab} className="mt-6">
+                {filteredBlogs.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredBlogs.map((blog) => (
+                      <BlogCard
+                        key={blog.id}
+                        blog={blog}
+                        layout="list"
+                        showActions={true}
+                        showStatus={true}
+                        showUpdateTime={true}
+                        summaryLines={2}
+                        maxTags={5}
+                        onEdit={handleEdit}
+                        onToggleStatus={handleToggleStatus}
+                        onDelete={(blogId) => setDeleteConfirmBlog(blog)}
+                      />
+                    ))}
+                    
+                    {/* Delete Confirmation Dialog */}
+                    <AlertDialog 
+                      open={deleteConfirmBlog !== null} 
+                      onOpenChange={(open) => !open && setDeleteConfirmBlog(null)}
+                    >
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>确认删除</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            您确定要删除文章《{deleteConfirmBlog?.title}》吗？此操作无法撤销。
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>取消</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              if (deleteConfirmBlog) {
+                                handleDeleteBlog(deleteConfirmBlog.id);
+                                setDeleteConfirmBlog(null);
+                              }
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            删除
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
-                  <h3 className="text-xl font-medium text-slate-600 mb-2">
-                    {activeTab === 'published' && '还没有已发布的文章'}
-                    {activeTab === 'draft' && '还没有草稿'}
-                    {activeTab === 'all' && '还没有文章'}
-                  </h3>
-                  <p className="text-slate-500 mb-6">
-                    {activeTab === 'published' && '您还没有发布任何文章，写一篇文章分享您的想法吧！'}
-                    {activeTab === 'draft' && '您还没有保存任何草稿，开始创作吧！'}
-                    {activeTab === 'all' && '开始创作您的第一篇文章，分享您的故事'}
-                  </p>
-                  <Button 
-                    onClick={() => navigate('/write')}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  >
-                    <PenTool className="w-4 h-4 mr-2" />
-                    写文章
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                ) : (
+                  <div className="text-center py-16">
+                    <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-12 h-12 text-slate-400" />
+                    </div>
+                    <h3 className="text-xl font-medium text-slate-600 mb-2">
+                      {activeTab === 'published' && '还没有已发布的文章'}
+                      {activeTab === 'draft' && '还没有草稿'}
+                      {activeTab === 'all' && '还没有文章'}
+                    </h3>
+                    <p className="text-slate-500 mb-6">
+                      {activeTab === 'published' && '您还没有发布任何文章，写一篇文章分享您的想法吧！'}
+                      {activeTab === 'draft' && '您还没有保存任何草稿，开始创作吧！'}
+                      {activeTab === 'all' && '开始创作您的第一篇文章，分享您的故事'}
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/write')}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      <PenTool className="w-4 h-4 mr-2" />
+                      写文章
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
