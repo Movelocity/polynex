@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { userService, blogService, categoryService, fileService, apiClient } from '@/services';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Button } from '@/components/x-ui/button';
+import { Alert, AlertDescription } from '@/components/x-ui/alert';
+import { Badge } from '@/components/x-ui/badge';
+import { userService, blogService, categoryService, fileService } from '@/services';
 import { User, Blog, Category } from '@/types';
-import { FileUpload } from '@/components/FileUpload';
+import { FileUpload } from '@/components/common/file/FileUpload';
 import { FileInfo } from '@/services/api/FileApiService';
 
 /**

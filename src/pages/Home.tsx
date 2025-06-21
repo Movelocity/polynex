@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { BlogCard } from '@/components/ui/BlogCard';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Badge } from '@/components/x-ui/badge';
+import { BlogCard } from '@/components/common/blog/BlogCard';
 import { 
   Calendar, 
   Tag, 

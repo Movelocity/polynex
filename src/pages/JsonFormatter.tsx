@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Textarea } from '@/components/x-ui/textarea';
+import { Label } from '@/components/x-ui/label';
+import { Input } from '@/components/x-ui/input';
 import { 
   FileJson, 
   Code, 

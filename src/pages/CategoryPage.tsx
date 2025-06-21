@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Badge } from '@/components/x-ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/x-ui/avatar';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -16,7 +16,7 @@ import {
   PenTool,
   FileX
 } from 'lucide-react';
-import { UserAvatar } from '@/components/ui/UserAvatar';
+import { UserAvatar } from '@/components/common/user/UserAvatar';
 
 // Temporary formatDate function until we move it to a proper utils file
 const formatDate = (dateString: string): string => {

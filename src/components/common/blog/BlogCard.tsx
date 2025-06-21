@@ -1,10 +1,8 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Blog } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
-import { Badge } from './badge';
-import { Avatar, AvatarFallback } from './avatar';
-import { Button } from './button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Badge } from '@/components/x-ui/badge';
+import { Button } from '@/components/x-ui/button';
 import { 
   Calendar, 
   Eye, 
@@ -12,7 +10,7 @@ import {
   Edit, 
   Trash2
 } from 'lucide-react';
-import { UserAvatar } from './UserAvatar';
+import { UserAvatar } from '@/components/common/user/UserAvatar';
 
 // Temporary formatDate function until we move it to a proper utils file
 const formatDate = (dateString: string): string => {
@@ -94,12 +92,12 @@ export function BlogCard({
               {canNavigate ? (
                 <Link 
                   to={`/blog/${blog.id}`}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-blue-600 transition-colors item-title"
                 >
                   {blog.title}
                 </Link>
               ) : (
-                <span className="text-slate-800">
+                <span className="text-slate-800 item-title">
                   {blog.title}
                 </span>
               )}

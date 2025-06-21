@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from './avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/x-ui/avatar';
 import { fileService } from '@/services';
 import { User, ClientUser } from '@/types';
 import { cn } from '@/lib/utils';

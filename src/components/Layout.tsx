@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/x-ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/x-ui/dropdown-menu';
+import { Input } from '@/components/x-ui/input';
 import { 
   BookOpen, 
   User, 
@@ -19,7 +18,7 @@ import {
   Wrench
 } from 'lucide-react';
 import { fileService } from '@/services';
-import { UserAvatar } from '@/components/ui/UserAvatar';
+import { UserAvatar } from '@/components/common/user/UserAvatar';
 
 export function Layout() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -167,7 +166,7 @@ export function Layout() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                       <User className="mr-2 h-4 w-4" />
-                      <span>个人中心</span>
+                      <span>我的文章</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/write')}>
                       <PenTool className="mr-2 h-4 w-4" />

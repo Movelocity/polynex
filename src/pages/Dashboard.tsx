@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { blogService, fileService } from '@/services';
 import { Blog } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BlogCard } from '@/components/ui/BlogCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { BlogCard } from '@/components/common/blog/BlogCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
+import { Input } from '@/components/x-ui/input';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/x-ui/alert-dialog';
 import { 
   PenTool, 
   FileText, 

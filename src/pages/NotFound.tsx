@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent } from '@/components/x-ui/card';
 import { Home, ArrowLeft, Search, BookOpen } from 'lucide-react';
 
 export function NotFound() {

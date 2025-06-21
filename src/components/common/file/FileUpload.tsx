@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Alert, AlertDescription } from '@/components/x-ui/alert';
+import { Progress } from '@/components/x-ui/progress';
 import { fileService } from '@/services';
 import { FileInfo } from '@/services/api/FileApiService';
 

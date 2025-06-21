@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Textarea } from '@/components/x-ui/textarea';
+import { Label } from '@/components/x-ui/label';
 import { Upload, ScanText, Copy, Trash2, Image as ImageIcon, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';

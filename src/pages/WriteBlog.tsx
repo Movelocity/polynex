@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TextareaAutosize from 'react-textarea-autosize';
-import { MarkdownPreview } from '@/components/ui/markdown-preview';
+import { MarkdownPreview } from '@/components/common/markdown-preview';
 import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/x-ui/button';
+import { Input } from '@/components/x-ui/input';
+import { Label } from '@/components/x-ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
+import { Badge } from '@/components/x-ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
+import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { 
   Save, 
   Eye, 

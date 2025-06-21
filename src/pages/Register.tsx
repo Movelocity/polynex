@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/x-ui/button';
+import { Input } from '@/components/x-ui/input';
+import { Label } from '@/components/x-ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { Loader2, Mail, Lock, User, BookOpen } from 'lucide-react';
 
 export function Register() {

@@ -1,9 +1,7 @@
-import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Layout } from '@/components/Layout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { initializeSampleData } from '@/utils/sampleData';
 
 // Pages
 import { Home } from '@/pages/Home';
@@ -24,10 +22,6 @@ import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
 
 function App() {
-  useEffect(() => {
-    // 初始化示例数据
-    initializeSampleData();
-  }, []);
 
   return (
     <AuthProvider>

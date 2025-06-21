@@ -1,23 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { BlogCard } from '@/components/ui/BlogCard';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent } from '@/components/x-ui/card';
+import { BlogCard } from '@/components/common/blog/BlogCard';
+import { Input } from '@/components/x-ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
 import { 
   Search,
   Filter,
   BookOpen,
-  Calendar,
-  Eye,
-  Tag,
-  TrendingUp,
-  PenTool,
-  FileText
 } from 'lucide-react';
 
 export function ArticleList() {

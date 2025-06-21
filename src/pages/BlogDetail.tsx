@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogService } from '@/services';
 import { Blog } from '@/types';
-import { MarkdownPreview } from '@/components/ui/markdown-preview';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { MarkdownPreview } from '@/components/common/markdown-preview';
+import { Button } from '@/components/x-ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Badge } from '@/components/x-ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/x-ui/avatar';
+import { Separator } from '@/components/x-ui/separator';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -18,7 +18,7 @@ import {
   BookOpen,
   Share2
 } from 'lucide-react';
-import { UserAvatar } from '@/components/ui/UserAvatar';
+import { UserAvatar } from '@/components/common/user/UserAvatar';
 // Note: Highlight.js styles are included via CDN in index.html for better compatibility
 
 // Temporary formatDate function until we move it to a proper utils file
