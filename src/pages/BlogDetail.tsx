@@ -11,7 +11,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MarkdownPreview } from '@/components/ui/markdown-preview';
 import { Separator } from '@/components/ui/separator';
 import { 
   Calendar, 
@@ -116,211 +117,149 @@ export function BlogDetail() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-      {/* Navigation */}
-      <div className="">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          返回
-        </Button>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-8">
       {/* Article Header */}
-      <Card className="mb-8 border-0 bg-white/80 backdrop-blur-sm">
-        <CardHeader className="pb-6">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-              {blog.category}
-            </Badge>
-            <div className="flex items-center text-slate-500 text-sm">
-              <Eye className="w-4 h-4 mr-1" />
-              {blog.views} 次阅读
-            </div>
+      <div className="my-6 border-0">
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span 
+            onClick={() => navigate(-1)}
+            className="cursor-pointer flex items-center hover:text-blue-600 mr-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            返回
+          </span>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+            {blog.category}
+          </Badge>
+          <div className="flex items-center text-slate-500 text-sm">
+            <Eye className="w-4 h-4 mr-1" />
+            {blog.views} 次阅读
           </div>
-          
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4 leading-tight">
-            {blog.title}
-          </h1>
-          
-          <p className="text-lg text-slate-600 mb-6">
-            {blog.summary}
-          </p>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white">
-                  {blog.authorName[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium text-slate-800">{blog.authorName}</p>
-                <div className="flex items-center text-sm text-slate-500">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {formatDate(blog.createTime)}
-                  {blog.updateTime !== blog.createTime && (
-                    <>
-                      <span className="mx-2">·</span>
-                      <Clock className="w-4 h-4 mr-1" />
-                      更新于 {formatDate(blog.updateTime)}
-                    </>
-                  )}
-                </div>
+        </div>
+        
+        <h1 className="mx-4 text-3xl md:text-4xl font-bold text-slate-800 mb-4 leading-tight">
+          {blog.title}
+        </h1>
+        
+        <p className="mx-4 text-lg text-slate-600 mb-6">
+          {blog.summary}
+        </p>
+        
+        <div className="mx-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            {/* <Avatar className="w-12 h-12">
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+                {blog.authorName[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar> */}
+            <div>
+              {/* <p className="font-medium text-slate-800">{blog.authorName}</p> */}
+              <div className="flex items-center text-sm text-slate-500">
+                <Calendar className="w-4 h-4 mr-1" />
+                {formatDate(blog.createTime)}
+                {blog.updateTime !== blog.createTime && (
+                  <>
+                    <span className="mx-2">·</span>
+                    <Clock className="w-4 h-4 mr-1" />
+                    更新于 {formatDate(blog.updateTime)}
+                  </>
+                )}
               </div>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={handleShare}>
-                <Share className="w-4 h-4 mr-2" />
-                分享
-              </Button>
-              {user && user.id === blog.authorId && (
-                <Button 
-                  size="sm" 
-                  onClick={() => navigate(`/edit/${blog.id}`)}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  编辑
-                </Button>
-              )}
-            </div>
           </div>
           
-          {blog.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {blog.tags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  <Tag className="w-3 h-3 mr-1" />
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardHeader>
-      </Card>
-
-      {/* Article Content */}
-      <Card className="mb-8 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-        <CardContent className="pt-8">
-          <div className="prose prose-slate max-w-none">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight, rehypeRaw]}
-              components={{
-                h1: ({ children }) => (
-                  <h1 className="text-3xl font-bold text-slate-800 mb-6 mt-8 first:mt-0 border-b border-slate-200 pb-2">
-                    {children}
-                  </h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-2xl font-bold text-slate-800 mb-4 mt-8 first:mt-0">
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-xl font-bold text-slate-800 mb-3 mt-6">
-                    {children}
-                  </h3>
-                ),
-                p: ({ children }) => (
-                  <p className="text-slate-700 mb-4 leading-relaxed">
-                    {children}
-                  </p>
-                ),
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-blue-300 pl-4 py-2 my-6 bg-blue-50 italic text-slate-700">
-                    {children}
-                  </blockquote>
-                ),
-                code: ({ children, ...props }) => {
-                  const inline = !props.className?.includes('language-');
-                  return inline ? (
-                    <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded text-sm">
-                      {children}
-                    </code>
-                  ) : (
-                    <code className="block bg-slate-50 p-4 rounded-lg overflow-x-auto text-sm">
-                      {children}
-                    </code>
-                  );
-                },
-                ul: ({ children }) => (
-                  <ul className="list-disc list-inside mb-4 space-y-2 text-slate-700">
-                    {children}
-                  </ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal list-inside mb-4 space-y-2 text-slate-700">
-                    {children}
-                  </ol>
-                ),
-                a: ({ href, children }) => (
-                  <a 
-                    href={href} 
-                    className="text-blue-600 hover:text-blue-800 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {children}
-                  </a>
-                ),
-              }}
-            >
-              {blog.content}
-            </ReactMarkdown>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={handleShare}>
+              <Share className="w-4 h-4 mr-2" />
+              分享
+            </Button>
+            {user && user.id === blog.authorId && (
+              <Button 
+                size="sm" 
+                onClick={() => navigate(`/edit/${blog.id}`)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                编辑
+              </Button>
+            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Related Articles */}
-      {relatedBlogs.length > 0 && (
-        <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-          <CardHeader>
-            <h3 className="text-xl font-bold text-slate-800">相关文章</h3>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {relatedBlogs.map((relatedBlog) => (
-                <div key={relatedBlog.id}>
-                  <Link 
-                    to={`/blog/${relatedBlog.id}`}
-                    className="group block"
-                  >
-                    <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors mb-2">
-                          {relatedBlog.title}
-                        </h4>
-                        <p className="text-sm text-slate-600 line-clamp-2 mb-2">
-                          {relatedBlog.summary}
-                        </p>
-                        <div className="flex items-center text-xs text-slate-500">
-                          <User className="w-3 h-3 mr-1" />
-                          {relatedBlog.authorName}
-                          <span className="mx-2">·</span>
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {formatDate(relatedBlog.createTime)}
-                          <span className="mx-2">·</span>
-                          <Eye className="w-3 h-3 mr-1" />
-                          {relatedBlog.views}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                  {relatedBlogs.indexOf(relatedBlog) < relatedBlogs.length - 1 && (
-                    <Separator className="my-2" />
-                  )}
-                </div>
-              ))}
-            </div>
+        </div>
+        
+        {blog.tags.length > 0 && (
+          <div className="mx-4 flex flex-wrap gap-2 mt-4">
+            {blog.tags.map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                <Tag className="w-3 h-3 mr-1" />
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+        
+      </div>
+      
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* Article Content */}
+        <Card className="col-span-1 xl:col-span-3 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+          <CardContent className="pt-8">
+            <MarkdownPreview content={blog.content} />
           </CardContent>
         </Card>
-      )}
+        
+        <div className="xl:col-span-1">
+          {/* TOC */}
+          <div></div>
+
+          {/* Related Articles */}
+          {relatedBlogs.length > 0 && (
+            <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+              <CardHeader>
+                <h3 className="text-xl font-bold text-slate-800">相关文章</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="">
+                  {relatedBlogs.map((relatedBlog) => (
+                    <div key={relatedBlog.id}>
+                      <Link 
+                        to={`/blog/${relatedBlog.id}`}
+                        className="group block"
+                      >
+                        <div className="flex items-start space-x-4 p-2 rounded-lg">
+                          <div className="flex-1 gap-1">
+                            <h4 className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors">
+                              {relatedBlog.title}
+                            </h4>
+                            {/* <p className="text-sm text-slate-600 line-clamp-2 mb-2">
+                              {relatedBlog.summary}
+                            </p> */}
+                            <div className="flex flex-col text-xs text-slate-500">
+                              <span className="flex items-center">
+                                <User className="w-3 h-3 mr-1" />
+                                {relatedBlog.authorName}
+                              </span>
+                              <span className="flex items-center">
+                                <Calendar className="w-3 h-3 mr-1" />
+                                {formatDate(relatedBlog.createTime)}
+                                <span className="mx-2">·</span>
+                                <Eye className="w-3 h-3 mr-1" />
+                                {relatedBlog.views}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                      {relatedBlogs.indexOf(relatedBlog) < relatedBlogs.length - 1 && (
+                        <Separator className="bg-slate-200" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

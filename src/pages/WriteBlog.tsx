@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TextareaAutosize from 'react-textarea-autosize';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
+import { MarkdownPreview } from '@/components/ui/markdown-preview';
 import { BlogStorage, CategoryStorage, generateId, generateSummary } from '@/utils/storage';
 import { Blog, Category } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,13 +16,36 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Save, 
   Eye, 
-  ArrowLeft, 
   Send, 
   X,
   Tag,
   FileText,
   Loader2
 } from 'lucide-react';
+
+function MarkdownGuide() {
+  return (
+    <Card className="hidden lg:block bg-blue-50 border-blue-200">
+      <CardHeader>
+        <CardTitle className="text-lg text-blue-800">Markdown 快速指南</CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm text-blue-700 space-y-2">
+        <div><code># 标题</code> - 一级标题</div>
+        <div><code>## 标题</code> - 二级标题</div>
+        <div><code>**粗体**</code> - 粗体文字</div>
+        <div><code>*斜体*</code> - 斜体文字</div>
+        <div><code>`代码`</code> - 行内代码</div>
+        <div><code>[链接](url)</code> - 链接</div>
+        <div><code>![图片](url)</code> - 图片</div>
+        <div><code>- 列表</code> - 无序列表</div>
+        <div><code>1. 列表</code> - 有序列表</div>
+        <div><code>&gt; 引用</code> - 引用块</div>
+      </CardContent>
+    </Card>
+  )
+}
+
+
 
 export function WriteBlog() {
   const { id } = useParams<{ id: string }>();
@@ -221,63 +241,13 @@ export function WriteBlog() {
 
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回
-          </Button>
-          <h1 className="text-2xl font-bold text-slate-800">
-            {isEdit ? '编辑文章' : '写新文章'}
-          </h1>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={() => handleSave('draft')}
-            disabled={saveLoading || loading}
-          >
-            {saveLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                保存中...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                保存草稿
-              </>
-            )}
-          </Button>
-          <Button 
-            onClick={() => handleSave('published')}
-            disabled={loading || saveLoading}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                发布中...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4 mr-2" />
-                发布文章
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <div className="space-y-6">
@@ -351,29 +321,12 @@ export function WriteBlog() {
                 </div>
               </CardContent>
             </Card>
+            
 
-            {/* Markdown Guide */}
-            <Card className="hidden lg:block bg-blue-50 border-blue-200">
-              <CardHeader>
-                <CardTitle className="text-lg text-blue-800">Markdown 快速指南</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-blue-700 space-y-2">
-                <div><code># 标题</code> - 一级标题</div>
-                <div><code>## 标题</code> - 二级标题</div>
-                <div><code>**粗体**</code> - 粗体文字</div>
-                <div><code>*斜体*</code> - 斜体文字</div>
-                <div><code>`代码`</code> - 行内代码</div>
-                <div><code>[链接](url)</code> - 链接</div>
-                <div><code>![图片](url)</code> - 图片</div>
-                <div><code>- 列表</code> - 无序列表</div>
-                <div><code>1. 列表</code> - 有序列表</div>
-                <div><code>&gt; 引用</code> - 引用块</div>
-              </CardContent>
-            </Card>
           </div>
         </div>
         {/* Editor */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 xl:col-span-3">
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
             <CardHeader>
               <input
@@ -386,7 +339,7 @@ export function WriteBlog() {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-
+                <div className="flex justify-between">
                 <TabsList>
                   <TabsTrigger value="write" className="flex items-center">
                     <FileText className="w-4 h-4 mr-2" />
@@ -397,8 +350,44 @@ export function WriteBlog() {
                     预览
                   </TabsTrigger>
                 </TabsList>
-                
-                <TabsContent value="write" className="">
+                <div className="flex gap-2 ml-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleSave('draft')}
+                    disabled={saveLoading || loading}
+                  >
+                    {saveLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        保存中...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        保存草稿
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={() => handleSave('published')}
+                    disabled={loading || saveLoading}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        发布中...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        发布文章
+                      </>
+                    )}
+                  </Button>
+                </div>
+                </div>
+                <TabsContent value="write" className="min-h-[600px]">
                   <div>
                     <TextareaAutosize
                       id="content"
@@ -414,85 +403,16 @@ export function WriteBlog() {
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="preview" className="mt-4">
-                  <Card className="border border-slate-200 bg-slate-50">
-                    <CardHeader>
-                      <CardTitle className="text-2xl">{formData.title || '文章标题'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="prose prose-slate max-w-none">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[rehypeHighlight, rehypeRaw]}
-                          components={{
-                            h1: ({ children }) => (
-                              <h1 className="text-3xl font-bold text-slate-800 mb-6 mt-8 first:mt-0 border-b border-slate-200 pb-2">
-                                {children}
-                              </h1>
-                            ),
-                            h2: ({ children }) => (
-                              <h2 className="text-2xl font-bold text-slate-800 mb-4 mt-8 first:mt-0">
-                                {children}
-                              </h2>
-                            ),
-                            h3: ({ children }) => (
-                              <h3 className="text-xl font-bold text-slate-800 mb-3 mt-6">
-                                {children}
-                              </h3>
-                            ),
-                            p: ({ children }) => (
-                              <p className="text-slate-700 mb-4 leading-relaxed">
-                                {children}
-                              </p>
-                            ),
-                            blockquote: ({ children }) => (
-                              <blockquote className="border-l-4 border-blue-300 pl-4 py-2 my-6 bg-blue-50 italic text-slate-700">
-                                {children}
-                              </blockquote>
-                            ),
-                            code: ({ children, ...props }) => {
-                              const inline = !props.className?.includes('language-');
-                              return inline ? (
-                                <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded text-sm">
-                                  {children}
-                                </code>
-                              ) : (
-                                <code className="block bg-slate-50 p-4 rounded-lg overflow-x-auto text-sm">
-                                  {children}
-                                </code>
-                              );
-                            },
-                            ul: ({ children }) => (
-                              <ul className="list-disc list-inside mb-4 space-y-2 text-slate-700">
-                                {children}
-                              </ul>
-                            ),
-                            ol: ({ children }) => (
-                              <ol className="list-decimal list-inside mb-4 space-y-2 text-slate-700">
-                                {children}
-                              </ol>
-                            ),
-                            a: ({ href, children }) => (
-                              <a 
-                                href={href} 
-                                className="text-blue-600 hover:text-blue-800 underline"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {children}
-                              </a>
-                            ),
-                          }}
-                        >
-                          {formData.content || '文章内容将在这里显示...'}
-                        </ReactMarkdown>
-                      </div>
-                    </CardContent>
-                  </Card>
+                <TabsContent value="preview" className="mt-4 p-4 min-h-[600px]">
+                  <MarkdownPreview content={formData.content} />
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
+        </div>
+        <div className="hidden xl:block xl:col-span-1">
+          {/* Markdown Guide */}
+          <MarkdownGuide />
         </div>
 
         
