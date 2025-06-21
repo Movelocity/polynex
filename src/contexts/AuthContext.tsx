@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, AuthState } from '@/types';
-import { UserStorage, generateId } from '@/utils/storage';
+import { ClientUser, AuthState } from '@/types';
+import { userService } from '@/services';
+import { apiClient } from '@/services/api/ApiClient';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
-  updateUser: (updates: Partial<User>) => Promise<boolean>;
-  updatePassword: (currentPassword: string, newPassword: string) => boolean;
+  updateUser: (updates: Partial<ClientUser>) => Promise<boolean>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,43 +31,70 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: false,
     user: null,
   });
+  const [loading, setLoading] = useState(true);
 
-  // 初始化时检查本地存储的登录状态
+  // 设置API客户端的未授权回调
   useEffect(() => {
-    const currentUser = UserStorage.getCurrentUser();
-    if (currentUser) {
-      setAuthState({
-        isAuthenticated: true,
-        user: currentUser,
-      });
-    }
+    apiClient.setUnauthorizedCallback(() => {
+      // token过期或无效，强制登出
+      handleLogout();
+    });
   }, []);
+
+  // 初始化时检查本地存储的登录状态和token有效性
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  const initializeAuth = async () => {
+    setLoading(true);
+    try {
+      // 检查localStorage中的用户信息
+      const currentUser = userService.getCurrentUser();
+      const token = apiClient.getToken();
+
+      if (currentUser && token) {
+        // 验证token是否仍然有效
+        const validation = await userService.validateToken();
+        if (validation.valid && validation.user) {
+          setAuthState({
+            isAuthenticated: true,
+            user: validation.user,
+          });
+        } else {
+          // token无效，清除本地数据
+          handleLogout();
+        }
+      } else {
+        // 没有本地认证信息
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+        });
+      }
+    } catch (error) {
+      console.error('初始化认证状态失败:', error);
+      // 初始化失败，清除本地数据
+      handleLogout();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 登录函数
   const login = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const user = UserStorage.findUserByEmail(email);
-      
-      if (!user) {
-        return { success: false, message: '用户不存在' };
+      const response = await userService.login(email, password);
+
+      if (response.success && response.user) {
+        setAuthState({
+          isAuthenticated: true,
+          user: response.user,
+        });
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
       }
-
-      if (user.password !== password) {
-        return { success: false, message: '密码错误' };
-      }
-
-      // 登录成功
-      const authUser = { ...user };
-      delete (authUser as any).password; // 移除密码字段
-
-      setAuthState({
-        isAuthenticated: true,
-        user: authUser as User,
-      });
-
-      UserStorage.setCurrentUser(authUser as User);
-      
-      return { success: true, message: '登录成功' };
     } catch (error) {
       console.error('登录失败:', error);
       return { success: false, message: '登录失败，请稍后重试' };
@@ -75,40 +104,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // 注册函数
   const register = async (username: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
     try {
-      // 检查用户名是否已存在
-      if (UserStorage.findUserByUsername(username)) {
-        return { success: false, message: '用户名已存在' };
+      const response = await userService.register(username, email, password);
+
+      if (response.success && response.user) {
+        setAuthState({
+          isAuthenticated: true,
+          user: response.user,
+        });
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
       }
-
-      // 检查邮箱是否已存在
-      if (UserStorage.findUserByEmail(email)) {
-        return { success: false, message: '邮箱已被注册' };
-      }
-
-      // 创建新用户
-      const newUser: User = {
-        id: generateId(),
-        username,
-        email,
-        password,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-        registerTime: new Date().toISOString(),
-      };
-
-      UserStorage.addUser(newUser);
-
-      // 自动登录
-      const authUser = { ...newUser };
-      delete (authUser as any).password;
-
-      setAuthState({
-        isAuthenticated: true,
-        user: authUser as User,
-      });
-
-      UserStorage.setCurrentUser(authUser as User);
-
-      return { success: true, message: '注册成功' };
     } catch (error) {
       console.error('注册失败:', error);
       return { success: false, message: '注册失败，请稍后重试' };
@@ -117,26 +123,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // 登出函数
   const logout = () => {
-    setAuthState({
-      isAuthenticated: false,
-      user: null,
-    });
-    UserStorage.setCurrentUser(null);
+    handleLogout();
+  };
+
+  // 内部登出处理函数
+  const handleLogout = async () => {
+    try {
+      await userService.logout();
+    } catch (error) {
+      console.error('登出API调用失败:', error);
+      // 即使API调用失败，也要清除本地状态
+    } finally {
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+      });
+    }
   };
 
   // 更新用户信息
-  const updateUser = async (updates: Partial<User>): Promise<boolean> => {
+  const updateUser = async (updates: Partial<ClientUser>): Promise<boolean> => {
     if (!authState.user) return false;
 
     try {
-      const success = UserStorage.updateUser(authState.user.id, updates);
+      const success = await userService.updateUser(authState.user.id, updates);
       if (success) {
         const updatedUser = { ...authState.user, ...updates };
         setAuthState({
           isAuthenticated: true,
           user: updatedUser,
         });
-        UserStorage.setCurrentUser(updatedUser);
       }
       return success;
     } catch (error) {
@@ -146,23 +162,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // 更新密码
-  const updatePassword = (currentPassword: string, newPassword: string): boolean => {
-    if (!authState.user) return false;
+  const updatePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+    if (!authState.user) {
+      return { success: false, message: '用户未登录' };
+    }
 
     try {
-      // 验证当前密码
-      const users = UserStorage.getUsers();
-      const fullUser = users.find(u => u.id === authState.user!.id);
-      if (!fullUser || fullUser.password !== currentPassword) {
-        return false;
-      }
-
-      // 更新密码
-      const success = UserStorage.updateUser(authState.user.id, { password: newPassword });
-      return success;
+      const result = await userService.updatePassword(currentPassword, newPassword);
+      return result;
     } catch (error) {
       console.error('更新密码失败:', error);
-      return false;
+      return { success: false, message: '更新密码失败，请稍后重试' };
     }
   };
 
@@ -173,6 +183,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     updateUser,
     updatePassword,
+    loading,
   };
 
   return (

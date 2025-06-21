@@ -3,32 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { 
-  userService, 
-  blogService, 
-  categoryService, 
-  getServiceFactory,
-  StorageType 
-} from '@/services';
+import { userService, blogService, categoryService, fileService, apiClient } from '@/services';
 import { User, Blog, Category } from '@/types';
+import { FileUpload } from '@/components/FileUpload';
+import { FileInfo } from '@/services/api/FileApiService';
 
 /**
- * 服务层演示组件
- * 展示如何使用新的服务架构和存储切换功能
+ * API服务演示组件
+ * 展示如何使用API服务进行数据操作
  */
 export const ServiceDemo: React.FC = () => {
-  const [currentStorageType, setCurrentStorageType] = useState<StorageType>('localStorage');
   const [users, setUsers] = useState<User[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // 获取当前存储类型
-  useEffect(() => {
-    const factory = getServiceFactory();
-    setCurrentStorageType(factory.getStorageType());
-  }, []);
 
   // 加载数据
   const loadData = async () => {
@@ -43,6 +33,15 @@ export const ServiceDemo: React.FC = () => {
         categoryService.getCategories()
       ]);
       
+      // 尝试加载文件列表（需要认证）
+      try {
+        const filesData = await fileService.getUserFiles();
+        setFiles(filesData);
+      } catch (fileError) {
+        console.log('无法加载文件列表，可能未登录');
+        setFiles([]);
+      }
+      
       setUsers(usersData);
       setBlogs(blogsData);
       setCategories(categoriesData);
@@ -51,16 +50,6 @@ export const ServiceDemo: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // 切换存储类型
-  const switchStorageType = (newType: StorageType) => {
-    const factory = getServiceFactory();
-    factory.switchStorageType(newType);
-    setCurrentStorageType(newType);
-    setError(null);
-    // 重新加载数据
-    loadData();
   };
 
   // 测试添加博客
@@ -110,6 +99,63 @@ export const ServiceDemo: React.FC = () => {
     }
   };
 
+  // 测试用户登录
+  const testLogin = async () => {
+    try {
+      setLoading(true);
+      const result = await userService.login('demo1@example.com', 'demo123');
+      if (result.success) {
+        console.log('登录成功:', result.user);
+        setError(null);
+        // 重新加载数据以更新用户信息
+        await loadData();
+      } else {
+        setError(result.message || '登录失败');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 测试头像上传
+  const testAvatarUpload = async () => {
+    // 创建一个文件输入元素
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = async (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (!file) return;
+
+      try {
+        setLoading(true);
+        const result = await userService.uploadAvatar(file);
+        if (result.success) {
+          console.log('头像上传成功:', result.user);
+          setError(null);
+          // 重新加载数据以更新用户信息
+          await loadData();
+        } else {
+          setError(result.message || '头像上传失败');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '头像上传失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fileInput.click();
+  };
+
+  // 文件上传完成回调
+  const handleFileUploadComplete = (fileInfo: FileInfo) => {
+    setFiles(prev => [fileInfo, ...prev]);
+    setError(null);
+  };
+
   // 初始加载数据
   useEffect(() => {
     loadData();
@@ -120,33 +166,15 @@ export const ServiceDemo: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            服务层演示
-            <Badge variant={currentStorageType === 'localStorage' ? 'default' : 'secondary'}>
-              当前存储: {currentStorageType}
+            API服务演示
+            <Badge variant="default">
+              API模式
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 存储类型切换 */}
-          <div className="flex gap-2">
-            <Button
-              variant={currentStorageType === 'localStorage' ? 'default' : 'outline'}
-              onClick={() => switchStorageType('localStorage')}
-              disabled={loading}
-            >
-              切换到 localStorage
-            </Button>
-            <Button
-              variant={currentStorageType === 'api' ? 'default' : 'outline'}
-              onClick={() => switchStorageType('api')}
-              disabled={loading}
-            >
-              切换到 API
-            </Button>
-          </div>
-
           {/* 操作按钮 */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button onClick={loadData} disabled={loading}>
               重新加载数据
             </Button>
@@ -156,11 +184,17 @@ export const ServiceDemo: React.FC = () => {
             <Button onClick={testSearch} disabled={loading}>
               测试搜索功能
             </Button>
+            <Button onClick={testLogin} disabled={loading}>
+              测试用户登录
+            </Button>
+            <Button onClick={testAvatarUpload} disabled={loading}>
+              测试头像上传
+            </Button>
           </div>
 
           {/* 错误信息 */}
           {error && (
-            <Alert>
+            <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -170,8 +204,21 @@ export const ServiceDemo: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* 文件上传演示 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>文件上传演示</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FileUpload 
+            onUploadComplete={handleFileUploadComplete}
+            showPreview={false}
+          />
+        </CardContent>
+      </Card>
+
       {/* 数据展示 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* 用户数据 */}
         <Card>
           <CardHeader>
@@ -181,8 +228,23 @@ export const ServiceDemo: React.FC = () => {
             <div className="space-y-2">
               {users.slice(0, 3).map(user => (
                 <div key={user.id} className="p-2 bg-gray-50 rounded">
-                  <div className="font-medium">{user.username}</div>
-                  <div className="text-sm text-gray-600">{user.email}</div>
+                  <div className="flex items-center space-x-2">
+                    {user.avatar && (
+                      <img 
+                        src={fileService.resolveFileUrl(user.avatar)} 
+                        alt={user.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          // 如果头像加载失败，隐藏图片
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <div>
+                      <div className="font-medium">{user.username}</div>
+                      <div className="text-sm text-gray-600">{user.email}</div>
+                    </div>
+                  </div>
                 </div>
               ))}
               {users.length > 3 && (
@@ -236,6 +298,41 @@ export const ServiceDemo: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* 文件数据 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>文件数据 ({files.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {files.slice(0, 3).map(file => {
+                const typeInfo = fileService.getFileTypeInfo(file.original_name || '');
+                return (
+                  <div key={file.unique_id} className="p-2 bg-gray-50 rounded">
+                    <div className="font-medium text-sm flex items-center gap-2">
+                      <span>{typeInfo.icon}</span>
+                      {file.original_name || `${file.unique_id}${file.extension}`}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {fileService.formatFileSize(file.size)}
+                    </div>
+                  </div>
+                );
+              })}
+              {files.length > 3 && (
+                <div className="text-sm text-gray-500">
+                  还有 {files.length - 3} 个文件...
+                </div>
+              )}
+              {files.length === 0 && (
+                <div className="text-sm text-gray-500">
+                  暂无文件，请先上传
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 使用说明 */}
@@ -246,19 +343,28 @@ export const ServiceDemo: React.FC = () => {
         <CardContent>
           <div className="space-y-2 text-sm">
             <p>
-              <strong>localStorage 模式:</strong> 数据存储在浏览器本地，适合开发和演示
-            </p>
-            <p>
-              <strong>API 模式:</strong> 数据通过HTTP API获取，需要后端服务支持
-            </p>
-            <p>
-              <strong>切换方式:</strong> 可以通过环境变量 VITE_STORAGE_TYPE 或动态切换按钮
+              <strong>API配置:</strong> 在环境变量中设置 VITE_API_BASE_URL
             </p>
             <p>
               <strong>代码使用:</strong> 
               <code className="ml-2 px-2 py-1 bg-gray-100 rounded">
-                import {`{ userService }`} from '@/services';
+                import {`{ userService, blogService, categoryService, fileService }`} from '@/services';
               </code>
+            </p>
+            <p>
+              <strong>认证:</strong> 使用 JWT Token 进行API认证
+            </p>
+            <p>
+              <strong>错误处理:</strong> 所有API调用都包含完整的错误处理
+            </p>
+            <p>
+              <strong>文件上传:</strong> 支持拖拽上传，自动生成唯一URL，支持图片预览
+            </p>
+            <p>
+              <strong>文件格式:</strong> 支持图片(jpg/png/gif等)、文档(pdf/doc/txt等)，最大50MB
+            </p>
+            <p>
+              <strong>头像上传:</strong> 专门的头像上传接口，自动更新用户信息，限制5MB
             </p>
           </div>
         </CardContent>

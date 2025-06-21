@@ -1,15 +1,23 @@
-import { useState, useEffect } from 'react';
-import { BlogStorage, CategoryStorage } from '@/utils/storage';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { BlogCard } from '@/components/ui/BlogCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Search,
   Filter,
-  BookOpen
+  BookOpen,
+  Calendar,
+  Eye,
+  Tag,
+  TrendingUp,
+  PenTool,
+  FileText
 } from 'lucide-react';
 
 export function ArticleList() {
@@ -17,11 +25,12 @@ export function ArticleList() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'popular'>('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const blogsPerPage = 10;
+  const blogsPerPage = 12;
 
   useEffect(() => {
     loadData();
@@ -29,14 +38,18 @@ export function ArticleList() {
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const allBlogs = BlogStorage.getPublishedBlogs();
-      setBlogs(allBlogs);
-
-      const allCategories = CategoryStorage.getCategories();
-      setCategories(allCategories);
-    } catch (error) {
-      console.error('加载数据失败:', error);
+      const [blogsData, categoriesData] = await Promise.all([
+        blogService.getPublishedBlogs(),
+        categoryService.getCategories()
+      ]);
+      
+      setBlogs(blogsData);
+      setCategories(categoriesData);
+    } catch (err) {
+      console.error('加载数据失败:', err);
+      setError('加载数据失败，请刷新页面重试');
     } finally {
       setLoading(false);
     }
@@ -52,10 +65,15 @@ export function ArticleList() {
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      if (sortBy === 'latest') {
-        return new Date(b.createTime).getTime() - new Date(a.createTime).getTime();
-      } else {
-        return b.views - a.views;
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createTime).getTime() - new Date(a.createTime).getTime();
+        case 'oldest':
+          return new Date(a.createTime).getTime() - new Date(b.createTime).getTime();
+        case 'popular':
+          return b.views - a.views;
+        default:
+          return 0;
       }
     });
 
@@ -69,6 +87,16 @@ export function ArticleList() {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, sortBy]);
 
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (sort: 'newest' | 'oldest' | 'popular') => {
+    setSortBy(sort);
+    setCurrentPage(1);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -77,6 +105,22 @@ export function ArticleList() {
             <BookOpen className="w-8 h-8 text-white" />
           </div>
           <p className="text-slate-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <BookOpen className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={loadData} variant="outline">
+            重新加载
+          </Button>
         </div>
       </div>
     );
@@ -111,7 +155,7 @@ export function ArticleList() {
 
             {/* Category Filter */}
             <div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedCategory} onValueChange={handleCategoryChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="所有分类" />
                 </SelectTrigger>
@@ -128,12 +172,13 @@ export function ArticleList() {
 
             {/* Sort */}
             <div>
-              <Select value={sortBy} onValueChange={(value: 'latest' | 'popular') => setSortBy(value)}>
+              <Select value={sortBy} onValueChange={handleSortChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="latest">最新发布</SelectItem>
+                  <SelectItem value="newest">最新发布</SelectItem>
+                  <SelectItem value="oldest">最早发布</SelectItem>
                   <SelectItem value="popular">最多阅读</SelectItem>
                 </SelectContent>
               </Select>

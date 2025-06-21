@@ -90,6 +90,16 @@ class DataFrameDatabase:
                 'registerTime': '2024-01-01T00:00:00.000Z'
             }
             
+            # 添加一个与前端测试匹配的用户
+            demo1_user = {
+                'id': 'demo1-user-1',
+                'username': '测试用户',
+                'email': 'demo1@example.com',
+                'password': 'demo123',
+                'avatar': None,  # 没有头像，可以测试上传
+                'registerTime': '2024-01-01T00:00:00.000Z'
+            }
+            
             tech_user = {
                 'id': 'tech-user-1',
                 'username': '技术小白',
@@ -101,7 +111,7 @@ class DataFrameDatabase:
             
             self.users_df = pd.concat([
                 self.users_df,
-                pd.DataFrame([demo_user, tech_user])
+                pd.DataFrame([demo_user, demo1_user, tech_user])
             ], ignore_index=True)
             self._save_users()
         

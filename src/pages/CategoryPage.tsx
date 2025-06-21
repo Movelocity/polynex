@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { BlogStorage, CategoryStorage } from '@/utils/storage';
+import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
-import { formatDate } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,41 +17,47 @@ import {
   FileX
 } from 'lucide-react';
 
+// Temporary formatDate function until we move it to a proper utils file
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 export function CategoryPage() {
   const { category } = useParams<{ category: string }>();
   const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [categoryInfo, setCategoryInfo] = useState<Category | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [categoryData, setCategoryData] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
-  const blogsPerPage = 8;
+  const blogsPerPage = 9;
 
   useEffect(() => {
     if (category) {
-      loadCategoryData();
+      loadCategoryData(category);
     }
   }, [category]);
 
-  const loadCategoryData = async () => {
-    if (!category) return;
-    
+  const loadCategoryData = async (categoryName: string) => {
     setLoading(true);
+    setError(null);
     try {
-      // 获取分类信息
-      const categoryData = CategoryStorage.getCategoryByName(category);
-      setCategoryInfo(categoryData || null);
-      
-      // 获取该分类下的博客
-      const categoryBlogs = BlogStorage.getBlogsByCategory(category);
+      // Load category info
+      const categoryInfo = await categoryService.getCategoryByName(categoryName);
+      setCategoryData(categoryInfo);
+
+      // Load blogs for this category
+      const categoryBlogs = await blogService.getBlogsByCategory(categoryName);
       setBlogs(categoryBlogs);
-      
-      if (!categoryData) {
-        // 如果分类不存在，跳转到404
-        navigate('/404');
-      }
-    } catch (error) {
-      console.error('加载分类数据失败:', error);
+    } catch (err) {
+      console.error('加载分类数据失败:', err);
+      setError('加载分类数据失败，请刷新页面重试');
     } finally {
       setLoading(false);
     }
@@ -67,14 +72,32 @@ export function CategoryPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto animate-pulse">
+            <BookOpen className="w-8 h-8 text-white" />
+          </div>
           <p className="text-slate-600">加载中...</p>
         </div>
       </div>
     );
   }
 
-  if (!categoryInfo) {
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <BookOpen className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => category && loadCategoryData(category)} variant="outline">
+            重新加载
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!categoryData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -109,10 +132,10 @@ export function CategoryPage() {
           <Tag className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-          {categoryInfo.name}
+          {categoryData.name}
         </h1>
         <p className="text-xl text-slate-600 mb-6 max-w-2xl mx-auto">
-          {categoryInfo.description}
+          {categoryData.description}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <div className="flex items-center space-x-4 text-slate-600">
@@ -126,7 +149,7 @@ export function CategoryPage() {
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             <PenTool className="w-4 h-4 mr-2" />
-            写{categoryInfo.name}文章
+            写{categoryData.name}文章
           </Button>
         </div>
       </div>
@@ -248,7 +271,7 @@ export function CategoryPage() {
             <FileX className="w-12 h-12 text-slate-400" />
           </div>
           <h3 className="text-xl font-medium text-slate-600 mb-2">
-            暂无 "{categoryInfo.name}" 分类的文章
+            暂无 "{categoryData.name}" 分类的文章
           </h3>
           <p className="text-slate-500 mb-6">
             成为第一个在此分类下分享内容的人吧！
@@ -258,7 +281,7 @@ export function CategoryPage() {
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             <PenTool className="w-4 h-4 mr-2" />
-            写第一篇{categoryInfo.name}文章
+            写第一篇{categoryData.name}文章
           </Button>
         </div>
       )}

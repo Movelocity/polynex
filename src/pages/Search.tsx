@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { BlogStorage } from '@/utils/storage';
+import { blogService } from '@/services';
 import { Blog } from '@/types';
-import { formatDate } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,12 +16,23 @@ import {
   TrendingUp
 } from 'lucide-react';
 
+// Temporary formatDate function until we move it to a proper utils file
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 export function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [searchResults, setSearchResults] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -37,11 +47,14 @@ export function Search() {
     if (!query.trim()) return;
     
     setLoading(true);
+    setError(null);
     try {
-      const results = BlogStorage.searchBlogs(query);
+      const results = await blogService.searchBlogs(query);
       setSearchResults(results);
-    } catch (error) {
-      console.error('搜索失败:', error);
+    } catch (err) {
+      console.error('搜索失败:', err);
+      setError('搜索失败，请重试');
+      setSearchResults([]);
     } finally {
       setLoading(false);
     }

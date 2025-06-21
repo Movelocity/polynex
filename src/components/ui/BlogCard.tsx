@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Blog } from '@/types';
-import { formatDate } from '@/utils/storage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
 import { Avatar, AvatarFallback } from './avatar';
@@ -13,6 +12,16 @@ import {
   Edit, 
   Trash2
 } from 'lucide-react';
+
+// Temporary formatDate function until we move it to a proper utils file
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
 export interface BlogCardProps {
   /** 博客数据 */

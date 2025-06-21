@@ -1,42 +1,43 @@
-// 导出所有接口
+// 导出接口类型
 export * from './interfaces/IUserService';
 export * from './interfaces/IBlogService';
 export * from './interfaces/ICategoryService';
 
-// 导出服务实现
-export * from './localStorage/UserStorageService';
-export * from './localStorage/BlogStorageService';
-export * from './localStorage/CategoryStorageService';
-
+// 导出API实现和客户端
 export * from './api/UserApiService';
 export * from './api/BlogApiService';
 export * from './api/CategoryApiService';
+export * from './api/FileApiService';
 export * from './api/ApiClient';
 
-// 导出服务工厂
-export * from './ServiceFactory';
-
-// 导出便捷访问方法
-import { ServiceFactory } from './ServiceFactory';
-
-const serviceFactory = ServiceFactory.getInstance();
-
-/**
- * 获取用户服务实例
- */
-export const userService = serviceFactory.getUserService();
+// 直接导出API服务实例
+import { UserApiService } from './api/UserApiService';
+import { BlogApiService } from './api/BlogApiService';
+import { CategoryApiService } from './api/CategoryApiService';
+import { FileApiService } from './api/FileApiService';
+import { apiClient } from './api/ApiClient';
 
 /**
- * 获取博客服务实例
+ * 用户服务实例
  */
-export const blogService = serviceFactory.getBlogService();
+export const userService = new UserApiService(apiClient);
 
 /**
- * 获取分类服务实例
+ * 博客服务实例
  */
-export const categoryService = serviceFactory.getCategoryService();
+export const blogService = new BlogApiService(apiClient);
 
 /**
- * 获取服务工厂实例
+ * 分类服务实例
  */
-export const getServiceFactory = () => serviceFactory; 
+export const categoryService = new CategoryApiService(apiClient);
+
+/**
+ * 文件服务实例
+ */
+export const fileService = new FileApiService(apiClient);
+
+/**
+ * API客户端实例
+ */
+export { apiClient }; 

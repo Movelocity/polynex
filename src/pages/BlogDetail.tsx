@@ -1,66 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
-import { BlogStorage } from '@/utils/storage';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { blogService } from '@/services';
 import { Blog } from '@/types';
-import { formatDate } from '@/utils/storage';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MarkdownPreview } from '@/components/ui/markdown-preview';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { 
+  ArrowLeft, 
   Calendar, 
   Eye, 
-  Tag, 
-  ArrowLeft, 
-  Edit, 
-  Share,
-  Clock,
-  User
+  Clock, 
+  User,
+  Tag,
+  BookOpen,
+  Share2
 } from 'lucide-react';
 // Note: Highlight.js styles are included via CDN in index.html for better compatibility
 
+// Temporary formatDate function until we move it to a proper utils file
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 export function BlogDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [blog, setBlog] = useState<Blog | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
-      loadBlog(id);
+      loadBlogAndRelated(id);
     }
   }, [id]);
 
-  const loadBlog = async (blogId: string) => {
+  const loadBlogAndRelated = async (blogId: string) => {
     setLoading(true);
+    setError(null);
     try {
-      const blogData = BlogStorage.getBlogById(blogId);
-      if (blogData) {
-        setBlog(blogData);
-        // 增加阅读量
-        BlogStorage.incrementViews(blogId);
-        
-        // 获取相关文章
-        const allBlogs = BlogStorage.getPublishedBlogs();
-        const related = allBlogs
-          .filter(b => b.id !== blogId && b.category === blogData.category)
-          .slice(0, 3);
-        setRelatedBlogs(related);
-      } else {
-        navigate('/404');
+      // Load blog details
+      const blogData = await blogService.getBlogById(blogId);
+      if (!blogData) {
+        setError('文章不存在');
+        return;
       }
-    } catch (error) {
-      console.error('加载博客失败:', error);
-      navigate('/404');
+      
+      setBlog(blogData);
+      
+      // Increment view count
+      await blogService.incrementViews(blogId);
+      
+      // Load related blogs
+      const allBlogs = await blogService.getPublishedBlogs();
+      const related = allBlogs
+        .filter(b => b.id !== blogId && b.category === blogData.category)
+        .slice(0, 3);
+      setRelatedBlogs(related);
+      
+    } catch (err) {
+      console.error('加载文章失败:', err);
+      setError('加载文章失败，请刷新页面重试');
     } finally {
       setLoading(false);
     }
@@ -74,41 +83,38 @@ export function BlogDetail() {
           text: blog.summary,
           url: window.location.href,
         });
-      } catch (error) {
-        // Fallback to clipboard
-        copyToClipboard();
+      } catch (err) {
+        console.log('分享失败:', err);
       }
     } else {
-      copyToClipboard();
+      // Fallback to copying URL
+      navigator.clipboard.writeText(window.location.href);
+      // You might want to show a toast notification here
     }
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      // 这里可以添加一个toast通知
-      console.log('链接已复制到剪贴板');
-    });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto animate-pulse">
+            <BookOpen className="w-8 h-8 text-white" />
+          </div>
           <p className="text-slate-600">加载中...</p>
         </div>
       </div>
     );
   }
 
-  if (!blog) {
+  if (error || !blog) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">文章不存在</h2>
-          <p className="text-slate-600 mb-4">您访问的文章不存在或已被删除</p>
-          <Button onClick={() => navigate('/')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <BookOpen className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-red-600 mb-4">{error || '文章不存在'}</p>
+          <Button onClick={() => navigate('/')} variant="outline">
             返回首页
           </Button>
         </div>
@@ -147,13 +153,13 @@ export function BlogDetail() {
         
         <div className="mx-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-4">
-            {/* <Avatar className="w-12 h-12">
+            <Avatar className="w-12 h-12">
               <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white">
                 {blog.authorName[0]?.toUpperCase()}
               </AvatarFallback>
-            </Avatar> */}
+            </Avatar>
             <div>
-              {/* <p className="font-medium text-slate-800">{blog.authorName}</p> */}
+              <p className="font-medium text-slate-800">{blog.authorName}</p>
               <div className="flex items-center text-sm text-slate-500">
                 <Calendar className="w-4 h-4 mr-1" />
                 {formatDate(blog.createTime)}
@@ -170,19 +176,9 @@ export function BlogDetail() {
           
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={handleShare}>
-              <Share className="w-4 h-4 mr-2" />
+              <Share2 className="w-4 h-4 mr-2" />
               分享
             </Button>
-            {user && user.id === blog.authorId && (
-              <Button 
-                size="sm" 
-                onClick={() => navigate(`/edit/${blog.id}`)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                编辑
-              </Button>
-            )}
           </div>
         </div>
         
@@ -230,9 +226,6 @@ export function BlogDetail() {
                             <h4 className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors">
                               {relatedBlog.title}
                             </h4>
-                            {/* <p className="text-sm text-slate-600 line-clamp-2 mb-2">
-                              {relatedBlog.summary}
-                            </p> */}
                             <div className="flex flex-col text-xs text-slate-500">
                               <span className="flex items-center">
                                 <User className="w-3 h-3 mr-1" />

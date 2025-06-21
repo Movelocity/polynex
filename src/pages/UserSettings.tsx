@@ -20,6 +20,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { fileService } from '@/services';
 
 export function UserSettings() {
   const { user, updatePassword } = useAuth();
@@ -79,9 +80,9 @@ export function UserSettings() {
 
     setLoading(true);
     try {
-      const result = updatePassword(currentPassword, newPassword);
-      if (result) {
-        setSuccess('密码修改成功！');
+      const result = await updatePassword(currentPassword, newPassword);
+      if (result.success) {
+        setSuccess(result.message);
         // Clear form
         setCurrentPassword('');
         setNewPassword('');
@@ -91,9 +92,10 @@ export function UserSettings() {
           handleDialogChange(false);
         }, 2000);
       } else {
-        setError('当前密码不正确');
+        setError(result.message);
       }
     } catch (err) {
+      console.error('密码修改失败:', err);
       setError('密码修改失败，请重试');
     } finally {
       setLoading(false);
@@ -141,11 +143,17 @@ export function UserSettings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
-                <Avatar className="w-20 h-20">
-                  <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white">
-                    {user.username[0]?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                {user.avatar && (
+                  <img 
+                    src={fileService.resolveFileUrl(user.avatar)} 
+                    alt={user.username}
+                    className="w-20 h-20 rounded-full object-cover cursor-pointer"
+                    onError={(e) => {
+                      // 如果头像加载失败，隐藏图片
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                )}
                 <div>
                   <h3 className="text-lg font-semibold">{user.username}</h3>
                   <p className="text-sm text-slate-500">{user.email}</p>

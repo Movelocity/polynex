@@ -46,6 +46,8 @@ python main.py
 - `POST /api/auth/login` - 用户登录
 - `POST /api/auth/register` - 用户注册
 - `POST /api/auth/logout` - 用户登出
+- `GET /api/auth/validate` - 验证JWT token
+- `PUT /api/auth/password` - 更新密码
 
 ### 用户接口
 
@@ -80,6 +82,100 @@ python main.py
 - `DELETE /api/categories/{id}` - 删除分类
 - `PUT /api/categories/counts` - 更新分类计数
 - `POST /api/categories/batch` - 批量保存分类
+
+### 文件存储接口 🆕
+
+#### 文件上传
+```
+POST /api/resources/upload
+```
+- 需要认证
+- 支持的文件类型：
+  - 图片：`.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.webp`
+  - 文档：`.pdf`, `.doc`, `.docx`, `.txt`, `.md`, `.rtf`
+- 最大文件大小：50MB
+- 返回文件的唯一ID和URL
+
+**请求示例（curl）：**
+```bash
+curl -X POST "http://localhost:8765/api/resources/upload" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@/path/to/your/file.jpg"
+```
+
+**响应示例：**
+```json
+{
+  "message": "文件上传成功",
+  "file": {
+    "unique_id": "123e4567-e89b-12d3-a456-426614174000",
+    "original_name": "avatar.jpg",
+    "extension": ".jpg",
+    "size": 102400,
+    "upload_time": "2024-01-01T12:00:00",
+    "uploader_id": "user123",
+    "url": "/api/resources/123e4567-e89b-12d3-a456-426614174000.jpg"
+  }
+}
+```
+
+#### 文件获取
+```
+GET /api/resources/{unique_id}.{postfix}
+```
+- 无需认证
+- 直接返回文件内容
+- 支持浏览器直接访问和下载
+
+**访问示例：**
+```
+http://localhost:8765/api/resources/123e4567-e89b-12d3-a456-426614174000.jpg
+```
+
+#### 文件列表
+```
+GET /api/resources/list
+```
+- 需要认证  
+- 返回当前用户上传的所有文件列表
+
+#### 文件删除
+```
+DELETE /api/resources/{unique_id}.{postfix}
+```
+- 需要认证
+- 删除指定的文件
+
+#### 用户头像上传 ⭐
+```
+POST /api/users/avatar/upload
+```
+- 需要认证
+- 只允许图片格式
+- 最大文件大小：5MB
+- 自动更新用户头像并返回更新后的用户信息
+
+**请求示例（curl）：**
+```bash
+curl -X POST "http://localhost:8765/api/users/avatar/upload" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@/path/to/avatar.jpg"
+```
+
+**响应示例：**
+```json
+{
+  "message": "头像上传成功",
+  "avatar_url": "/api/resources/123e4567-e89b-12d3-a456-426614174000.jpg",
+  "user": {
+    "id": "user123",
+    "username": "测试用户",
+    "email": "user@example.com",
+    "avatar": "/api/resources/123e4567-e89b-12d3-a456-426614174000.jpg",
+    "registerTime": "2024-01-01T12:00:00"
+  }
+}
+```
 
 ## 数据存储
 
@@ -144,3 +240,111 @@ server/
 - 密码加密使用 bcrypt，但 JWT 密钥是硬编码的，生产环境需要使用环境变量
 - 数据存储在本地文件中，重启服务数据不会丢失
 - CORS 配置允许本地开发，生产环境需要调整
+
+## 使用场景
+
+### 1. 用户头像
+```javascript
+// 上传头像
+const formData = new FormData();
+formData.append('file', avatarFile);
+
+const response = await fetch('/api/resources/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  },
+  body: formData
+});
+
+const result = await response.json();
+const avatarUrl = result.file.url;
+
+// 更新用户信息中的头像URL
+await fetch(`/api/users/${userId}`, {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ avatar: avatarUrl })
+});
+```
+
+### 2. 博客图片
+```javascript
+// 在博客编辑器中插入图片
+const uploadImage = async (imageFile) => {
+  const formData = new FormData();
+  formData.append('file', imageFile);
+  
+  const response = await fetch('/api/resources/upload', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData
+  });
+  
+  const result = await response.json();
+  return result.file.url; // 可以直接在markdown中使用
+};
+```
+
+### 3. 用户文件管理（网盘功能）
+```javascript
+// 获取用户文件列表
+const getUserFiles = async () => {
+  const response = await fetch('/api/resources/list', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return await response.json();
+};
+
+// 删除文件
+const deleteFile = async (uniqueId, extension) => {
+  await fetch(`/api/resources/${uniqueId}.${extension}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+```
+
+## 文件存储说明
+
+- 文件存储在服务器的 `uploads/` 目录中
+- 每个文件都有唯一的UUID作为文件名
+- 文件URL格式：`/api/resources/{uuid}.{extension}`
+- 文件可以直接通过URL访问，无需认证
+- 上传和删除操作需要用户认证
+
+## 测试账号
+
+系统预设了以下测试账号：
+
+| 邮箱 | 密码 | 用户名 | 头像 |
+|------|------|--------|------|
+| demo@example.com | demo123 | 博客达人 | 外部头像 |
+| demo1@example.com | demo123 | 测试用户 | 无头像（可测试上传） |
+| tech@example.com | tech123 | 技术小白 | 外部头像 |
+
+## 头像处理逻辑
+
+### URL格式统一
+- 文件上传返回：`/api/resources/{uuid}.{ext}` （相对路径）
+- 前端自动解析为：`http://localhost:8765/api/resources/{uuid}.{ext}`
+- 用户头像字段存储相对路径，前端显示时自动转换为完整URL
+
+### 头像上传流程
+1. 用户选择图片文件
+2. 调用 `/api/users/avatar/upload` 接口
+3. 后端保存文件并更新用户头像字段
+4. 返回新的用户信息
+5. 前端更新本地用户数据
+
+## 安全注意事项
+
+1. 文件类型限制：只允许特定的文件扩展名
+2. 文件大小限制：常规文件50MB，头像5MB
+3. 唯一ID：使用UUID防止文件名冲突和猜测
+4. 上传认证：需要JWT token才能上传文件
+5. 目录权限：确保uploads目录有适当的读写权限
+6. 头像专用接口：自动更新用户信息，避免数据不一致

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TextareaAutosize from 'react-textarea-autosize';
 import { MarkdownPreview } from '@/components/ui/markdown-preview';
-import { BlogStorage, CategoryStorage, generateId, generateSummary } from '@/utils/storage';
+import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,21 @@ import {
   FileText,
   Loader2
 } from 'lucide-react';
+
+// Temporary utility functions until we move them to proper utils
+const generateId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+const generateSummary = (content: string): string => {
+  // Remove markdown syntax and get first 200 characters
+  const plainText = content
+    .replace(/[#*`>\-_\[\]()]/g, '') // Remove markdown characters
+    .replace(/\n/g, ' ') // Replace newlines with spaces
+    .trim();
+  
+  return plainText.length > 200 ? plainText.substring(0, 200) + '...' : plainText;
+};
 
 function MarkdownGuide() {
   return (
@@ -45,8 +60,6 @@ function MarkdownGuide() {
   )
 }
 
-
-
 export function WriteBlog() {
   const { id } = useParams<{ id: string }>();
   const [formData, setFormData] = useState({
@@ -68,20 +81,29 @@ export function WriteBlog() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 加载分类
-    const allCategories = CategoryStorage.getCategories();
-    setCategories(allCategories);
-
-    // 如果是编辑模式，加载博客数据
-    if (id) {
-      loadBlog(id);
-    }
+    loadInitialData();
   }, [id]);
+
+  const loadInitialData = async () => {
+    try {
+      // 加载分类
+      const allCategories = await categoryService.getCategories();
+      setCategories(allCategories);
+
+      // 如果是编辑模式，加载博客数据
+      if (id) {
+        await loadBlog(id);
+      }
+    } catch (err) {
+      console.error('加载初始数据失败:', err);
+      setError('加载数据失败，请刷新页面重试');
+    }
+  };
 
   const loadBlog = async (blogId: string) => {
     setLoading(true);
     try {
-      const blog = BlogStorage.getBlogById(blogId);
+      const blog = await blogService.getBlogById(blogId);
       if (blog) {
         // 检查是否是作者
         if (user && blog.authorId === user.id) {
@@ -102,6 +124,7 @@ export function WriteBlog() {
         setTimeout(() => navigate('/'), 2000);
       }
     } catch (err) {
+      console.error('加载文章失败:', err);
       setError('加载文章失败');
     } finally {
       setLoading(false);
@@ -179,7 +202,7 @@ export function WriteBlog() {
 
       if (isEdit && id) {
         // 更新博客
-        const success = BlogStorage.updateBlog(id, {
+        const success = await blogService.updateBlog(id, {
           title: formData.title,
           content: formData.content,
           summary,
@@ -190,8 +213,6 @@ export function WriteBlog() {
         });
 
         if (success) {
-          // 更新分类计数
-          CategoryStorage.updateCategoryCounts();
           navigate(status === 'published' ? `/blog/${id}` : '/dashboard');
         } else {
           setError('更新文章失败');
@@ -213,14 +234,11 @@ export function WriteBlog() {
           views: 0,
         };
 
-        BlogStorage.addBlog(newBlog);
-        
-        // 更新分类计数
-        CategoryStorage.updateCategoryCounts();
-        
+        await blogService.addBlog(newBlog);
         navigate(status === 'published' ? `/blog/${newBlog.id}` : '/dashboard');
       }
     } catch (err) {
+      console.error('保存文章失败:', err);
       setError('保存文章失败，请重试');
     } finally {
       setLoading(false);

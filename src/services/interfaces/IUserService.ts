@@ -1,4 +1,4 @@
-import { User } from '@/types';
+import { User, ClientUser, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
 
 /**
  * 用户服务接口
@@ -26,14 +26,14 @@ export interface IUserService {
   updateUser(userId: string, updates: Partial<User>): Promise<boolean>;
 
   /**
-   * 获取当前登录用户
+   * 获取当前登录用户（从localStorage）
    */
-  getCurrentUser(): Promise<User | null>;
+  getCurrentUser(): ClientUser | null;
 
   /**
-   * 设置当前登录用户
+   * 设置当前登录用户（到localStorage）
    */
-  setCurrentUser(user: User | null): Promise<void>;
+  setCurrentUser(user: ClientUser | null): void;
 
   /**
    * 根据邮箱查找用户
@@ -46,9 +46,14 @@ export interface IUserService {
   findUserByUsername(username: string): Promise<User | undefined>;
 
   /**
-   * 用户登录
+   * 用户登录（返回token和用户信息）
    */
-  login(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }>;
+  login(email: string, password: string): Promise<AuthResponse>;
+
+  /**
+   * 用户登录（使用请求对象）
+   */
+  loginWithRequest(request: LoginRequest): Promise<AuthResponse>;
 
   /**
    * 用户登出
@@ -56,7 +61,22 @@ export interface IUserService {
   logout(): Promise<void>;
 
   /**
-   * 用户注册
+   * 用户注册（返回token和用户信息）
    */
-  register(userData: Omit<User, 'id' | 'registerTime'>): Promise<{ success: boolean; user?: User; error?: string }>;
+  register(username: string, email: string, password: string): Promise<AuthResponse>;
+
+  /**
+   * 用户注册（使用请求对象）
+   */
+  registerWithRequest(request: RegisterRequest): Promise<AuthResponse>;
+
+  /**
+   * 验证token有效性
+   */
+  validateToken(): Promise<{ valid: boolean; user?: ClientUser }>;
+
+  /**
+   * 更新密码
+   */
+  updatePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }>;
 } 

@@ -18,6 +18,7 @@ import {
   FileText,
   Wrench
 } from 'lucide-react';
+import { fileService } from '@/services';
 
 export function Layout() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -145,12 +146,19 @@ export function Layout() {
               {isAuthenticated && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar} alt={user.username} />
-                        <AvatarFallback>{user.username[0]?.toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                    </Button>
+                    {/* <Button variant="ghost" className="relative h-8 w-8 rounded-full"> */}
+                      {user.avatar && (
+                        <img 
+                          src={fileService.resolveFileUrl(user.avatar)} 
+                          alt={user.username}
+                          className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                          onError={(e) => {
+                            // 如果头像加载失败，隐藏图片
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      )}
+                    {/* </Button> */}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <div className="flex items-center justify-start gap-2 p-2">

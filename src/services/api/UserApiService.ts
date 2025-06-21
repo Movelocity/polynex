@@ -1,4 +1,4 @@
-import { User } from '@/types';
+import { User, ClientUser, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
 import { IUserService } from '../interfaces/IUserService';
 import { ApiClient, ApiError } from './ApiClient';
 
@@ -7,6 +7,7 @@ import { ApiClient, ApiError } from './ApiClient';
  */
 export class UserApiService implements IUserService {
   private apiClient: ApiClient;
+  private readonly USER_STORAGE_KEY = 'current_user';
 
   constructor(apiClient: ApiClient) {
     this.apiClient = apiClient;
@@ -27,6 +28,14 @@ export class UserApiService implements IUserService {
   async updateUser(userId: string, updates: Partial<User>): Promise<boolean> {
     try {
       await this.apiClient.put(`/users/${userId}`, updates);
+      
+      // 如果更新的是当前用户，同步更新localStorage
+      const currentUser = this.getCurrentUser();
+      if (currentUser && currentUser.id === userId) {
+        const updatedUser: ClientUser = { ...currentUser, ...updates };
+        this.setCurrentUser(updatedUser);
+      }
+      
       return true;
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
@@ -36,25 +45,31 @@ export class UserApiService implements IUserService {
     }
   }
 
-  async getCurrentUser(): Promise<User | null> {
+  /**
+   * 获取当前登录用户（从localStorage）
+   */
+  getCurrentUser(): ClientUser | null {
     try {
-      return await this.apiClient.get<User>('/users/current');
+      const userStr = localStorage.getItem(this.USER_STORAGE_KEY);
+      return userStr ? JSON.parse(userStr) : null;
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        return null;
-      }
-      throw error;
+      console.error('Failed to get current user from localStorage:', error);
+      return null;
     }
   }
 
-  async setCurrentUser(user: User | null): Promise<void> {
-    if (user) {
-      // 这个方法在API版本中通常不需要，因为当前用户信息由认证token确定
-      // 但为了接口一致性，我们保留它
-      console.warn('setCurrentUser in API mode: user context is managed by authentication token');
-    } else {
-      // 登出
-      this.apiClient.setToken(null);
+  /**
+   * 设置当前登录用户（到localStorage）
+   */
+  setCurrentUser(user: ClientUser | null): void {
+    try {
+      if (user) {
+        localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(this.USER_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.error('Failed to set current user in localStorage:', error);
     }
   }
 
@@ -80,69 +95,173 @@ export class UserApiService implements IUserService {
     }
   }
 
-  async login(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
-    try {
-      const response = await this.apiClient.post<{ user: User; token: string }>('/auth/login', {
-        email,
-        password
-      });
+  async login(email: string, password: string): Promise<AuthResponse> {
+    return this.loginWithRequest({ email, password });
+  }
 
-      // 保存认证token
+  async loginWithRequest(request: LoginRequest): Promise<AuthResponse> {
+    try {
+      const response = await this.apiClient.post<{ user: ClientUser; token: string }>('/auth/login', request);
+
+      // 保存认证token和用户信息
       this.apiClient.setToken(response.token);
+      this.setCurrentUser(response.user);
 
       return {
         success: true,
+        message: '登录成功',
+        token: response.token,
         user: response.user
       };
     } catch (error) {
+      let message = '登录失败';
       if (error instanceof ApiError) {
-        return {
-          success: false,
-          error: error.message
-        };
+        message = error.message;
       }
       return {
         success: false,
-        error: '登录失败'
+        message
       };
     }
   }
 
   async logout(): Promise<void> {
     try {
+      // 尝试通知服务器登出
       await this.apiClient.post('/auth/logout');
     } catch (error) {
-      // 即使服务器端登出失败，也要清除本地token
+      // 即使服务器端登出失败，也要清除本地数据
       console.error('Server logout failed:', error);
     } finally {
+      // 清除本地认证信息
       this.apiClient.setToken(null);
+      this.setCurrentUser(null);
     }
   }
 
-  async register(userData: Omit<User, 'id' | 'registerTime'>): Promise<{ success: boolean; user?: User; error?: string }> {
-    try {
-      const response = await this.apiClient.post<{ user: User; token?: string }>('/auth/register', userData);
+  async register(username: string, email: string, password: string): Promise<AuthResponse> {
+    return this.registerWithRequest({ username, email, password });
+  }
 
-      // 如果注册成功后自动登录，保存token
-      if (response.token) {
-        this.apiClient.setToken(response.token);
+  async registerWithRequest(request: RegisterRequest): Promise<AuthResponse> {
+    try {
+      const response = await this.apiClient.post<{ user: ClientUser; token: string }>('/auth/register', request);
+
+      // 保存认证token和用户信息
+      this.apiClient.setToken(response.token);
+      this.setCurrentUser(response.user);
+
+      return {
+        success: true,
+        message: '注册成功',
+        token: response.token,
+        user: response.user
+      };
+    } catch (error) {
+      let message = '注册失败';
+      if (error instanceof ApiError) {
+        message = error.message;
+      }
+      return {
+        success: false,
+        message
+      };
+    }
+  }
+
+  async validateToken(): Promise<{ valid: boolean; user?: ClientUser }> {
+    try {
+      const user = await this.apiClient.get<ClientUser>('/auth/validate');
+      
+      // 更新本地用户信息
+      this.setCurrentUser(user);
+      
+      return {
+        valid: true,
+        user
+      };
+    } catch (error) {
+      // token无效，清除本地数据
+      this.apiClient.setToken(null);
+      this.setCurrentUser(null);
+      
+      return {
+        valid: false
+      };
+    }
+  }
+
+  async updatePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      await this.apiClient.put('/auth/password', {
+        currentPassword,
+        newPassword
+      });
+
+      return {
+        success: true,
+        message: '密码更新成功'
+      };
+    } catch (error) {
+      let message = '密码更新失败';
+      if (error instanceof ApiError) {
+        message = error.message;
+      }
+      return {
+        success: false,
+        message
+      };
+    }
+  }
+
+  async uploadAvatar(file: File): Promise<{ success: boolean; message: string; user?: ClientUser; avatarUrl?: string }> {
+    try {
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // 使用fetch直接发送，因为ApiClient可能不支持FormData
+      const baseURL = (this.apiClient as any).baseURL || 'http://localhost:8765/api';
+      const token = this.apiClient.getToken();
+      
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${baseURL}/users/avatar/upload`, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Upload failed' }));
+        throw new ApiError(response.status, errorData.message || 'Upload failed');
+      }
+
+      const result = await response.json();
+
+      // 更新本地用户信息
+      if (result.user) {
+        this.setCurrentUser(result.user);
       }
 
       return {
         success: true,
-        user: response.user
+        message: result.message || '头像上传成功',
+        user: result.user,
+        avatarUrl: result.avatar_url
       };
     } catch (error) {
+      let message = '头像上传失败';
       if (error instanceof ApiError) {
-        return {
-          success: false,
-          error: error.message
-        };
+        message = error.message;
       }
       return {
         success: false,
-        error: '注册失败'
+        message
       };
     }
   }
-} 
+}

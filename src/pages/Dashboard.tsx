@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BlogStorage } from '@/utils/storage';
+import { blogService, fileService } from '@/services';
 import { Blog } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,11 @@ export function Dashboard() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const blogsPerPage = 6;
@@ -40,20 +41,22 @@ export function Dashboard() {
   }, [searchQuery]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !authLoading) {
       loadUserBlogs();
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const loadUserBlogs = async () => {
     if (!user) return;
     
     setLoading(true);
+    setError(null);
     try {
-      const userBlogs = BlogStorage.getBlogsByAuthor(user.id);
+      const userBlogs = await blogService.getBlogsByAuthor(user.id);
       setBlogs(userBlogs.sort((a, b) => new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()));
-    } catch (error) {
-      console.error('加载博客失败:', error);
+    } catch (err) {
+      console.error('加载博客失败:', err);
+      setError('加载博客失败，请刷新页面重试');
     } finally {
       setLoading(false);
     }
@@ -61,7 +64,7 @@ export function Dashboard() {
 
   const handleDeleteBlog = async (blogId: string) => {
     try {
-      const success = BlogStorage.deleteBlog(blogId);
+      const success = await blogService.deleteBlog(blogId);
       if (success) {
         setBlogs(prev => prev.filter(blog => blog.id !== blogId));
       }
@@ -72,7 +75,7 @@ export function Dashboard() {
 
   const handleToggleStatus = async (blogId: string, newStatus: 'published' | 'draft') => {
     try {
-      const success = BlogStorage.updateBlog(blogId, { status: newStatus });
+      const success = await blogService.updateBlog(blogId, { status: newStatus });
       if (success) {
         setBlogs(prev => prev.map(blog => 
           blog.id === blogId ? { ...blog, status: newStatus } : blog
@@ -137,7 +140,7 @@ export function Dashboard() {
     totalViews: blogs.reduce((sum, blog) => sum + blog.views, 0),
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -162,15 +165,36 @@ export function Dashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <FileText className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={loadUserBlogs} variant="outline">
+            重新加载
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center space-x-4 mb-4">
-        <Avatar className="w-16 h-16">
-          <AvatarImage src={user.avatar} alt={user.username} />
-          <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-xl">
-            {user.username[0]?.toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        {user.avatar && (
+          <img 
+            src={fileService.resolveFileUrl(user.avatar)} 
+            alt={user.username}
+            className="w-16 h-16 rounded-full object-cover cursor-pointer"
+            onError={(e) => {
+              // 如果头像加载失败，隐藏图片
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        )}
         <div>
           <h1 className="text-2xl font-bold text-slate-800">欢迎回来，{user.username}</h1>
           <p className="text-slate-600">管理您的博客内容</p>

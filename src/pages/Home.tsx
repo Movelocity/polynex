@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BlogStorage, CategoryStorage } from '@/utils/storage';
+import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
-import { formatDate } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,12 +15,23 @@ import {
   BarChart3
 } from 'lucide-react';
 
+// Temporary formatDate function until we move it to a proper utils file
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 export function Home() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const blogsPerPage = 6;
@@ -32,17 +42,19 @@ export function Home() {
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // 获取已发布的博客
-      const allBlogs = BlogStorage.getPublishedBlogs();
-      setBlogs(allBlogs);
-
-      // 更新分类计数并获取分类
-      CategoryStorage.updateCategoryCounts();
-      const allCategories = CategoryStorage.getCategories();
-      setCategories(allCategories);
-    } catch (error) {
-      console.error('加载数据失败:', error);
+      // 获取已发布的博客和分类信息
+      const [blogsData, categoriesData] = await Promise.all([
+        blogService.getPublishedBlogs(),
+        categoryService.getCategories()
+      ]);
+      
+      setBlogs(blogsData);
+      setCategories(categoriesData);
+    } catch (err) {
+      console.error('加载数据失败:', err);
+      setError('加载数据失败，请刷新页面重试');
     } finally {
       setLoading(false);
     }
@@ -71,6 +83,22 @@ export function Home() {
             <BookOpen className="w-8 h-8 text-white" />
           </div>
           <p className="text-slate-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <BookOpen className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={loadData} variant="outline">
+            重新加载
+          </Button>
         </div>
       </div>
     );

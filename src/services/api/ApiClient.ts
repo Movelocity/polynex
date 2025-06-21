@@ -1,3 +1,4 @@
+export const defaultBaseURL = 'http://localhost:8765/api';
 /**
  * API客户端基类
  * 处理HTTP请求、错误处理、认证等通用功能
@@ -5,10 +6,19 @@
 export class ApiClient {
   private baseURL: string;
   private token: string | null = null;
+  private onUnauthorized?: () => void;
 
-  constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8765/api') {
+  constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || defaultBaseURL) {
     this.baseURL = baseURL;
+    console.log("baseURL:",this.baseURL);
     this.loadToken();
+  }
+
+  /**
+   * 设置未授权回调函数
+   */
+  setUnauthorizedCallback(callback: () => void): void {
+    this.onUnauthorized = callback;
   }
 
   /**
@@ -35,6 +45,13 @@ export class ApiClient {
   }
 
   /**
+   * 获取当前token
+   */
+  getToken(): string | null {
+    return this.token;
+  }
+
+  /**
    * 获取请求头
    */
   private getHeaders(): HeadersInit {
@@ -54,6 +71,17 @@ export class ApiClient {
    */
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
+      // 处理401未授权错误
+      if (response.status === 401) {
+        // 清除本地token
+        this.setToken(null);
+        // 触发未授权回调
+        if (this.onUnauthorized) {
+          this.onUnauthorized();
+        }
+        throw new ApiError(401, '登录已过期，请重新登录');
+      }
+
       const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
       throw new ApiError(response.status, errorData.message || 'Request failed');
     }
