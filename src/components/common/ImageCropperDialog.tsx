@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/x-ui/dialog';
 import { Button } from '@/components/x-ui/button';
-import { ImageCropperCanvas, CropArea } from '@/components/ImageCropperCanvas';
+import { ImageCropper, CropArea } from '@/components/ImageCropLegacy/ImageCropper';
 
 interface ImageCropperDialogProps {
   open: boolean;
@@ -182,7 +182,7 @@ export function ImageCropperDialog({
           </div>
           
           <div className="border rounded-lg p-4 bg-gray-50">
-            <ImageCropperCanvas
+            <ImageCropper
               imageUrl={imageUrl}
               cropArea={cropArea}
               onCropAreaChange={handleCropAreaChange}

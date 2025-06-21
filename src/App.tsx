@@ -16,6 +16,7 @@ import { ArticleList } from '@/pages/ArticleList';
 import { UserSettings } from '@/pages/UserSettings';
 import { Tools } from '@/pages/Tools';
 import { ImageCropper } from '@/pages/ImageCropper';
+import { NewImageCropperDemo } from '@/pages/NewImageCropperDemo';
 import { ImageOCR } from '@/pages/ImageOCR';
 import { JsonFormatter } from '@/pages/JsonFormatter';
 import { NotFound } from '@/pages/NotFound';
@@ -57,6 +58,7 @@ function App() {
             <Route path="category/:category" element={<CategoryPage />} />
             <Route path="tools" element={<Tools />} />
             <Route path="tools/image-cropper" element={<ImageCropper />} />
+            <Route path="tools/advanced-image-cropper" element={<NewImageCropperDemo />} />
             <Route path="tools/image-ocr" element={<ImageOCR />} />
             <Route path="tools/json-formatter" element={<JsonFormatter />} />
 

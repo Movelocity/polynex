@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useImageCrop } from '@/hooks/useImageCrop';
-import { ImageCropperCanvas } from '@/components/ImageCropperCanvas';
+import { ImageCropper as ImageCropperLegacy } from '@/components/ImageCropLegacy/ImageCropper';
 import { Button } from '@/components/x-ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Input } from '@/components/x-ui/input';
@@ -111,52 +111,54 @@ function ImageDownloader({ imageUrl }: { imageUrl: string}) {
             </div>
           </div>
 
-          {/* 常用尺寸预设 */}
-          <div>
-            <Label className="text-sm font-medium mb-3 block">常用尺寸</Label>
-            <div className="grid grid-cols-4 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDownloadWidth(64);
-                  setDownloadHeight(64);
-                }}
-              >
-                64×64
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDownloadWidth(128);
-                  setDownloadHeight(128);
-                }}
-              >
-                128×128
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDownloadWidth(256);
-                  setDownloadHeight(256);
-                }}
-              >
-                256×256
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDownloadWidth(512);
-                  setDownloadHeight(512);
-                }}
-              >
-                512×512
-              </Button>
+          {/* 宽高为1:1时，可以选择常用尺寸预设 */}
+          {downloadWidth===downloadHeight && (
+            <div>
+              <Label className="text-sm font-medium mb-3 block">常用尺寸</Label>
+              <div className="grid grid-cols-4 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDownloadWidth(64);
+                    setDownloadHeight(64);
+                  }}
+                >
+                  64×64
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDownloadWidth(128);
+                    setDownloadHeight(128);
+                  }}
+                >
+                  128×128
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDownloadWidth(256);
+                    setDownloadHeight(256);
+                  }}
+                >
+                  256×256
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDownloadWidth(512);
+                    setDownloadHeight(512);
+                  }}
+                >
+                  512×512
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-center space-x-2">
             <input
@@ -442,13 +444,14 @@ export function ImageCropper() {
                 <div className="relative">
                   <div className="w-full max-w-full overflow-auto rounded-lg bg-slate-50 flex justify-center p-4">
                     {imageDimensions && (
-                      <ImageCropperCanvas
+                      <ImageCropperLegacy
                         imageUrl={proxyImage}
                         cropArea={cropArea}
                         onCropAreaChange={handleCropAreaChange}
                         containerWidth={imageDimensions.displayWidth}
                         containerHeight={imageDimensions.displayHeight}
                         maxContainerWidth={maxWidth}
+                        maxContainerHeight={900}
                       />
                     )}
                   </div>
@@ -475,6 +478,11 @@ export function ImageCropper() {
           {mode === 'result' && croppedImage && (
             <Card>
               <ImageDownloader imageUrl={croppedImage} />
+            </Card>
+          )}
+          {mode === 'preview' && proxyImage && (
+            <Card>
+              <ImageDownloader imageUrl={proxyImage} />
             </Card>
           )}
 

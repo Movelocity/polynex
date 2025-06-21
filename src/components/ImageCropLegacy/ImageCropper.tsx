@@ -7,25 +7,27 @@ export interface CropArea {
   height: number;
 }
 
-export interface ImageCropperCanvasProps {
+export interface ImageCropperProps {
   imageUrl: string;
   cropArea: CropArea;
   onCropAreaChange: (area: CropArea) => void;
   containerWidth: number;
   containerHeight: number;
   maxContainerWidth?: number;
+  maxContainerHeight?: number;
 }
 
 type DragHandle = 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null;
 
-export function ImageCropperCanvas({
+export function ImageCropper({
   imageUrl,
   cropArea,
   onCropAreaChange,
   containerWidth,
   containerHeight,
-  maxContainerWidth = 800
-}: ImageCropperCanvasProps) {
+  maxContainerWidth = 800,
+  maxContainerHeight = 600
+}: ImageCropperProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragHandle, setDragHandle] = useState<DragHandle>(null);
@@ -36,14 +38,16 @@ export function ImageCropperCanvas({
     let displayWidth = containerWidth;
     let displayHeight = containerHeight;
     
-    if (displayWidth > maxContainerWidth) {
-      const scale = maxContainerWidth / displayWidth;
-      displayWidth = maxContainerWidth;
-      displayHeight = displayHeight * scale;
-    }
+    const widthScale = maxContainerWidth / displayWidth;
+    const heightScale = maxContainerHeight / displayHeight;
+    
+    const scale = Math.min(widthScale, heightScale, 1);
+    
+    displayWidth = displayWidth * scale;
+    displayHeight = displayHeight * scale;
     
     return { displayWidth, displayHeight };
-  }, [containerWidth, containerHeight, maxContainerWidth]);
+  }, [containerWidth, containerHeight, maxContainerWidth, maxContainerHeight]);
 
   const actualSize = getActualDisplaySize();
   const displayScale = actualSize.displayWidth / containerWidth;
@@ -77,20 +81,90 @@ export function ImageCropperCanvas({
     return { scaleX, scaleY };
   }, []);
 
-  const getCanvasCoordinates = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCanvasCoordinates = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
     const { scaleX, scaleY } = getCanvasScale();
     
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     
     return { x, y };
   }, [getCanvasScale]);
 
   const displayCropArea = toDisplayCoords(cropArea);
+
+  useEffect(() => {
+    if (!isDragging || !dragHandle) return;
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
+      
+      const dx = x - dragStart.x;
+      const dy = y - dragStart.y;
+
+      let newCropArea = { ...initialCropArea };
+
+      switch (dragHandle) {
+        case 'move':
+          newCropArea.x = Math.max(0, Math.min(actualSize.displayWidth - newCropArea.width, initialCropArea.x + dx));
+          newCropArea.y = Math.max(0, Math.min(actualSize.displayHeight - newCropArea.height, initialCropArea.y + dy));
+          break;
+        case 'nw':
+          newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
+          newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
+          newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
+          newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
+          break;
+        case 'ne':
+          newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
+          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
+          newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
+          break;
+        case 'sw':
+          newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
+          newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
+          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
+          break;
+        case 'se':
+          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
+          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
+          break;
+        case 'n':
+          newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
+          newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
+          break;
+        case 's':
+          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
+          break;
+        case 'w':
+          newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
+          newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
+          break;
+        case 'e':
+          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
+          break;
+      }
+
+      const originalCropArea = toOriginalCoords(newCropArea);
+      onCropAreaChange(originalCropArea);
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      setDragHandle(null);
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, dragHandle, dragStart, initialCropArea, actualSize, onCropAreaChange, toOriginalCoords, getCanvasCoordinates]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -165,7 +239,7 @@ export function ImageCropperCanvas({
   }, [displayCropArea]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const { x, y } = getCanvasCoordinates(e);
+    const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
 
     const handle = getHandleAtPosition(x, y);
     if (handle) {
@@ -173,6 +247,8 @@ export function ImageCropperCanvas({
       setDragHandle(handle);
       setDragStart({ x, y });
       setInitialCropArea({ ...displayCropArea });
+      
+      e.preventDefault();
     }
   }, [displayCropArea, getHandleAtPosition, getCanvasCoordinates]);
 
@@ -180,7 +256,7 @@ export function ImageCropperCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const { x, y } = getCanvasCoordinates(e);
+    const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
 
     if (!isDragging) {
       const handle = getHandleAtPosition(x, y);
@@ -208,70 +284,7 @@ export function ImageCropperCanvas({
           canvas.style.cursor = 'default';
       }
     }
-
-    if (isDragging && dragHandle) {
-      const dx = x - dragStart.x;
-      const dy = y - dragStart.y;
-
-      let newCropArea = { ...initialCropArea };
-
-      switch (dragHandle) {
-        case 'move':
-          newCropArea.x = Math.max(0, Math.min(actualSize.displayWidth - newCropArea.width, initialCropArea.x + dx));
-          newCropArea.y = Math.max(0, Math.min(actualSize.displayHeight - newCropArea.height, initialCropArea.y + dy));
-          break;
-        case 'nw':
-          newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
-          newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
-          newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
-          newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
-          break;
-        case 'ne':
-          newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
-          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
-          newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
-          break;
-        case 'sw':
-          newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
-          newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
-          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
-          break;
-        case 'se':
-          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
-          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
-          break;
-        case 'n':
-          newCropArea.y = Math.max(0, Math.min(initialCropArea.y + initialCropArea.height - 20, initialCropArea.y + dy));
-          newCropArea.height = initialCropArea.height - (newCropArea.y - initialCropArea.y);
-          break;
-        case 's':
-          newCropArea.height = Math.max(20, Math.min(actualSize.displayHeight - initialCropArea.y, initialCropArea.height + dy));
-          break;
-        case 'w':
-          newCropArea.x = Math.max(0, Math.min(initialCropArea.x + initialCropArea.width - 20, initialCropArea.x + dx));
-          newCropArea.width = initialCropArea.width - (newCropArea.x - initialCropArea.x);
-          break;
-        case 'e':
-          newCropArea.width = Math.max(20, Math.min(actualSize.displayWidth - initialCropArea.x, initialCropArea.width + dx));
-          break;
-      }
-
-      const originalCropArea = toOriginalCoords(newCropArea);
-      onCropAreaChange(originalCropArea);
-    }
-  }, [isDragging, dragHandle, dragStart, initialCropArea, actualSize, getHandleAtPosition, onCropAreaChange, toOriginalCoords, getCanvasCoordinates]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    setDragHandle(null);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
-      setDragHandle(null);
-    }
-  }, [isDragging]);
+  }, [getHandleAtPosition, getCanvasCoordinates, isDragging]);
 
   return (
     <div className="flex justify-center">
@@ -281,13 +294,12 @@ export function ImageCropperCanvas({
         height={actualSize.displayHeight}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
         className="border border-slate-200 rounded-lg max-w-full h-auto"
         style={{ 
           maxWidth: '100%',
           height: 'auto',
-          display: 'block'
+          display: 'block',
+          userSelect: 'none'
         }}
       />
     </div>

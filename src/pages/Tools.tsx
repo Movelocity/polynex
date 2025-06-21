@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
-import { Crop, ScanText, FileJson } from 'lucide-react';
+import { Crop, ScanText, FileJson, Sparkles } from 'lucide-react';
 
 export function Tools() {
   const tools = [
@@ -10,6 +10,13 @@ export function Tools() {
       icon: Crop,
       path: '/tools/image-cropper',
       color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      title: '智能图片裁剪',
+      description: '基于AI算法的智能裁剪工具，自动识别最佳裁剪区域，支持批量处理',
+      icon: Sparkles,
+      path: '/tools/advanced-image-cropper',
+      color: 'from-indigo-500 to-purple-500'
     },
     {
       title: '图片OCR',
