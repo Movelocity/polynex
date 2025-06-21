@@ -242,74 +242,33 @@ export function Dashboard() {
         </Card>
         {/* side */}
         <div className="col-span-1 space-y-4">
-          
           {/* Stats */}
-          {/* <div className="hidden lg:flex flex-col gap-4"> */}
-          <Card className="hidden lg:flex flex-col">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center font-bold text-xl">
-                <BarChart3 className="w-6 h-6 mr-2" />
-                数据统计
+                <BarChart3 className="w-5 h-5 mr-2" />
+                站点统计
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-md font-medium">
-                <span className="flex items-center justify-between">
-                  <span>总文章</span>
-                  <span className=" font-bold">{stats.total}</span>
-                </span>
-                <span className="flex items-center justify-between">
-                  <span>已发布</span>
-                  <span className="font-bold">{stats.published}</span>
-                </span>
-                <span className="flex items-center justify-between">
-                  <span>草稿</span>
-                  <span className="font-bold">{stats.draft}</span>
-                </span>
-                <span className="flex items-center justify-between">
-                  <span>总阅读量</span>
-                  <span className="font-bold">{stats.totalViews}</span>
-                </span>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">文章总数</span>
+                <span className="font-semibold text-blue-600">{stats.total}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">已发布</span>
+                <span className="font-semibold text-green-600">{stats.published}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">草稿</span>
+                <span className="font-semibold text-green-600">{stats.draft}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">总阅读量</span>
+                <span className="font-semibold text-purple-600">{stats.totalViews}</span>
               </div>
             </CardContent>
           </Card>
-            
-            {/* <Card className="">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-600 text-sm font-medium">已发布</p>
-                    <p className="text-3xl font-bold text-green-700">{stats.published}</p>
-                  </div>
-                  <BookOpen className="w-8 h-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-yellow-600 text-sm font-medium">草稿</p>
-                    <p className="text-3xl font-bold text-yellow-700">{stats.draft}</p>
-                  </div>
-                  <Clock className="w-8 h-8 text-yellow-500" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-600 text-sm font-medium">总阅读量</p>
-                    <p className="text-3xl font-bold text-purple-700">{stats.totalViews}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card> */}
-          {/* </div> */}
         </div>
       </div>
     </div>
