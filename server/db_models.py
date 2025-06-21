@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, DateTime, JSON, Enum as SQLEnum
+from sqlalchemy import Column, String, Text, Integer, DateTime, JSON, Enum as SQLEnum, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -24,6 +24,17 @@ class User(Base):
     avatar = Column(String(500), nullable=True)
     role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.USER)
     register_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+class SiteConfig(Base):
+    """网站配置表"""
+    __tablename__ = "site_config"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    key = Column(String(100), unique=True, nullable=False)  # 配置键
+    value = Column(Text, nullable=True)  # 配置值
+    description = Column(Text, nullable=True)  # 配置描述
+    create_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Blog(Base):
     """博客表"""

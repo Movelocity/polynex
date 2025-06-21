@@ -5,6 +5,7 @@ export interface User {
   email: string;
   password: string;
   avatar?: string;
+  role: 'admin' | 'user';
   registerTime: string;
 }
 
@@ -14,6 +15,7 @@ export interface ClientUser {
   username: string;
   email: string;
   avatar?: string;
+  role: 'admin' | 'user';
   registerTime: string;
 }
 

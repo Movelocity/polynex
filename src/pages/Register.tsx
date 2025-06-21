@@ -123,7 +123,6 @@ export function Register() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
               <div className="space-y-2">
                 <Label htmlFor="username">用户名</Label>
                 <div className="relative">
@@ -140,7 +139,6 @@ export function Register() {
                   />
                 </div>
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="email">邮箱</Label>
                 <div className="relative">
@@ -157,7 +155,6 @@ export function Register() {
                   />
                 </div>
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="password">密码</Label>
                 <div className="relative">

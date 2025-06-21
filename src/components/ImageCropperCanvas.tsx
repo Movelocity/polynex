@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-interface CropArea {
+export interface CropArea {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
-interface ImageCropperCanvasProps {
+export interface ImageCropperCanvasProps {
   imageUrl: string;
   cropArea: CropArea;
   onCropAreaChange: (area: CropArea) => void;

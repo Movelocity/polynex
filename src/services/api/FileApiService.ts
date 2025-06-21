@@ -22,6 +22,22 @@ export interface UploadResponse {
 }
 
 /**
+ * 头像上传响应接口
+ */
+export interface AvatarUploadResponse {
+  message: string;
+  avatar_url: string;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    avatar?: string;
+    role: 'admin' | 'user';
+    registerTime: string;
+  };
+}
+
+/**
  * 文件列表响应接口
  */
 export interface FileListResponse {
@@ -36,6 +52,44 @@ export class FileApiService {
 
   constructor(apiClient: ApiClient) {
     this.apiClient = apiClient;
+  }
+
+  /**
+   * 上传头像
+   */
+  async uploadAvatar(file: File): Promise<AvatarUploadResponse> {
+    try {
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // 使用fetch直接发送，因为ApiClient可能不支持FormData
+      const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
+      const token = this.apiClient.getToken();
+      
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${baseURL}/users/avatar/upload`, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Avatar upload failed' }));
+        throw new ApiError(response.status, errorData.detail || 'Avatar upload failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(0, 'Network error during avatar upload');
+    }
   }
 
   /**

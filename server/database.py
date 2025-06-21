@@ -5,7 +5,7 @@ from datetime import datetime
 import uuid
 
 from db_models import (
-    User, Blog, Category, FileRecord, UserRole,
+    User, Blog, Category, FileRecord, UserRole, SiteConfig,
     engine, SessionLocal, create_tables
 )
 from models import UserCreate, BlogCreate, CategoryCreate
@@ -31,45 +31,41 @@ class SQLiteDatabase:
         return str(uuid.uuid4())
     
     def _initialize_sample_data(self):
-        """初始化示例数据"""
+        """初始化示例数据（仅包含基本配置和分类，不包含用户数据）"""
         session = self._get_session()
         try:
             # 检查是否已有数据
-            if session.query(User).count() > 0:
+            if session.query(SiteConfig).count() > 0:
                 return
             
-            # 创建示例用户 (第一个用户为管理员)
-            demo_user = User(
-                id='demo-user-1',
-                username='博客达人',
-                email='demo@example.com',
-                password=get_password_hash('demo123'),  # 使用加密密码
-                avatar='https://api.dicebear.com/7.x/avataaars/svg?seed=demo',
-                role=UserRole.ADMIN,  # 第一个用户为管理员
-                register_time=datetime.fromisoformat('2024-01-01T00:00:00')
-            )
-            
-            demo1_user = User(
-                id='demo1-user-1',
-                username='测试用户',
-                email='demo1@example.com',
-                password=get_password_hash('demo123'),  # 使用加密密码
-                avatar=None,
-                role=UserRole.USER,
-                register_time=datetime.fromisoformat('2024-01-01T00:00:00')
-            )
-            
-            tech_user = User(
-                id='tech-user-1',
-                username='技术小白',
-                email='tech@example.com',
-                password=get_password_hash('tech123'),  # 使用加密密码
-                avatar='https://api.dicebear.com/7.x/avataaars/svg?seed=tech',
-                role=UserRole.USER,
-                register_time=datetime.fromisoformat('2024-02-01T00:00:00')
-            )
-            
-            session.add_all([demo_user, demo1_user, tech_user])
+            # 创建默认网站配置
+            default_configs = [
+                SiteConfig(
+                    id=self._generate_id(),
+                    key='allow_registration',
+                    value='true',
+                    description='是否允许用户注册',
+                    create_time=datetime.utcnow(),
+                    update_time=datetime.utcnow()
+                ),
+                SiteConfig(
+                    id=self._generate_id(),
+                    key='require_invite_code',
+                    value='false',
+                    description='注册是否需要邀请码',
+                    create_time=datetime.utcnow(),
+                    update_time=datetime.utcnow()
+                ),
+                SiteConfig(
+                    id=self._generate_id(),
+                    key='invite_code',
+                    value='',
+                    description='邀请码内容',
+                    create_time=datetime.utcnow(),
+                    update_time=datetime.utcnow()
+                )
+            ]
+            session.add_all(default_configs)
             
             # 创建示例分类
             categories = [
@@ -79,58 +75,7 @@ class SQLiteDatabase:
             ]
             session.add_all(categories)
             
-            # 创建示例博客
-            sample_blog = Blog(
-                id=self._generate_id(),
-                title='FastAPI 快速入门指南',
-                content='''# FastAPI 快速入门指南
-
-FastAPI 是一个现代、快速的 Python Web 框架，用于构建 API。
-
-## 主要特性
-
-- **快速**: 非常高的性能，与 NodeJS 和 Go 相当
-- **快速编码**: 提高功能开发速度约 200% 至 300%
-- **更少 bug**: 减少约 40% 的人为（开发者）导致错误
-- **直观**: 极佳的编辑器支持，自动补全无处不在，调试时间更短
-- **简易**: 设计的易于使用和学习，阅读文档时间更短
-- **简短**: 最小化代码重复，通过不同的参数声明实现丰富功能，bug 更少
-
-## 安装
-
-```bash
-pip install fastapi
-pip install "uvicorn[standard]"
-```
-
-## 创建第一个 API
-
-```python
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-```
-
-这就是一个完整的 FastAPI 应用！''',
-                summary='FastAPI 是一个现代、快速的 Python Web 框架，本文介绍了其主要特性和基本使用方法。',
-                category='技术',
-                tags=['Python', 'FastAPI', 'Web开发', 'API'],
-                author_id='demo-user-1',
-                create_time=datetime.fromisoformat('2024-06-20T10:00:00'),
-                update_time=datetime.fromisoformat('2024-06-20T10:00:00'),
-                status='published',
-                views=42
-            )
-            session.add(sample_blog)
-            
             session.commit()
-            
-            # 更新分类计数
-            self.update_category_counts()
             
         except Exception as e:
             session.rollback()
@@ -177,6 +122,17 @@ def read_root():
             'name': category.name,
             'description': category.description,
             'count': category.count
+        }
+
+    def _config_to_dict(self, config: SiteConfig) -> Dict[str, Any]:
+        """将SiteConfig对象转换为字典"""
+        return {
+            'id': config.id,
+            'key': config.key,
+            'value': config.value,
+            'description': config.description,
+            'createTime': config.create_time.isoformat() + 'Z',
+            'updateTime': config.update_time.isoformat() + 'Z'
         }
 
     # ===== 用户相关操作 =====
@@ -615,6 +571,119 @@ def read_root():
                 session.add(category)
             
             session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    # ===== 网站配置相关操作 =====
+
+    def get_all_site_configs(self) -> List[Dict[str, Any]]:
+        """获取所有网站配置"""
+        session = self._get_session()
+        try:
+            configs = session.query(SiteConfig).all()
+            return [self._config_to_dict(config) for config in configs]
+        finally:
+            session.close()
+
+    def get_site_config_by_key(self, key: str) -> Optional[Dict[str, Any]]:
+        """根据键获取网站配置"""
+        session = self._get_session()
+        try:
+            config = session.query(SiteConfig).filter(SiteConfig.key == key).first()
+            return self._config_to_dict(config) if config else None
+        finally:
+            session.close()
+
+    def get_site_config_value(self, key: str, default: str = None) -> Optional[str]:
+        """获取网站配置值"""
+        config = self.get_site_config_by_key(key)
+        return config['value'] if config else default
+
+    def update_site_config(self, key: str, value: str, description: str = None) -> bool:
+        """更新网站配置"""
+        session = self._get_session()
+        try:
+            config = session.query(SiteConfig).filter(SiteConfig.key == key).first()
+            if not config:
+                # 如果不存在，创建新配置
+                config = SiteConfig(
+                    id=self._generate_id(),
+                    key=key,
+                    value=value,
+                    description=description,
+                    create_time=datetime.utcnow(),
+                    update_time=datetime.utcnow()
+                )
+                session.add(config)
+            else:
+                # 更新现有配置
+                config.value = value
+                if description is not None:
+                    config.description = description
+                config.update_time = datetime.utcnow()
+            
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def delete_site_config(self, key: str) -> bool:
+        """删除网站配置"""
+        session = self._get_session()
+        try:
+            config = session.query(SiteConfig).filter(SiteConfig.key == key).first()
+            if not config:
+                return False
+            
+            session.delete(config)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    # ===== 管理员权限相关操作 =====
+
+    def delete_user(self, user_id: str) -> bool:
+        """删除用户（管理员权限）"""
+        session = self._get_session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+            
+            # 不能删除管理员
+            if user.role == UserRole.ADMIN:
+                raise ValueError("不能删除管理员账户")
+            
+            session.delete(user)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def reset_user_password(self, user_id: str, new_password: str) -> bool:
+        """重置用户密码（管理员权限）"""
+        session = self._get_session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+            
+            user.password = new_password
+            session.commit()
+            return True
         except Exception as e:
             session.rollback()
             raise e

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ImageCropperDialog } from '@/components/ui/ImageCropperDialog';
 import { 
   User, 
   Lock, 
@@ -18,13 +18,21 @@ import {
   AlertCircle,
   Check,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload,
+  Camera,
+  File,
+  Trash2,
+  Download,
+  Image as ImageIcon
 } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { userService, fileService } from '@/services';
 
 export function UserSettings() {
-  const { user, updatePassword } = useAuth();
+  const { user, updatePassword, updateUser } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Password form state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -33,6 +41,17 @@ export function UserSettings() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Avatar upload state
+  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  
+  // File management state
+  const [userFiles, setUserFiles] = useState<any[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [filePreview, setFilePreview] = useState<string>('');
+  const [showFilePreview, setShowFilePreview] = useState(false);
   
   // Form states
   const [error, setError] = useState('');
@@ -44,6 +63,119 @@ export function UserSettings() {
     navigate('/login');
     return null;
   }
+
+  // 文件选择处理
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+      setError('请选择图片文件');
+      return;
+    }
+
+    // 检查文件大小（2MB）
+    if (file.size > 2 * 1024 * 1024) {
+      setError('图片文件大小不能超过2MB');
+      return;
+    }
+
+    // 创建预览URL
+    const imageUrl = URL.createObjectURL(file);
+    setSelectedImage(imageUrl);
+    setShowCropDialog(true);
+    setError('');
+  };
+
+  // 头像裁剪完成
+  const handleAvatarCrop = async (croppedBlob: Blob) => {
+    setUploadingAvatar(true);
+    try {
+      // 直接使用userService上传头像，传递Blob
+      const result = await userService.uploadAvatar(croppedBlob);
+      
+      if (result.success && result.user) {
+        // 更新用户信息
+        if (updateUser) {
+          updateUser(result.user);
+        }
+        
+        setSuccess('头像更新成功！');
+        setError('');
+      } else {
+        throw new Error(result.message || '头像上传失败');
+      }
+
+      // 清理预览URL
+      if (selectedImage) {
+        URL.revokeObjectURL(selectedImage);
+        setSelectedImage('');
+      }
+
+    } catch (err: any) {
+      console.error('头像上传失败:', err);
+      setError(err.message || '头像上传失败，请重试');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  // 加载用户文件列表
+  const loadUserFiles = async () => {
+    setLoadingFiles(true);
+    try {
+      const files = await fileService.getUserFiles();
+      setUserFiles(files);
+    } catch (err: any) {
+      console.error('加载文件列表失败:', err);
+      setError('加载文件列表失败');
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  // 删除文件
+  const deleteFile = async (uniqueId: string, extension: string) => {
+    try {
+      const success = await fileService.deleteFile(uniqueId, extension);
+      if (success) {
+        setUserFiles(prev => prev.filter(file => file.unique_id !== uniqueId));
+        setSuccess('文件删除成功');
+      } else {
+        throw new Error('文件删除失败');
+      }
+    } catch (err: any) {
+      setError(err.message || '文件删除失败');
+    }
+  };
+
+  // 预览图片
+  const previewImage = (fileUrl: string) => {
+    setFilePreview(fileService.resolveFileUrl(fileUrl));
+    setShowFilePreview(true);
+  };
+
+  // 下载文件
+  const downloadFile = (fileUrl: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = fileService.resolveFileUrl(fileUrl);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // 格式化文件大小
+  const formatFileSize = (bytes: number) => {
+    return fileService.formatFileSize(bytes);
+  };
+
+  // 判断是否为图片文件
+  const isImageFile = (extension: string) => {
+    const info = fileService.getFileTypeInfo(`file${extension}`);
+    return info.isImage;
+  };
 
   const validatePasswordForm = () => {
     if (!currentPassword) {
@@ -128,9 +260,25 @@ export function UserSettings() {
         </div>
       </div>
 
+      {/* 全局消息提示 */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert className="mb-6 border-green-200 bg-green-50">
+          <Check className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">{success}</AlertDescription>
+        </Alert>
+      )}
+
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="profile">个人信息</TabsTrigger>
+          <TabsTrigger value="files">文件管理</TabsTrigger>
           <TabsTrigger value="security">安全设置</TabsTrigger>
         </TabsList>
 
@@ -139,17 +287,52 @@ export function UserSettings() {
           <Card>
             <CardHeader>
               <CardTitle>个人信息</CardTitle>
-              <CardDescription>查看您的账户基本信息</CardDescription>
+              <CardDescription>管理您的头像和账户基本信息</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <UserAvatar 
-                  user={user}
-                  size="xl"
-                />
-                <div>
+              <div className="flex items-center space-x-6">
+                <div className="relative">
+                  <UserAvatar 
+                    user={user}
+                    size="xl"
+                  />
+                  <Button
+                    size="sm"
+                    className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                  >
+                    {uploadingAvatar ? (
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+                <div className="space-y-2">
                   <h3 className="text-lg font-semibold">{user.username}</h3>
                   <p className="text-sm text-slate-500">{user.email}</p>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploadingAvatar ? '上传中...' : '更换头像'}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    支持 JPG、PNG 等格式，文件大小不超过 2MB
+                  </p>
                 </div>
               </div>
 
@@ -168,16 +351,91 @@ export function UserSettings() {
                 </div>
                 <div>
                   <Label className="text-slate-600">账户类型</Label>
-                  <p className="mt-1 font-medium">普通用户</p>
+                  <p className="mt-1 font-medium">
+                    {user.role === 'admin' ? '管理员' : '普通用户'}
+                    {user.role === 'admin' && (
+                      <Badge variant="default" className="ml-2">Admin</Badge>
+                    )}
+                  </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              {/* <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  目前暂不支持修改用户名和邮箱。如需修改，请联系管理员。
-                </AlertDescription>
-              </Alert> */}
+        {/* Files Tab */}
+        <TabsContent value="files">
+          <Card>
+            <CardHeader>
+              <CardTitle>文件管理</CardTitle>
+              <CardDescription>查看、下载和删除您上传的文件</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-sm text-slate-500">
+                  您上传的文件列表
+                </div>
+                <Button onClick={loadUserFiles} disabled={loadingFiles}>
+                  {loadingFiles ? '加载中...' : '刷新列表'}
+                </Button>
+              </div>
+
+              {userFiles.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <File className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>暂无上传的文件</p>
+                  <Button variant="outline" className="mt-4" onClick={loadUserFiles}>
+                    加载文件列表
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {userFiles.map((file) => (
+                    <div key={file.unique_id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        {isImageFile(file.extension) ? (
+                          <ImageIcon className="w-5 h-5 text-blue-500" />
+                        ) : (
+                          <File className="w-5 h-5 text-slate-500" />
+                        )}
+                        <div>
+                          <p className="font-medium text-sm">
+                            {file.unique_id}{file.extension}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {formatFileSize(file.size)} • {new Date(file.upload_time).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {isImageFile(file.extension) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => previewImage(file.url)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadFile(file.url, `${file.unique_id}${file.extension}`)}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteFile(file.unique_id, file.extension)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -359,6 +617,37 @@ export function UserSettings() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Image Cropper Dialog */}
+      <ImageCropperDialog
+        open={showCropDialog}
+        onOpenChange={setShowCropDialog}
+        imageUrl={selectedImage}
+        aspectRatio={1} // 正方形头像
+        maxWidth={512}
+        maxHeight={512}
+        maxFileSize={2 * 1024 * 1024} // 2MB
+        onCrop={handleAvatarCrop}
+        title="裁剪头像"
+      />
+
+      {/* File Preview Dialog */}
+      <Dialog open={showFilePreview} onOpenChange={setShowFilePreview}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>图片预览</DialogTitle>
+          </DialogHeader>
+          {filePreview && (
+            <div className="flex justify-center">
+              <img 
+                src={filePreview} 
+                alt="文件预览" 
+                className="max-w-full max-h-96 object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

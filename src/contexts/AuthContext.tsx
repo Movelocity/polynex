@@ -7,7 +7,7 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
-  updateUser: (updates: Partial<ClientUser>) => Promise<boolean>;
+  updateUser: (userOrUpdates: ClientUser | Partial<ClientUser>) => Promise<boolean>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   loading: boolean;
 }
@@ -142,10 +142,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // 更新用户信息
-  const updateUser = async (updates: Partial<ClientUser>): Promise<boolean> => {
+  const updateUser = async (userOrUpdates: ClientUser | Partial<ClientUser>): Promise<boolean> => {
     if (!authState.user) return false;
 
     try {
+      // 如果传入的是完整的用户对象（包含id），直接使用
+      if ('id' in userOrUpdates && userOrUpdates.id) {
+        setAuthState({
+          isAuthenticated: true,
+          user: userOrUpdates as ClientUser,
+        });
+        return true;
+      }
+      
+      // 否则作为更新字段处理
+      const updates = userOrUpdates as Partial<ClientUser>;
       const success = await userService.updateUser(authState.user.id, updates);
       if (success) {
         const updatedUser = { ...authState.user, ...updates };

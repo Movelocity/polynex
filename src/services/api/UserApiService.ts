@@ -214,11 +214,12 @@ export class UserApiService implements IUserService {
     }
   }
 
-  async uploadAvatar(file: File): Promise<{ success: boolean; message: string; user?: ClientUser; avatarUrl?: string }> {
+  async uploadAvatar(file: File | Blob): Promise<{ success: boolean; message: string; user?: ClientUser; avatarUrl?: string }> {
     try {
       // 创建FormData对象
       const formData = new FormData();
-      formData.append('file', file);
+      // FormData可以接受Blob或File
+      formData.append('file', file, 'avatar.jpg');
 
       // 使用fetch直接发送，因为ApiClient可能不支持FormData
       const baseURL = (this.apiClient as any).baseURL || 'http://localhost:8765/api';

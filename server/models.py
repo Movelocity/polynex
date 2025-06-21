@@ -100,6 +100,29 @@ class CategoryUpdate(BaseModel):
     count: Optional[int] = None
 
 
+class SiteConfig(BaseModel):
+    """网站配置模型"""
+    id: str
+    key: str
+    value: Optional[str] = None
+    description: Optional[str] = None
+    createTime: str
+    updateTime: str
+
+
+class SiteConfigCreate(BaseModel):
+    """创建网站配置模型"""
+    key: str
+    value: Optional[str] = None
+    description: Optional[str] = None
+
+
+class SiteConfigUpdate(BaseModel):
+    """更新网站配置模型"""
+    value: Optional[str] = None
+    description: Optional[str] = None
+
+
 class LoginResponse(BaseModel):
     user: UserResponse
     token: str
