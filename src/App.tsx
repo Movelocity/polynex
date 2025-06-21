@@ -21,6 +21,7 @@ import { ImageCropper } from '@/pages/ImageCropper';
 import { ImageOCR } from '@/pages/ImageOCR';
 import { JsonFormatter } from '@/pages/JsonFormatter';
 import { NotFound } from '@/pages/NotFound';
+import { ServiceDemo } from '@/components/ServiceDemo';
 
 function App() {
   useEffect(() => {
@@ -49,6 +50,8 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          <Route path="/service-demo" element={<ServiceDemo />} />
 
           {/* Routes with layout */}
           <Route path="/" element={<Layout />}>
