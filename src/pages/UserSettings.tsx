@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+// import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
@@ -20,7 +20,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { fileService } from '@/services';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 export function UserSettings() {
   const { user, updatePassword } = useAuth();
@@ -143,17 +143,10 @@ export function UserSettings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
-                {user.avatar && (
-                  <img 
-                    src={fileService.resolveFileUrl(user.avatar)} 
-                    alt={user.username}
-                    className="w-20 h-20 rounded-full object-cover cursor-pointer"
-                    onError={(e) => {
-                      // 如果头像加载失败，隐藏图片
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                )}
+                <UserAvatar 
+                  user={user}
+                  size="xl"
+                />
                 <div>
                   <h3 className="text-lg font-semibold">{user.username}</h3>
                   <p className="text-sm text-slate-500">{user.email}</p>

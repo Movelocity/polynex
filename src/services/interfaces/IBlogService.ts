@@ -18,7 +18,7 @@ export interface IBlogService {
   /**
    * 添加新博客
    */
-  addBlog(blog: Blog): Promise<void>;
+  addBlog(blog: Blog): Promise<Blog>;
 
   /**
    * 更新博客

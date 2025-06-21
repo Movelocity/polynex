@@ -234,8 +234,8 @@ export function WriteBlog() {
           views: 0,
         };
 
-        await blogService.addBlog(newBlog);
-        navigate(status === 'published' ? `/blog/${newBlog.id}` : '/dashboard');
+        const createdBlog = await blogService.addBlog(newBlog);
+        navigate(status === 'published' ? `/blog/${createdBlog.id}` : '/dashboard');
       }
     } catch (err) {
       console.error('保存文章失败:', err);

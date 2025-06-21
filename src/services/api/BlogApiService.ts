@@ -20,8 +20,8 @@ export class BlogApiService implements IBlogService {
     await this.apiClient.post('/blogs/batch', { blogs });
   }
 
-  async addBlog(blog: Blog): Promise<void> {
-    await this.apiClient.post('/blogs', blog);
+  async addBlog(blog: Blog): Promise<Blog> {
+    return await this.apiClient.post<Blog>('/blogs', blog);
   }
 
   async updateBlog(blogId: string, updates: Partial<Blog>): Promise<boolean> {

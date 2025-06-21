@@ -15,6 +15,7 @@ import {
   FileX,
   TrendingUp
 } from 'lucide-react';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 // Temporary formatDate function until we move it to a proper utils file
 const formatDate = (dateString: string): string => {
@@ -173,11 +174,10 @@ export function Search() {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Avatar className="w-6 h-6">
-                          <AvatarFallback className="text-xs">
-                            {blog.authorName[0]?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <UserAvatar 
+                          username={blog.authorName}
+                          size="xs"
+                        />
                         <span className="text-sm text-slate-600">{blog.authorName}</span>
                       </div>
                       <div className="flex items-center text-sm text-slate-500">

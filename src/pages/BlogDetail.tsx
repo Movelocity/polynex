@@ -18,6 +18,7 @@ import {
   BookOpen,
   Share2
 } from 'lucide-react';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 // Note: Highlight.js styles are included via CDN in index.html for better compatibility
 
 // Temporary formatDate function until we move it to a proper utils file
@@ -153,11 +154,10 @@ export function BlogDetail() {
         
         <div className="mx-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <Avatar className="w-12 h-12">
-              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white">
-                {blog.authorName[0]?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar 
+              username={blog.authorName}
+              size="lg"
+            />
             <div>
               <p className="font-medium text-slate-800">{blog.authorName}</p>
               <div className="flex items-center text-sm text-slate-500">
