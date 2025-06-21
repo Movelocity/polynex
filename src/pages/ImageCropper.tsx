@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, RotateCw, Crop, Edit, Download, ArrowLeft } from 'lucide-react';
+import { Upload, RotateCw, Crop, Edit, Download, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
@@ -86,7 +86,7 @@ function ImageDownloader({ imageUrl }: { imageUrl: string}) {
           {/* <CardTitle className="text-lg">下载设置</CardTitle> */}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-rows-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="width">宽度 (px)</Label>
               <Input
@@ -108,6 +108,53 @@ function ImageDownloader({ imageUrl }: { imageUrl: string}) {
                 min="1"
                 max="4000"
               />
+            </div>
+          </div>
+
+          {/* 常用尺寸预设 */}
+          <div>
+            <Label className="text-sm font-medium mb-3 block">常用尺寸</Label>
+            <div className="grid grid-cols-4 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDownloadWidth(64);
+                  setDownloadHeight(64);
+                }}
+              >
+                64×64
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDownloadWidth(128);
+                  setDownloadHeight(128);
+                }}
+              >
+                128×128
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDownloadWidth(256);
+                  setDownloadHeight(256);
+                }}
+              >
+                256×256
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDownloadWidth(512);
+                  setDownloadHeight(512);
+                }}
+              >
+                512×512
+              </Button>
             </div>
           </div>
 
@@ -308,6 +355,7 @@ export function ImageCropper() {
             返回工具列表
           </Link>
         </div>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">图片裁剪工具</h1>
         <p className="text-slate-600">上传图片并裁剪成所需尺寸</p>
       </div>
 
@@ -317,7 +365,10 @@ export function ImageCropper() {
           <Card>
             <CardHeader>
               <div className="flex justify-between">
-                <span className="text-2xl font-bold text-slate-900">图片裁剪工具</span>
+              <CardTitle className="flex items-center space-x-2">
+                <ImageIcon className="w-5 h-5" />
+                <span>操作面板</span>
+              </CardTitle>
                 { proxyImage && mode !== 'cropping' && (
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={()=>{mode === 'preview'? reset() : backToPreview()}}>
@@ -352,7 +403,7 @@ export function ImageCropper() {
                 }
               </div>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="px-6">
               {!proxyImage ? (
                 <div
                   className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center hover:border-slate-400 transition-colors cursor-pointer"

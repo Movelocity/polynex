@@ -123,79 +123,25 @@ export function Dashboard() {
   }
 
   return (
-    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        
-        {/* side */}
-        <div className="col-span-1 space-y-4">
-          <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src={user.avatar} alt={user.username} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-xl">
-                {user.username[0]?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">欢迎回来，{user.username}</h1>
-              <p className="text-slate-600">管理您的博客内容</p>
-            </div>
-          </div>
-          {/* Stats */}
-          <div className="hidden lg:flex flex-col gap-4">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-600 text-sm font-medium">总文章</p>
-                    <p className="text-3xl font-bold text-blue-700">{stats.total}</p>
-                  </div>
-                  <FileText className="w-8 h-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-600 text-sm font-medium">已发布</p>
-                    <p className="text-3xl font-bold text-green-700">{stats.published}</p>
-                  </div>
-                  <BookOpen className="w-8 h-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-yellow-600 text-sm font-medium">草稿</p>
-                    <p className="text-3xl font-bold text-yellow-700">{stats.draft}</p>
-                  </div>
-                  <Clock className="w-8 h-8 text-yellow-500" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-600 text-sm font-medium">总阅读量</p>
-                    <p className="text-3xl font-bold text-purple-700">{stats.totalViews}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center space-x-4 mb-4">
+        <Avatar className="w-16 h-16">
+          <AvatarImage src={user.avatar} alt={user.username} />
+          <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-xl">
+            {user.username[0]?.toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">欢迎回来，{user.username}</h1>
+          <p className="text-slate-600">管理您的博客内容</p>
         </div>
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Blog Management */}
-        <Card className="col-span-4 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+        <Card className="col-span-1 lg:col-span-3 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center font-bold text-xl">
               <BarChart3 className="w-6 h-6 mr-2" />
               我的文章
             </CardTitle>
@@ -294,6 +240,77 @@ export function Dashboard() {
             </Tabs>
           </CardContent>
         </Card>
+        {/* side */}
+        <div className="col-span-1 space-y-4">
+          
+          {/* Stats */}
+          {/* <div className="hidden lg:flex flex-col gap-4"> */}
+          <Card className="hidden lg:flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center font-bold text-xl">
+                <BarChart3 className="w-6 h-6 mr-2" />
+                数据统计
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-md font-medium">
+                <span className="flex items-center justify-between">
+                  <span>总文章</span>
+                  <span className=" font-bold">{stats.total}</span>
+                </span>
+                <span className="flex items-center justify-between">
+                  <span>已发布</span>
+                  <span className="font-bold">{stats.published}</span>
+                </span>
+                <span className="flex items-center justify-between">
+                  <span>草稿</span>
+                  <span className="font-bold">{stats.draft}</span>
+                </span>
+                <span className="flex items-center justify-between">
+                  <span>总阅读量</span>
+                  <span className="font-bold">{stats.totalViews}</span>
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+            
+            {/* <Card className="">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-600 text-sm font-medium">已发布</p>
+                    <p className="text-3xl font-bold text-green-700">{stats.published}</p>
+                  </div>
+                  <BookOpen className="w-8 h-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-yellow-600 text-sm font-medium">草稿</p>
+                    <p className="text-3xl font-bold text-yellow-700">{stats.draft}</p>
+                  </div>
+                  <Clock className="w-8 h-8 text-yellow-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-600 text-sm font-medium">总阅读量</p>
+                    <p className="text-3xl font-bold text-purple-700">{stats.totalViews}</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card> */}
+          {/* </div> */}
+        </div>
       </div>
     </div>
   );

@@ -79,7 +79,7 @@ export function Home() {
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      {/* <div className="text-center mb-12">
+      <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
           分享你的故事
         </h1>
@@ -99,7 +99,7 @@ export function Home() {
             加入我们
           </Button>
         </div>
-      </div> */}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-8">
         {/* Sidebar */}

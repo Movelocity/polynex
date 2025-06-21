@@ -240,93 +240,17 @@ export function WriteBlog() {
   }
 
   return (
-    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-        {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="space-y-6">
-            {/* Tags */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Tag className="w-5 h-5 mr-2" />
-                  分类 & 标签设置
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="category">选择分类</Label>
-                    <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue placeholder="选择文章分类" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="tagInput">添加标签</Label>
-                    <div className="flex space-x-2 mt-2">
-                      <Input
-                        id="tagInput"
-                        placeholder="输入标签名"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        disabled={formData.tags.length >= 5}
-                      />
-                      <Button 
-                        size="sm" 
-                        onClick={handleAddTag}
-                        disabled={!tagInput.trim() || formData.tags.length >= 5}
-                      >
-                        添加
-                      </Button>
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      最多可添加 5 个标签，按回车键快速添加
-                    </div>
-                  </div>
-                  
-                  {formData.tags.length > 0 && (
-                    <div>
-                      <Label>已添加的标签</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center">
-                            {tag}
-                            <button
-                              onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 hover:text-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-          </div>
-        </div>
         {/* Editor */}
-        <div className="lg:col-span-3 xl:col-span-3">
+        <div className="col-span-1 lg:col-span-3">
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
             <CardHeader>
               <input
@@ -410,10 +334,88 @@ export function WriteBlog() {
             </CardContent>
           </Card>
         </div>
-        <div className="hidden xl:block xl:col-span-1">
-          {/* Markdown Guide */}
-          <MarkdownGuide />
+
+        {/* Sidebar */}
+        <div className="col-span-1 space-y-6">
+          
+            {/* Tags */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <Tag className="w-5 h-5 mr-2" />
+                  分类 & 标签设置
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="category">选择分类</Label>
+                    <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="选择文章分类" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="tagInput">添加标签</Label>
+                    <div className="flex space-x-2 mt-2">
+                      <Input
+                        id="tagInput"
+                        placeholder="输入标签名"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        disabled={formData.tags.length >= 5}
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={handleAddTag}
+                        disabled={!tagInput.trim() || formData.tags.length >= 5}
+                      >
+                        添加
+                      </Button>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      最多可添加 5 个标签，按回车键快速添加
+                    </div>
+                  </div>
+                  
+                  {formData.tags.length > 0 && (
+                    <div>
+                      <Label>已添加的标签</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="flex items-center">
+                            {tag}
+                            <button
+                              onClick={() => handleRemoveTag(tag)}
+                              className="ml-1 hover:text-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          
+
+          <div className="hidden lg:block">
+            {/* Markdown Guide */}
+            <MarkdownGuide />
+          </div>
         </div>
+        
 
         
       </div>

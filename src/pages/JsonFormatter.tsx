@@ -308,7 +308,6 @@ export function JsonFormatter() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Label htmlFor="input-json">JSON内容：</Label>
                 <Textarea
                   id="input-json"
                   value={inputJson}
@@ -352,7 +351,7 @@ export function JsonFormatter() {
             <CardContent>
               {outputJson ? (
                 <div className="space-y-4">
-                  <Label htmlFor="output-json">处理结果：</Label>
+                  {/* <Label htmlFor="output-json">处理结果：</Label> */}
                   <Textarea
                     id="output-json"
                     value={outputJson}
