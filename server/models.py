@@ -1,6 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional, List, Literal
 from datetime import datetime
+from enum import Enum
+
+
+class UserRole(str, Enum):
+    """用户角色枚举"""
+    ADMIN = "admin"
+    USER = "user"
 
 
 class User(BaseModel):
@@ -9,6 +16,7 @@ class User(BaseModel):
     email: str
     password: str
     avatar: Optional[str] = None
+    role: UserRole = UserRole.USER
     registerTime: str
 
 
@@ -36,6 +44,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     avatar: Optional[str] = None
+    role: UserRole
     registerTime: str
 
 

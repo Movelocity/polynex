@@ -77,6 +77,7 @@ async def login(user_login: UserLogin):
         username=user_data['username'],
         email=user_data['email'],
         avatar=user_data.get('avatar'),
+        role=user_data['role'],
         registerTime=user_data['registerTime']
     )
     
@@ -121,6 +122,7 @@ async def register(user_create: UserCreate):
         username=new_user['username'],
         email=new_user['email'],
         avatar=new_user.get('avatar'),
+        role=new_user['role'],
         registerTime=new_user['registerTime']
     )
     
@@ -150,6 +152,7 @@ async def validate_token(current_user_id: str = Depends(get_current_user_id)):
         username=user_data['username'],
         email=user_data['email'],
         avatar=user_data.get('avatar'),
+        role=user_data['role'],
         registerTime=user_data['registerTime']
     )
 
@@ -209,6 +212,7 @@ async def get_users(current_user_id: str = Depends(get_current_user_id)):
             username=user['username'],
             email=user['email'],
             avatar=user.get('avatar'),
+            role=user['role'],
             registerTime=user['registerTime']
         )
         for user in users
@@ -227,6 +231,7 @@ async def get_current_user(current_user_id: str = Depends(get_current_user_id)):
         username=user_data['username'],
         email=user_data['email'],
         avatar=user_data.get('avatar'),
+        role=user_data['role'],
         registerTime=user_data['registerTime']
     )
 
@@ -243,6 +248,7 @@ async def get_user_by_email(email: str):
         username=user_data['username'],
         email=user_data['email'],
         avatar=user_data.get('avatar'),
+        role=user_data['role'],
         registerTime=user_data['registerTime']
     )
 
@@ -259,6 +265,7 @@ async def get_user_by_username(username: str):
         username=user_data['username'],
         email=user_data['email'],
         avatar=user_data.get('avatar'),
+        role=user_data['role'],
         registerTime=user_data['registerTime']
     )
 
@@ -746,6 +753,7 @@ async def upload_avatar(
                 username=user_data['username'],
                 email=user_data['email'],
                 avatar=user_data.get('avatar'),
+                role=user_data['role'],
                 registerTime=user_data['registerTime']
             )
         }
