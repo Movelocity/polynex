@@ -21,7 +21,8 @@ from database import db
 from auth import (
     verify_password, get_password_hash, create_access_token,
     get_current_user_id, get_current_user_id_optional,
-    ACCESS_TOKEN_EXPIRE_MINUTES
+    ACCESS_TOKEN_EXPIRE_MINUTES, check_login_rate_limit,
+    get_remaining_attempts, get_reset_time, record_login_attempt
 )
 
 app = FastAPI(
@@ -57,6 +58,28 @@ MAX_FILE_SIZE = 50 * 1024 * 1024
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login(user_login: UserLogin):
     """用户登录"""
+    # 检查登录速率限制
+    if not check_login_rate_limit(user_login.email):
+        remaining_attempts = get_remaining_attempts(user_login.email)
+        reset_time = get_reset_time(user_login.email)
+        
+        error_detail = f"登录尝试过于频繁，每分钟最多允许6次登录尝试。"
+        if reset_time:
+            error_detail += f" 请在{reset_time}秒后重试。"
+        
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=error_detail,
+            headers={
+                "X-RateLimit-Limit": "6",
+                "X-RateLimit-Remaining": str(remaining_attempts),
+                "X-RateLimit-Reset": str(reset_time) if reset_time else "0"
+            }
+        )
+    
+    # 记录登录尝试
+    record_login_attempt(user_login.email)
+    
     user_data = db.get_user_by_email(user_login.email)
     
     if not user_data or not verify_password(user_login.password, user_data['password']):
@@ -379,13 +402,8 @@ async def create_blog(
     current_user_id: str = Depends(get_current_user_id)
 ):
     """创建博客"""
-    # 获取当前用户信息
-    user_data = db.get_user_by_id(current_user_id)
-    if not user_data:
-        raise HTTPException(status_code=404, detail="用户不存在")
-
-    # 创建博客
-    new_blog = db.create_blog(blog_create, current_user_id, user_data['username'])
+    # 创建博客（不再需要传递用户名，数据库层会自动查询）
+    new_blog = db.create_blog(blog_create, current_user_id)
     return new_blog
 
 

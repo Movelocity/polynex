@@ -57,6 +57,7 @@ class Blog(BaseModel):
     tags: List[str]
     authorId: str
     authorName: str
+    authorAvatar: Optional[str] = None
     createTime: str
     updateTime: str
     status: Literal['published', 'draft']

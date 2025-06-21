@@ -36,7 +36,6 @@ class Blog(Base):
     category = Column(String(100), nullable=False)
     tags = Column(JSON, nullable=True)  # 存储标签列表
     author_id = Column(String, nullable=False)
-    author_name = Column(String(100), nullable=False)
     create_time = Column(DateTime, nullable=False, default=datetime.utcnow)
     update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     status = Column(String(20), nullable=False, default='draft')  # 'published' or 'draft'

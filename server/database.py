@@ -120,7 +120,6 @@ def read_root():
                 category='技术',
                 tags=['Python', 'FastAPI', 'Web开发', 'API'],
                 author_id='demo-user-1',
-                author_name='博客达人',
                 create_time=datetime.fromisoformat('2024-06-20T10:00:00'),
                 update_time=datetime.fromisoformat('2024-06-20T10:00:00'),
                 status='published',
@@ -153,8 +152,8 @@ def read_root():
             'registerTime': user.register_time.isoformat() + 'Z'
         }
     
-    def _blog_to_dict(self, blog: Blog) -> Dict[str, Any]:
-        """将Blog对象转换为字典"""
+    def _blog_to_dict(self, blog: Blog, author: User = None) -> Dict[str, Any]:
+        """将Blog对象转换为字典，包含作者信息"""
         return {
             'id': blog.id,
             'title': blog.title,
@@ -163,7 +162,8 @@ def read_root():
             'category': blog.category,
             'tags': blog.tags or [],
             'authorId': blog.author_id,
-            'authorName': blog.author_name,
+            'authorName': author.username if author else 'Unknown',
+            'authorAvatar': author.avatar if author else None,
             'createTime': blog.create_time.isoformat() + 'Z',
             'updateTime': blog.update_time.isoformat() + 'Z',
             'status': blog.status,
@@ -299,8 +299,9 @@ def read_root():
         """获取所有博客"""
         session = self._get_session()
         try:
-            blogs = session.query(Blog).all()
-            return [self._blog_to_dict(blog) for blog in blogs]
+            # 使用join查询获取博客和作者信息
+            results = session.query(Blog, User).join(User, Blog.author_id == User.id).all()
+            return [self._blog_to_dict(blog, author) for blog, author in results]
         finally:
             session.close()
 
@@ -308,8 +309,9 @@ def read_root():
         """获取已发布的博客"""
         session = self._get_session()
         try:
-            blogs = session.query(Blog).filter(Blog.status == 'published').all()
-            return [self._blog_to_dict(blog) for blog in blogs]
+            # 使用join查询获取已发布博客和作者信息
+            results = session.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.status == 'published').all()
+            return [self._blog_to_dict(blog, author) for blog, author in results]
         finally:
             session.close()
 
@@ -317,8 +319,9 @@ def read_root():
         """根据ID获取博客"""
         session = self._get_session()
         try:
-            blog = session.query(Blog).filter(Blog.id == blog_id).first()
-            return self._blog_to_dict(blog) if blog else None
+            # 使用join查询获取博客和作者信息
+            result = session.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.id == blog_id).first()
+            return self._blog_to_dict(result[0], result[1]) if result else None
         finally:
             session.close()
 
@@ -326,8 +329,9 @@ def read_root():
         """根据作者ID获取博客"""
         session = self._get_session()
         try:
-            blogs = session.query(Blog).filter(Blog.author_id == author_id).all()
-            return [self._blog_to_dict(blog) for blog in blogs]
+            # 使用join查询获取博客和作者信息
+            results = session.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.author_id == author_id).all()
+            return [self._blog_to_dict(blog, author) for blog, author in results]
         finally:
             session.close()
 
@@ -335,8 +339,9 @@ def read_root():
         """根据分类获取博客"""
         session = self._get_session()
         try:
-            blogs = session.query(Blog).filter(Blog.category == category).all()
-            return [self._blog_to_dict(blog) for blog in blogs]
+            # 使用join查询获取博客和作者信息
+            results = session.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.category == category).all()
+            return [self._blog_to_dict(blog, author) for blog, author in results]
         finally:
             session.close()
 
@@ -347,19 +352,25 @@ def read_root():
         
         session = self._get_session()
         try:
-            blogs = session.query(Blog).filter(
+            # 使用join查询获取博客和作者信息
+            results = session.query(Blog, User).join(User, Blog.author_id == User.id).filter(
                 (Blog.title.contains(query)) |
                 (Blog.content.contains(query)) |
                 (Blog.summary.contains(query))
             ).all()
-            return [self._blog_to_dict(blog) for blog in blogs]
+            return [self._blog_to_dict(blog, author) for blog, author in results]
         finally:
             session.close()
 
-    def create_blog(self, blog_data: BlogCreate, author_id: str, author_name: str) -> Dict[str, Any]:
+    def create_blog(self, blog_data: BlogCreate, author_id: str) -> Dict[str, Any]:
         """创建新博客"""
         session = self._get_session()
         try:
+            # 获取作者信息
+            author = session.query(User).filter(User.id == author_id).first()
+            if not author:
+                raise ValueError("作者不存在")
+            
             new_blog = Blog(
                 id=self._generate_id(),
                 title=blog_data.title,
@@ -368,7 +379,6 @@ def read_root():
                 category=blog_data.category,
                 tags=blog_data.tags,
                 author_id=author_id,
-                author_name=author_name,
                 create_time=datetime.utcnow(),
                 update_time=datetime.utcnow(),
                 status=blog_data.status,
@@ -381,7 +391,7 @@ def read_root():
             # 更新分类计数
             self.update_category_counts()
             
-            return self._blog_to_dict(new_blog)
+            return self._blog_to_dict(new_blog, author)
         except Exception as e:
             session.rollback()
             raise e
@@ -468,7 +478,6 @@ def read_root():
                     category=blog_data['category'],
                     tags=blog_data['tags'],
                     author_id=blog_data['authorId'],
-                    author_name=blog_data['authorName'],
                     create_time=datetime.fromisoformat(blog_data['createTime'].replace('Z', '')),
                     update_time=datetime.fromisoformat(blog_data['updateTime'].replace('Z', '')),
                     status=blog_data['status'],
