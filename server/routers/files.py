@@ -326,10 +326,30 @@ async def get_thumbnail(unique_id: str):
     )
 
 @router.get("/resources/list")
-async def list_user_files(current_user_id: str = Depends(get_current_user_id)):
-    """获取当前用户上传的文件列表"""
+async def list_user_files(
+    page: int = 1,
+    page_size: int = 10,
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """获取当前用户上传的文件列表（支持分页）"""
     try:
-        files = db.get_files_by_uploader(current_user_id)
+        # 参数验证
+        if page < 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="页码必须大于0"
+            )
+        
+        if page_size < 1 or page_size > 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="每页大小必须在1-100之间"
+            )
+        
+        # 获取分页文件列表
+        result = db.get_files_by_uploader(current_user_id, page, page_size)
+        files = result['files']
+        pagination = result['pagination']
         
         # 为每个文件动态判断并构造缩略图URL
         for file in files:
@@ -338,7 +358,12 @@ async def list_user_files(current_user_id: str = Depends(get_current_user_id)):
                 if thumbnail_path.exists():
                     file['thumbnail'] = construct_thumbnail_url(file['unique_id'])
         
-        return {"files": files}
+        return {
+            "files": files,
+            "pagination": pagination
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

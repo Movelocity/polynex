@@ -25,6 +25,12 @@ export function UserSettings() {
   // File management state
   const [userFiles, setUserFiles] = useState<any[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
+  const [filePagination, setFilePagination] = useState({
+    page: 1,
+    page_size: 10,
+    total: 0,
+    total_pages: 0
+  });
   
   // File upload state
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -78,11 +84,16 @@ export function UserSettings() {
   };
 
   // 加载用户文件列表
-  const loadUserFiles = async () => {
+  const loadUserFiles = async (page: number = 1, pageSize: number = 10) => {
+    // 确保传递的是数字，防止对象传递
+    const validPage = typeof page === 'number' ? page : (filePagination.page || 1);
+    const validPageSize = typeof pageSize === 'number' ? pageSize : (filePagination.page_size || 10);
+    
     setLoadingFiles(true);
     try {
-      const files = await fileService.getUserFiles();
-      setUserFiles(files);
+      const response = await fileService.getUserFiles(validPage, validPageSize);
+      setUserFiles(response.files);
+      setFilePagination(response.pagination);
     } catch (err: any) {
       console.error('加载文件列表失败:', err);
       setError('加载文件列表失败');
@@ -91,13 +102,35 @@ export function UserSettings() {
     }
   };
 
+  // 处理页面切换
+  const handlePageChange = async (page: number) => {
+    // 确保传递的是数字
+    const validPage = typeof page === 'number' ? page : 1;
+    await loadUserFiles(validPage, filePagination.page_size || 10);
+  };
+
   // 删除文件
   const handleFileDelete = async (uniqueId: string, extension: string) => {
     try {
       const success = await fileService.deleteFile(uniqueId, extension);
       if (success) {
+        // 先从当前列表中移除文件以提供即时反馈
         setUserFiles(prev => prev.filter(file => file.unique_id !== uniqueId));
         setSuccess('文件删除成功');
+        
+        // 计算删除后是否需要调整页面
+        const remainingFilesOnCurrentPage = userFiles.length - 1;
+        let targetPage = filePagination.page;
+        
+        // 如果当前页没有文件了且不是第一页，跳转到上一页
+        if (remainingFilesOnCurrentPage === 0 && filePagination.page > 1) {
+          targetPage = filePagination.page - 1;
+        }
+        
+        // 刷新文件列表以确保分页信息正确
+        setTimeout(() => {
+          loadUserFiles(targetPage, filePagination.page_size || 10);
+        }, 500);
       } else {
         throw new Error('文件删除失败');
       }
@@ -154,9 +187,9 @@ export function UserSettings() {
     // 显示上传结果
     if (uploadedCount > 0) {
       setSuccess(`成功上传 ${uploadedCount} 个文件！`);
-      // 自动刷新文件列表以确保数据同步
+      // 自动刷新文件列表以确保数据同步，回到第一页显示新上传的文件
       setTimeout(() => {
-        loadUserFiles();
+        loadUserFiles(1, filePagination.page_size || 10);
       }, 1000);
     }
     
@@ -309,8 +342,10 @@ export function UserSettings() {
               <FileList
                 files={userFiles}
                 loading={loadingFiles}
+                pagination={filePagination}
                 onDelete={handleFileDelete}
                 onRefresh={loadUserFiles}
+                onPageChange={handlePageChange}
               />
             </CardContent>
           </Card>

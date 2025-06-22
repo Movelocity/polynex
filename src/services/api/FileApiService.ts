@@ -1,6 +1,16 @@
 import { ApiClient, ApiError, defaultBaseURL } from './ApiClient';
 
 /**
+ * 分页信息接口
+ */
+export interface PaginationInfo {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+/**
  * 文件信息接口
  */
 export interface FileInfo {
@@ -11,6 +21,7 @@ export interface FileInfo {
   upload_time: string;
   uploader_id?: string;
   url: string;
+  thumbnail?: string; // 缩略图URL（如果是图片且缩略图存在）
 }
 
 /**
@@ -38,10 +49,11 @@ export interface AvatarUploadResponse {
 }
 
 /**
- * 文件列表响应接口
+ * 文件列表响应接口（支持分页）
  */
 export interface FileListResponse {
   files: FileInfo[];
+  pagination: PaginationInfo;
 }
 
 /**
@@ -139,6 +151,14 @@ export class FileApiService {
   }
 
   /**
+   * 获取缩略图URL
+   */
+  getThumbnailUrl(uniqueId: string): string {
+    const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
+    return `${baseURL}/resources/thumbnail/${uniqueId}.jpg`;
+  }
+
+  /**
    * 转换相对URL为完整URL（如果需要）
    */
   resolveFileUrl(url: string): string {
@@ -153,12 +173,21 @@ export class FileApiService {
   }
 
   /**
-   * 获取用户文件列表
+   * 获取用户文件列表（支持分页）
    */
-  async getUserFiles(): Promise<FileInfo[]> {
+  async getUserFiles(page: number = 1, pageSize: number = 10): Promise<FileListResponse> {
     try {
-      const response = await this.apiClient.get<FileListResponse>('/resources/list');
-      return response.files;
+      // 验证参数，确保是有效数字
+      const validPage = Math.max(1, Math.floor(Number(page)) || 1);
+      const validPageSize = Math.max(1, Math.min(100, Math.floor(Number(pageSize)) || 10));
+      
+      // 调试日志
+      if (typeof page !== 'number' || typeof pageSize !== 'number') {
+        console.warn('FileApiService.getUserFiles: 接收到非数字参数', { page, pageSize, validPage, validPageSize });
+      }
+      
+      const response = await this.apiClient.get<FileListResponse>(`/resources/list?page=${validPage}&page_size=${validPageSize}`);
+      return response;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
@@ -201,6 +230,15 @@ export class FileApiService {
   isValidFileSize(file: File, maxSizeMB: number = 50): boolean {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     return file.size <= maxSizeBytes;
+  }
+
+  /**
+   * 检查是否为图片文件
+   */
+  isImageFile(fileName: string): boolean {
+    const extension = fileName.toLowerCase().split('.').pop() || '';
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    return imageExts.includes(extension);
   }
 
   /**

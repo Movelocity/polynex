@@ -801,12 +801,37 @@ class SQLiteDatabase:
         finally:
             session.close()
 
-    def get_files_by_uploader(self, uploader_id: str) -> List[Dict[str, Any]]:
-        """根据上传者ID获取文件列表"""
+    def get_files_by_uploader(self, uploader_id: str, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """根据上传者ID获取文件列表（支持分页）"""
         session = self._get_session()
         try:
-            files = session.query(FileRecord).filter(FileRecord.uploader_id == uploader_id).all()
-            return [self._file_to_dict(file_record) for file_record in files]
+            # 计算偏移量
+            offset = (page - 1) * page_size
+            
+            # 获取总数
+            total = session.query(FileRecord).filter(FileRecord.uploader_id == uploader_id).count()
+            
+            # 获取分页数据，按上传时间倒序排列
+            files = session.query(FileRecord).filter(FileRecord.uploader_id == uploader_id)\
+                .order_by(FileRecord.upload_time.desc())\
+                .offset(offset)\
+                .limit(page_size)\
+                .all()
+            
+            # 计算分页信息
+            total_pages = (total + page_size - 1) // page_size  # 向上取整
+            
+            return {
+                'files': [self._file_to_dict(file_record) for file_record in files],
+                'pagination': {
+                    'page': page,
+                    'page_size': page_size,
+                    'total': total,
+                    'total_pages': total_pages,
+                    'has_next': page < total_pages,
+                    'has_previous': page > 1
+                }
+            }
         finally:
             session.close()
 

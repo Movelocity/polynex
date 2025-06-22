@@ -36,7 +36,7 @@ export const ServiceDemo: React.FC = () => {
       // 尝试加载文件列表（需要认证）
       try {
         const filesData = await fileService.getUserFiles();
-        setFiles(filesData);
+        setFiles(filesData.files);
       } catch (fileError) {
         console.log('无法加载文件列表，可能未登录');
         setFiles([]);
