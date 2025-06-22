@@ -62,6 +62,22 @@ class Blog(BaseModel):
     views: int
 
 
+class BlogSummary(BaseModel):
+    """博客摘要模型（不包含content，用于列表展示）"""
+    id: str
+    title: str
+    summary: str
+    category: str
+    tags: List[str]
+    authorId: str
+    authorName: str
+    authorAvatar: Optional[str] = None
+    createTime: str
+    updateTime: str
+    status: Literal['published', 'draft']
+    views: int
+
+
 class BlogCreate(BaseModel):
     title: str
     content: str

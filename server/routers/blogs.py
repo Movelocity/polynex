@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 
 from models import (
-    Blog, BlogCreate, BlogUpdate,
+    Blog, BlogSummary, BlogCreate, BlogUpdate,
     BatchBlogsRequest
 )
 from database import db
@@ -11,48 +11,52 @@ from auth import get_current_user_id
 router = APIRouter(prefix="/api/blogs", tags=["博客管理"])
 
 
-@router.get("", response_model=List[Blog])
+@router.get("", response_model=List[BlogSummary])
 async def get_blogs():
-    """获取所有博客"""
-    blogs = db.get_all_blogs()
+    """获取所有博客摘要（不包含content）"""
+    blogs = db.get_all_blogs_summary()
     return blogs
 
 
-@router.get("/published", response_model=List[Blog])
+@router.get("/published", response_model=List[BlogSummary])
 async def get_published_blogs():
-    """获取已发布博客"""
-    blogs = db.get_published_blogs()
+    """获取已发布博客摘要（不包含content）"""
+    blogs = db.get_published_blogs_summary()
     return blogs
 
 
+# 重要：具体路由必须放在通用路由 /{blog_id} 之前！
+# 原因：FastAPI按照路由定义顺序进行匹配，如果 /{blog_id} 在前面，
+# 访问 /search 时会被匹配为 blog_id="search"，导致查找不存在的博客而返回404
+@router.get("/search", response_model=List[BlogSummary])
+async def search_blogs(q: str):
+    """搜索博客摘要（不包含content）"""
+    blogs = db.search_blogs_summary(q)
+    return blogs
+
+
+@router.get("/author/{author_id}", response_model=List[BlogSummary])
+async def get_blogs_by_author(author_id: str):
+    """根据作者获取博客摘要（不包含content）"""
+    blogs = db.get_blogs_by_author_summary(author_id)
+    return blogs
+
+
+@router.get("/category/{category}", response_model=List[BlogSummary])
+async def get_blogs_by_category(category: str):
+    """根据分类获取博客摘要（不包含content）"""
+    blogs = db.get_blogs_by_category_summary(category)
+    return blogs
+
+
+# 通用路由放在最后，避免误匹配具体路由
 @router.get("/{blog_id}", response_model=Blog)
 async def get_blog_by_id(blog_id: str):
-    """根据ID获取博客"""
+    """根据ID获取博客完整内容"""
     blog = db.get_blog_by_id(blog_id)
     if not blog:
         raise HTTPException(status_code=404, detail="博客不存在")
     return blog
-
-
-@router.get("/author/{author_id}", response_model=List[Blog])
-async def get_blogs_by_author(author_id: str):
-    """根据作者获取博客"""
-    blogs = db.get_blogs_by_author(author_id)
-    return blogs
-
-
-@router.get("/category/{category}", response_model=List[Blog])
-async def get_blogs_by_category(category: str):
-    """根据分类获取博客"""
-    blogs = db.get_blogs_by_category(category)
-    return blogs
-
-
-@router.get("/search", response_model=List[Blog])
-async def search_blogs(q: str):
-    """搜索博客"""
-    blogs = db.search_blogs(q)
-    return blogs
 
 
 @router.post("", response_model=Blog, status_code=201)

@@ -168,13 +168,13 @@ export function Search() {
                       </div>
                     </div>
                     
-                    <h3 className="text-xl font-semibold text-slate-800 mb-2 hover:text-blue-600 transition-colors">
+                    <h3 className="text-xl font-semibold text-foreground mb-2 hover:text-blue-600 transition-colors">
                       <Link to={`/blog/${blog.id}`}>
                         {highlightText(blog.title, searchQuery)}
                       </Link>
                     </h3>
                     
-                    <p className="text-slate-600 mb-4 line-clamp-3 leading-relaxed">
+                    <p className="text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
                       {highlightText(blog.summary, searchQuery)}
                     </p>
                     

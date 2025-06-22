@@ -244,7 +244,7 @@
   .border-info { @apply border-[hsl(var(--info))]; }
 
   /* 灰度扩展类 */
-  .bg-gray-50 { @apply bg-[hsl(var(--gray-50))]; }
+  /* .bg-gray-50 { @apply bg-[hsl(var(--gray-50))]; }
   .bg-gray-100 { @apply bg-[hsl(var(--gray-100))]; }
   .bg-gray-200 { @apply bg-[hsl(var(--gray-200))]; }
   .bg-gray-300 { @apply bg-[hsl(var(--gray-300))]; }
@@ -264,7 +264,7 @@
   .text-gray-600 { @apply text-[hsl(var(--gray-600))]; }
   .text-gray-700 { @apply text-[hsl(var(--gray-700))]; }
   .text-gray-800 { @apply text-[hsl(var(--gray-800))]; }
-  .text-gray-900 { @apply text-[hsl(var(--gray-900))]; }
+  .text-gray-900 { @apply text-[hsl(var(--gray-900))]; } */
 
   /* 渐变背景类 */
   .bg-gradient-primary { @apply bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))]; }

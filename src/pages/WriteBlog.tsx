@@ -349,8 +349,8 @@ export function WriteBlog() {
                   </Button>
                 </div>
                 </div>
-                <TabsContent value="write" className="min-h-[600px]">
-                  <div className="relative min-h-[600px]">
+                <TabsContent value="write">
+                  <div className="relative min-h-[600px] pb-4">
                     <TextareaAutosize
                       id="content"
                       placeholder="开始编写您的文章... 支持 Markdown 语法"

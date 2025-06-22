@@ -95,7 +95,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             );
           },
           p: ({ children }) => (
-            <p className="text-muted-foreground mb-4 leading-relaxed">
+            <p className="text-foreground mb-4 leading-relaxed">
               {children}
             </p>
           ),
@@ -121,7 +121,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             if (!isInCodeBlock) {
               // 内联代码样式 - 使用主题色
               return (
-                <code className="bg-muted text-foreground px-1.5 py-0.5 rounded text-sm font-mono border border-border">
+                <code className="bg-gray-300/40 dark:bg-gray-400/40 text-foreground p-0.5 rounded font-mono">
                   {children}
                 </code>
               );
@@ -130,7 +130,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             // 代码块样式 - 使用主题色
             return (
               <code 
-                className={`block p-4 text-sm font-mono leading-relaxed text-foreground ${className || ''}`}
+                className={`block p-4 text-sm font-consolas leading-relaxed text-foreground ${className || ''}`}
                 {...props}
               >
                 {children}
@@ -148,7 +148,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             </ol>
           ),
           li: ({ children }) => (
-            <li className="text-muted-foreground leading-relaxed">
+            <li className="text-foreground leading-relaxed">
               {children}
             </li>
           ),
@@ -203,7 +203,7 @@ export function MarkdownPreview({ content }: { content: string }) {
           ),
           // 处理强调文本
           em: ({ children }) => (
-            <em className="italic text-muted-foreground">
+            <em className="italic text-foreground">
               {children}
             </em>
           ),
