@@ -72,7 +72,7 @@ def main():
             "main:app",
             host="0.0.0.0",
             port=8765,
-            reload=True,  # 开发模式下自动重载
+            reload=False,  # 开发模式下自动重载
             log_level="info"
         )
     except KeyboardInterrupt:

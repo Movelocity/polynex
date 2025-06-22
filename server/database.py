@@ -755,6 +755,132 @@ class SQLiteDatabase:
         finally:
             session.close()
 
+    # ===== 文件相关操作 =====
+
+    def _file_to_dict(self, file_record: FileRecord) -> Dict[str, Any]:
+        """将FileRecord对象转换为字典"""
+        return {
+            'unique_id': file_record.unique_id,
+            'original_name': file_record.original_name,
+            'extension': file_record.extension,
+            'size': file_record.size,
+            'upload_time': file_record.upload_time.isoformat() + 'Z',
+            'uploader_id': file_record.uploader_id,
+            'url': f"/api/resources/{file_record.unique_id}{file_record.extension}"
+        }
+
+    def create_file_record(self, file_data: Dict[str, Any]) -> Dict[str, Any]:
+        """创建文件记录"""
+        session = self._get_session()
+        try:
+            new_file = FileRecord(
+                unique_id=file_data['unique_id'],
+                original_name=file_data['original_name'],
+                extension=file_data['extension'],
+                size=file_data['size'],
+                upload_time=datetime.fromisoformat(file_data['upload_time'].replace('Z', '')) if isinstance(file_data.get('upload_time'), str) else datetime.utcnow(),
+                uploader_id=file_data.get('uploader_id')
+            )
+            
+            session.add(new_file)
+            session.commit()
+            
+            return self._file_to_dict(new_file)
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_file_by_id(self, unique_id: str) -> Optional[Dict[str, Any]]:
+        """根据ID获取文件记录"""
+        session = self._get_session()
+        try:
+            file_record = session.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
+            return self._file_to_dict(file_record) if file_record else None
+        finally:
+            session.close()
+
+    def get_files_by_uploader(self, uploader_id: str) -> List[Dict[str, Any]]:
+        """根据上传者ID获取文件列表"""
+        session = self._get_session()
+        try:
+            files = session.query(FileRecord).filter(FileRecord.uploader_id == uploader_id).all()
+            return [self._file_to_dict(file_record) for file_record in files]
+        finally:
+            session.close()
+
+    def get_all_files(self) -> List[Dict[str, Any]]:
+        """获取所有文件记录"""
+        session = self._get_session()
+        try:
+            files = session.query(FileRecord).all()
+            return [self._file_to_dict(file_record) for file_record in files]
+        finally:
+            session.close()
+
+    def update_file_record(self, unique_id: str, updates: Dict[str, Any]) -> bool:
+        """更新文件记录"""
+        session = self._get_session()
+        try:
+            file_record = session.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
+            if not file_record:
+                return False
+            
+            for key, value in updates.items():
+                if hasattr(file_record, key):
+                    setattr(file_record, key, value)
+            
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def delete_file_record(self, unique_id: str) -> bool:
+        """删除文件记录"""
+        session = self._get_session()
+        try:
+            file_record = session.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
+            if not file_record:
+                return False
+            
+            session.delete(file_record)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def scan_and_import_files(self, files_data: List[Dict[str, Any]]):
+        """批量导入文件记录（用于启动时扫描）"""
+        session = self._get_session()
+        try:
+            for file_data in files_data:
+                # 检查文件是否已存在
+                existing = session.query(FileRecord).filter(FileRecord.unique_id == file_data['unique_id']).first()
+                if not existing:
+                    new_file = FileRecord(
+                        unique_id=file_data['unique_id'],
+                        original_name=file_data['original_name'],
+                        extension=file_data['extension'],
+                        size=file_data['size'],
+                        upload_time=datetime.fromisoformat(file_data['upload_time'].replace('Z', '')) if isinstance(file_data.get('upload_time'), str) else datetime.utcnow(),
+                        uploader_id=file_data.get('uploader_id')
+                    )
+                    session.add(new_file)
+            
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
 
 # 全局数据库实例
 db = SQLiteDatabase()

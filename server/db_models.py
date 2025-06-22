@@ -70,7 +70,7 @@ class FileRecord(Base):
     extension = Column(String(20), nullable=False)
     size = Column(Integer, nullable=False)
     upload_time = Column(DateTime, nullable=False, default=datetime.utcnow)
-    uploader_id = Column(String, nullable=False)
+    uploader_id = Column(String, nullable=True)  # 允许为空，表示未知上传者
 
 # 数据库配置
 DATABASE_URL = "sqlite:///./blog_platform.db"
