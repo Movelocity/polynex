@@ -8,8 +8,17 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
+
+  // 如果正在加载认证状态，显示加载画面
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+      </div>
+    );
+  }
 
   if (requireAuth && !isAuthenticated) {
     // 保存用户想要访问的页面，登录后重定向

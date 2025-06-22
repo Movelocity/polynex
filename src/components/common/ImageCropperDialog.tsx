@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/x-ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/x-ui/dialog';
 import { Button } from '@/components/x-ui/button';
 import { ImageCropperPanel, CropArea } from '@/components/ImageCropV1/ImageCropperPanel';
 
@@ -173,6 +173,9 @@ export function ImageCropperDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            通过拖拽调整裁剪区域来选择所需的图片部分，然后点击确认裁剪按钮完成操作。
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

@@ -34,9 +34,14 @@ export function UserSettings() {
   const [success, setSuccess] = useState('');
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
+  // 由于组件已被 ProtectedRoute 保护，user 状态已确保存在
+  // 但在 TypeScript 中仍需类型保护
   if (!user) {
-    navigate('/login');
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+      </div>
+    );
   }
 
   // 组件加载时自动加载文件列表

@@ -31,12 +31,13 @@ export function UserProfileInfo({ user }: UserProfileInfoProps) {
       </div>
       <div>
         <Label className="text-slate-600">账户类型</Label>
-        <p className="mt-1 font-medium">
+        {/*<div> cannot appear as a descendant of <p>*/}
+        <div className="mt-1 font-medium">
           {user.role === 'admin' ? '管理员' : '普通用户'}
           {user.role === 'admin' && (
             <Badge variant="default" className="ml-2">Admin</Badge>
           )}
-        </p>
+        </div>
       </div>
     </div>
   );
