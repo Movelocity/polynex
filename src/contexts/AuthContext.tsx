@@ -8,6 +8,7 @@ interface AuthContextType extends AuthState {
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateUser: (userOrUpdates: ClientUser | Partial<ClientUser>) => Promise<boolean>;
+  updateUserProfile: (updates: { username?: string; email?: string }) => Promise<{ success: boolean; message: string }>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   loading: boolean;
 }
@@ -190,6 +191,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // 更新用户资料（用户名和邮箱）
+  const updateUserProfile = async (updates: { username?: string; email?: string }): Promise<{ success: boolean; message: string }> => {
+    if (!authState.user) {
+      return { success: false, message: '用户未登录' };
+    }
+
+    try {
+      const result = await userService.updateUserProfile(updates);
+      if (result.success && result.user) {
+        setAuthState({
+          isAuthenticated: true,
+          user: result.user,
+        });
+      }
+      return result;
+    } catch (error) {
+      console.error('更新用户资料失败:', error);
+      return { success: false, message: '更新用户资料失败，请稍后重试' };
+    }
+  };
+
   // 更新密码
   const updatePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
     if (!authState.user) {
@@ -211,6 +233,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     logout,
     updateUser,
+    updateUserProfile,
     updatePassword,
     loading,
   };

@@ -113,8 +113,27 @@ async def update_user(
             detail="只能更新自己的信息"
         )
     
-    # 如果更新密码，需要加密
     updates = user_update.dict(exclude_unset=True)
+    
+    # 验证用户名唯一性
+    if 'username' in updates:
+        existing_user = db.get_user_by_username(updates['username'])
+        if existing_user and existing_user['id'] != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="用户名已被使用"
+            )
+    
+    # 验证邮箱唯一性
+    if 'email' in updates:
+        existing_user = db.get_user_by_email(updates['email'])
+        if existing_user and existing_user['id'] != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="邮箱已被使用"
+            )
+    
+    # 如果更新密码，需要加密
     if 'password' in updates:
         updates['password'] = get_password_hash(updates['password'])
     
@@ -122,7 +141,19 @@ async def update_user(
     if not success:
         raise HTTPException(status_code=404, detail="用户不存在")
     
-    return {"message": "用户信息更新成功"}
+    # 返回更新后的用户信息
+    updated_user = db.get_user_by_id(user_id)
+    return {
+        "message": "用户信息更新成功",
+        "user": UserResponse(
+            id=updated_user['id'],
+            username=updated_user['username'],
+            email=updated_user['email'],
+            avatar=updated_user.get('avatar'),
+            role=updated_user['role'],
+            registerTime=updated_user['registerTime']
+        )
+    }
 
 
 @router.post("/batch")

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs
 import { Badge } from '@/components/x-ui/badge';
 import { ArrowLeft, AlertCircle, Check } from 'lucide-react';
 import { AvatarUpload } from '@/components/common/user/AvatarUpload';
+import { UserProfileEditDialog } from '@/components/common/user/UserProfileEditDialog';
 import { FileUploadArea } from '@/components/common/file/FileUploadArea';
 import { FileList } from '@/components/common/FileList';
 import { PasswordChangeDialog } from '@/components/common/PasswordChangeDialog';
@@ -15,7 +16,7 @@ import { UserProfileInfo } from '@/components/common/UserProfileInfo';
 import { userService, fileService } from '@/services';
 
 export function UserSettings() {
-  const { user, updatePassword, updateUser } = useAuth();
+  const { user, updatePassword, updateUser, updateUserProfile } = useAuth();
   const navigate = useNavigate();
   
   // Avatar upload state
@@ -104,8 +105,6 @@ export function UserSettings() {
       setError(err.message || '文件删除失败');
     }
   };
-
-
 
   // 文件上传处理
   const handleFileUpload = async (files: FileList | File[]) => {
@@ -230,22 +229,67 @@ export function UserSettings() {
 
         {/* Profile Tab */}
         <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>个人信息</CardTitle>
-              <CardDescription>管理您的头像和账户基本信息</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <AvatarUpload
-                user={user}
-                onAvatarUpload={handleAvatarUpload}
-                uploading={uploadingAvatar}
-                onError={setError}
-              />
+          <div className="space-y-6">
+            {/* 个人档案区域 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>个人档案</CardTitle>
+                <CardDescription>管理您的头像和基本信息</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-6">
+                  {/* 头像区域 */}
+                  <div className="flex-shrink-0">
+                    <AvatarUpload
+                      user={user}
+                      onAvatarUpload={handleAvatarUpload}
+                      uploading={uploadingAvatar}
+                      onError={setError}
+                    />
+                  </div>
+                  
+                  {/* 用户信息区域 */}
+                  <div className="flex-1 min-w-0">
+                    <UserProfileInfo user={user} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <UserProfileInfo user={user} />
-            </CardContent>
-          </Card>
+            {/* 账户管理区域 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>账户管理</CardTitle>
+                <CardDescription>修改您的账户信息和安全设置</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* 个人资料修改 */}
+                <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-foreground">个人资料</h4>
+                    <p className="text-sm text-muted-foreground">修改您的用户名和邮箱地址</p>
+                  </div>
+                  <UserProfileEditDialog 
+                    user={user} 
+                    onUpdate={updateUserProfile}
+                  />
+                </div>
+
+                {/* 密码修改 */}
+                <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-foreground">账户密码</h4>
+                    <p className="text-sm text-muted-foreground">定期更改密码可以提高账户安全性</p>
+                  </div>
+                  <PasswordChangeDialog
+                    open={isPasswordDialogOpen}
+                    onOpenChange={handlePasswordDialogChange}
+                    onPasswordChange={handlePasswordChange}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Files Tab */}
@@ -274,49 +318,32 @@ export function UserSettings() {
 
         {/* Security Tab */}
         <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>密码管理</CardTitle>
-              <CardDescription>管理您的账户密码</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted">
-                <div>
-                  <h4 className="font-medium">账户密码</h4>
-                  <p className="text-sm text-muted-foreground mt-1">定期更改密码可以提高账户安全性</p>
+          <div className="space-y-6">
+            {/* 其他安全设置 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>高级安全选项</CardTitle>
+                <CardDescription>更多安全相关的设置选项</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-foreground">两步验证</h4>
+                    <p className="text-sm text-muted-foreground">增加额外的安全保护层</p>
+                  </div>
+                  <Badge variant="secondary">即将推出</Badge>
                 </div>
-                <PasswordChangeDialog
-                  open={isPasswordDialogOpen}
-                  onOpenChange={handlePasswordDialogChange}
-                  onPasswordChange={handlePasswordChange}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>其他安全设置</CardTitle>
-              <CardDescription>更多安全相关的设置选项</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                <div>
-                  <h4 className="font-medium">两步验证</h4>
-                  <p className="text-sm text-muted-foreground mt-1">增加额外的安全保护层</p>
+                
+                <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
+                  <div className="space-y-1">
+                    <h4 className="font-medium text-foreground">登录历史</h4>
+                    <p className="text-sm text-muted-foreground">查看您的账户登录记录</p>
+                  </div>
+                  <Badge variant="secondary">即将推出</Badge>
                 </div>
-                <Badge variant="secondary">即将推出</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                <div>
-                  <h4 className="font-medium">登录历史</h4>
-                  <p className="text-sm text-muted-foreground mt-1">查看您的账户登录记录</p>
-                </div>
-                <Badge variant="secondary">即将推出</Badge>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

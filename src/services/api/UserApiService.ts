@@ -45,6 +45,37 @@ export class UserApiService implements IUserService {
     }
   }
 
+  async updateUserProfile(updates: { username?: string; email?: string }): Promise<{ success: boolean; message: string; user?: ClientUser }> {
+    try {
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) {
+        return { success: false, message: '用户未登录' };
+      }
+
+      const response = await this.apiClient.put<{ message: string; user: ClientUser }>(`/users/${currentUser.id}`, updates);
+      
+      // 更新本地用户信息
+      if (response.user) {
+        this.setCurrentUser(response.user);
+      }
+
+      return {
+        success: true,
+        message: response.message,
+        user: response.user
+      };
+    } catch (error) {
+      let message = '更新失败';
+      if (error instanceof ApiError) {
+        message = error.message;
+      }
+      return {
+        success: false,
+        message
+      };
+    }
+  }
+
   /**
    * 获取当前登录用户（从localStorage）
    */

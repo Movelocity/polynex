@@ -16,15 +16,15 @@ interface UserProfileInfoProps {
 
 export function UserProfileInfo({ user }: UserProfileInfoProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
+    <div className="grid grid-cols-1 gap-4">
+      {/* <div>
         <Label className="text-slate-600">用户名</Label>
         <p className="mt-1 font-medium">{user.username}</p>
       </div>
       <div>
         <Label className="text-slate-600">邮箱</Label>
         <p className="mt-1 font-medium">{user.email}</p>
-      </div>
+      </div> */}
       <div>
         <Label className="text-slate-600">用户ID</Label>
         <p className="mt-1 font-medium text-slate-500">{user.id}</p>
