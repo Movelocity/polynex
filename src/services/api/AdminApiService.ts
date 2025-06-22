@@ -1,5 +1,6 @@
 import { User, ClientUser } from '@/types';
 import { ApiClient, ApiError } from './ApiClient';
+import { InviteCodeConfig, InviteCodeUpdate } from '@/types';
 
 /**
  * 管理员API服务 - 提供用户管理功能
@@ -90,6 +91,41 @@ export class AdminApiService {
         return false;
       }
       throw error;
+    }
+  }
+
+  /**
+   * 获取邀请码配置
+   */
+  async getInviteCodeConfig(): Promise<InviteCodeConfig> {
+    try {
+      const response = await this.apiClient.get<InviteCodeConfig>('/admin/invite-code-config');
+      return response;
+    } catch (error) {
+      console.error('获取邀请码配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新邀请码配置
+   */
+  async updateInviteCodeConfig(config: InviteCodeUpdate): Promise<{ success: boolean; message: string }> {
+    try {
+      await this.apiClient.put('/admin/invite-code-config', config);
+      return {
+        success: true,
+        message: '邀请码配置更新成功'
+      };
+    } catch (error) {
+      let message = '邀请码配置更新失败';
+      if (error instanceof ApiError) {
+        message = error.message;
+      }
+      return {
+        success: false,
+        message
+      };
     }
   }
 } 

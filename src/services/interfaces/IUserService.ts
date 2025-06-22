@@ -1,4 +1,4 @@
-import { User, ClientUser, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
+import { User, ClientUser, LoginRequest, RegisterRequest, AuthResponse, RegistrationConfig } from '@/types';
 
 /**
  * 用户服务接口
@@ -63,12 +63,17 @@ export interface IUserService {
   /**
    * 用户注册（返回token和用户信息）
    */
-  register(username: string, email: string, password: string): Promise<AuthResponse>;
+  register(username: string, email: string, password: string, inviteCode?: string): Promise<AuthResponse>;
 
   /**
    * 用户注册（使用请求对象）
    */
   registerWithRequest(request: RegisterRequest): Promise<AuthResponse>;
+
+  /**
+   * 获取注册配置
+   */
+  getRegistrationConfig(): Promise<RegistrationConfig>;
 
   /**
    * 验证token有效性

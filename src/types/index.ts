@@ -30,6 +30,7 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  invite_code?: string;
 }
 
 // 认证响应类型
@@ -84,4 +85,22 @@ export interface PaginationData<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+// 注册配置类型
+export interface RegistrationConfig {
+  allow_registration: boolean;
+  require_invite_code: boolean;
+}
+
+// 邀请码配置类型
+export interface InviteCodeConfig {
+  require_invite_code: boolean;
+  invite_code?: string;
+}
+
+// 邀请码更新类型
+export interface InviteCodeUpdate {
+  require_invite_code: boolean;
+  invite_code?: string;
 }

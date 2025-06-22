@@ -23,6 +23,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     avatar: Optional[str] = None
+    invite_code: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -189,3 +190,23 @@ class UserRoleUpdate(BaseModel):
 class AdminPasswordReset(BaseModel):
     """管理员重置密码模型"""
     newPassword: str
+
+
+# ===== 注册配置相关模型 =====
+
+class RegistrationConfig(BaseModel):
+    """注册配置响应模型"""
+    allow_registration: bool
+    require_invite_code: bool
+
+
+class InviteCodeConfig(BaseModel):
+    """邀请码配置模型"""
+    require_invite_code: bool
+    invite_code: Optional[str] = None
+
+
+class InviteCodeUpdate(BaseModel):
+    """邀请码更新模型"""
+    require_invite_code: bool
+    invite_code: Optional[str] = None

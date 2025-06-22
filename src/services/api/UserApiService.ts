@@ -1,4 +1,4 @@
-import { User, ClientUser, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
+import { User, ClientUser, LoginRequest, RegisterRequest, AuthResponse, RegistrationConfig } from '@/types';
 import { IUserService } from '../interfaces/IUserService';
 import { ApiClient, ApiError } from './ApiClient';
 
@@ -170,8 +170,8 @@ export class UserApiService implements IUserService {
     }
   }
 
-  async register(username: string, email: string, password: string): Promise<AuthResponse> {
-    return this.registerWithRequest({ username, email, password });
+  async register(username: string, email: string, password: string, inviteCode?: string): Promise<AuthResponse> {
+    return this.registerWithRequest({ username, email, password, invite_code: inviteCode });
   }
 
   async registerWithRequest(request: RegisterRequest): Promise<AuthResponse> {
@@ -293,6 +293,20 @@ export class UserApiService implements IUserService {
       return {
         success: false,
         message
+      };
+    }
+  }
+
+  async getRegistrationConfig(): Promise<RegistrationConfig> {
+    try {
+      const response = await this.apiClient.get<RegistrationConfig>('/auth/registration-config');
+      return response;
+    } catch (error) {
+      console.error('获取注册配置失败:', error);
+      // 返回默认配置
+      return {
+        allow_registration: true,
+        require_invite_code: false
       };
     }
   }

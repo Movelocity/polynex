@@ -5,7 +5,7 @@ import { apiClient } from '@/services/api/ApiClient';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  register: (username: string, email: string, password: string, inviteCode?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateUser: (userOrUpdates: ClientUser | Partial<ClientUser>) => Promise<boolean>;
   updateUserProfile: (updates: { username?: string; email?: string }) => Promise<{ success: boolean; message: string }>;
@@ -121,9 +121,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // 注册函数
-  const register = async (username: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
+  const register = async (username: string, email: string, password: string, inviteCode?: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await userService.register(username, email, password);
+      const response = await userService.register(username, email, password, inviteCode);
 
       if (response.success && response.user) {
         setAuthState({

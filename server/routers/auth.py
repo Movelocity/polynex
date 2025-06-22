@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from models import (
     UserCreate, UserLogin, UserResponse,
-    LoginResponse, RegisterResponse
+    LoginResponse, RegisterResponse, RegistrationConfig
 )
 from database import db
 from auth import (
@@ -69,6 +69,18 @@ async def login(user_login: UserLogin):
     return LoginResponse(user=user_response, token=access_token)
 
 
+@router.get("/registration-config", response_model=RegistrationConfig)
+async def get_registration_config():
+    """获取注册配置（公开接口）"""
+    allow_registration = db.get_site_config_value('allow_registration', 'true')
+    require_invite_code = db.get_site_config_value('require_invite_code', 'false')
+    
+    return RegistrationConfig(
+        allow_registration=allow_registration.lower() == 'true',
+        require_invite_code=require_invite_code.lower() == 'true'
+    )
+
+
 @router.post("/register", response_model=RegisterResponse)
 async def register(user_create: UserCreate):
     """用户注册"""
@@ -84,9 +96,19 @@ async def register(user_create: UserCreate):
     require_invite_code = db.get_site_config_value('require_invite_code', 'false')
     if require_invite_code.lower() == 'true':
         invite_code = db.get_site_config_value('invite_code', '')
-        # 这里应该有邀请码验证逻辑，但目前先跳过
-        # 实际应用中可以在UserCreate模型中添加invite_code字段
-        pass
+        
+        # 验证邀请码
+        if not user_create.invite_code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="注册需要邀请码"
+            )
+        
+        if not invite_code or user_create.invite_code != invite_code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="邀请码无效"
+            )
     
     # 检查邮箱是否已存在
     existing_user = db.get_user_by_email(user_create.email)

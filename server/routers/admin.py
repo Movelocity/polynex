@@ -4,7 +4,7 @@ from typing import List
 from models import (
     SiteConfig, SiteConfigCreate, SiteConfigUpdate,
     UserResponse, UserStatsResponse, AdminUserUpdate, 
-    UserRoleUpdate, AdminPasswordReset
+    UserRoleUpdate, AdminPasswordReset, InviteCodeConfig, InviteCodeUpdate
 )
 from database import db
 from auth import get_current_user_id, get_password_hash
@@ -105,6 +105,50 @@ async def delete_site_config(
     if not success:
         raise HTTPException(status_code=404, detail="配置不存在")
     return {"message": "配置删除成功"}
+
+
+# ===== 邀请码配置管理接口（管理员权限）=====
+
+@router.get("/invite-code-config", response_model=InviteCodeConfig)
+async def get_invite_code_config(admin_user_id: str = Depends(require_admin_permission)):
+    """获取邀请码配置（管理员）"""
+    require_invite_code = db.get_site_config_value('require_invite_code', 'false')
+    invite_code = db.get_site_config_value('invite_code', '')
+    
+    return InviteCodeConfig(
+        require_invite_code=require_invite_code.lower() == 'true',
+        invite_code=invite_code if invite_code else None
+    )
+
+
+@router.put("/invite-code-config")
+async def update_invite_code_config(
+    config: InviteCodeUpdate,
+    admin_user_id: str = Depends(require_admin_permission)
+):
+    """更新邀请码配置（管理员）"""
+    try:
+        # 更新是否需要邀请码的配置
+        db.update_site_config(
+            key='require_invite_code',
+            value='true' if config.require_invite_code else 'false',
+            description='注册是否需要邀请码'
+        )
+        
+        # 更新邀请码内容
+        invite_code_value = config.invite_code if config.invite_code else ''
+        db.update_site_config(
+            key='invite_code',
+            value=invite_code_value,
+            description='邀请码内容'
+        )
+        
+        return {"message": "邀请码配置更新成功"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="邀请码配置更新失败"
+        )
 
 
 # ===== 管理员用户管理接口 =====

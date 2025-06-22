@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClientUser } from '@/types';
+import { ClientUser, InviteCodeConfig } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminService, fileService } from '@/services';
 import { Button } from '@/components/x-ui/button';
@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/x-ui/table';
 import { Badge } from '@/components/x-ui/badge';
 import { Input } from '@/components/x-ui/input';
+import { Label } from '@/components/x-ui/label';
+import { Switch } from '@/components/x-ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/x-ui/alert-dialog';
 import { useTitle } from '@/hooks/usePageTitle';
 import { 
@@ -19,8 +21,12 @@ import {
   Trash2,
   RotateCcw,
   UserCheck,
-  UserX
+  UserX,
+  Key,
+  Settings,
+  Save
 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export function UserManagement() {
   // 设置页面标题
@@ -33,6 +39,15 @@ export function UserManagement() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [stats, setStats] = useState({ total: 0, admins: 0, users: 0 });
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<ClientUser | null>(null);
+  
+  // 邀请码配置相关状态
+  const [inviteCodeConfig, setInviteCodeConfig] = useState<InviteCodeConfig>({
+    require_invite_code: false,
+    invite_code: ''
+  });
+  const [inviteCodeLoading, setInviteCodeLoading] = useState(false);
+  const [inviteCodeUpdating, setInviteCodeUpdating] = useState(false);
+  const [switchUpdating, setSwitchUpdating] = useState(false);
   
   const { user: currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -55,6 +70,7 @@ export function UserManagement() {
       }
       loadUsers();
       loadStats();
+      loadInviteCodeConfig();
     }
   }, [currentUser, authLoading, navigate]);
 
@@ -78,6 +94,83 @@ export function UserManagement() {
       setStats(statsData);
     } catch (err) {
       console.error('加载统计数据失败:', err);
+    }
+  };
+
+  const loadInviteCodeConfig = async () => {
+    setInviteCodeLoading(true);
+    try {
+      const config = await adminService.getInviteCodeConfig();
+      setInviteCodeConfig(config);
+    } catch (err) {
+      console.error('加载邀请码配置失败:', err);
+      toast({
+        title: "加载失败",
+        description: "加载邀请码配置失败，请刷新页面重试",
+        variant: "destructive",
+      });
+    } finally {
+      setInviteCodeLoading(false);
+    }
+  };
+
+  const handleUpdateInviteCodeConfig = async () => {
+    setInviteCodeUpdating(true);
+    try {
+      const result = await adminService.updateInviteCodeConfig(inviteCodeConfig);
+      if (result.success) {
+        toast({
+          title: "配置更新成功",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "配置更新失败",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error('更新邀请码配置失败:', err);
+      toast({
+        title: "配置更新失败",
+        description: "更新邀请码配置失败，请稍后重试",
+        variant: "destructive",
+      });
+    } finally {
+      setInviteCodeUpdating(false);
+    }
+  };
+
+  const handleSwitchToggle = async (checked: boolean) => {
+    setSwitchUpdating(true);
+    const newConfig = { ...inviteCodeConfig, require_invite_code: checked };
+    
+    try {
+      const result = await adminService.updateInviteCodeConfig(newConfig);
+      if (result.success) {
+        // 更新成功后才更新本地状态
+        setInviteCodeConfig(newConfig);
+        toast({
+          title: "配置更新成功",
+          description: checked ? "已启用邀请码功能" : "已禁用邀请码功能",
+        });
+      } else {
+        toast({
+          title: "配置更新失败",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error('更新邀请码开关失败:', err);
+      toast({
+        title: "配置更新失败",
+        description: "更新邀请码开关失败，请稍后重试",
+        variant: "destructive",
+      });
+    } finally {
+      setSwitchUpdating(false);
     }
   };
 
@@ -214,6 +307,92 @@ export function UserManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 邀请码配置 */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Key className="w-5 h-5 mr-2" />
+            邀请码配置
+          </CardTitle>
+          <CardDescription>
+            管理用户注册时的邀请码要求
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {inviteCodeLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="ml-2 text-slate-600">加载配置中...</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">启用邀请码</Label>
+                  <div className="text-sm text-muted-foreground">
+                    开启后新用户注册需要提供正确的邀请码
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {switchUpdating && (
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  <Switch
+                    checked={inviteCodeConfig.require_invite_code}
+                    onCheckedChange={handleSwitchToggle}
+                    disabled={switchUpdating}
+                  />
+                </div>
+              </div>
+              
+              {inviteCodeConfig.require_invite_code && (
+                <div className="space-y-2">
+                  <Label htmlFor="invite-code">邀请码</Label>
+                  <Input
+                    id="invite-code"
+                    type="text"
+                    placeholder="请输入邀请码"
+                    value={inviteCodeConfig.invite_code || ''}
+                    onChange={(e) => 
+                      setInviteCodeConfig(prev => ({ ...prev, invite_code: e.target.value }))
+                    }
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    用户注册时需要输入此邀请码才能成功注册
+                  </p>
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={handleUpdateInviteCodeConfig}
+                      disabled={inviteCodeUpdating}
+                      size="sm"
+                    >
+                      {inviteCodeUpdating ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          保存中...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-2" />
+                          保存邀请码
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {!inviteCodeConfig.require_invite_code && (
+                <p className="text-sm text-muted-foreground bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  💡 当前未启用邀请码功能，所有用户都可以自由注册
+                </p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 用户列表 */}
       <Card>
