@@ -15,6 +15,8 @@ import {
   FileText, 
   BarChart3,
   Search,
+  Shield,
+  Users,
 } from 'lucide-react';
 
 export function Dashboard() {
@@ -382,6 +384,28 @@ export function Dashboard() {
         </Card>
         {/* side */}
         <div className="col-span-1 space-y-4">
+          {/* Admin Section - Only visible to admins */}
+          {user.role === 'admin' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center font-bold text-xl">
+                  <Shield className="w-5 h-5 mr-2" />
+                  管理员功能
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={() => navigate('/admin/users')}
+                  className="w-full justify-start"
+                  variant="outline"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  用户管理
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Stats */}
           <Card>
             <CardHeader>

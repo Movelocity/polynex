@@ -63,6 +63,23 @@
 - **Headers**: `Authorization: Bearer <token>`
 - **响应**: `200 OK`
 
+### 验证JWT token
+- **URL**: `GET /auth/validate`
+- **Headers**: `Authorization: Bearer <token>`
+- **响应**: `200 OK` 或 `401 Unauthorized`
+
+### 更新密码
+- **URL**: `PUT /auth/password`
+- **Headers**: `Authorization: Bearer <token>`
+- **请求体**:
+  ```json
+  {
+    "oldPassword": "旧密码",
+    "newPassword": "新密码"
+  }
+  ```
+- **响应**: `200 OK` 或 `400 Bad Request`
+
 ## 用户接口
 
 ### 获取所有用户
@@ -107,6 +124,12 @@
     "users": [User, User, ...]
   }
   ```
+- **响应**: `200 OK`
+
+### 上传用户头像
+- **URL**: `POST /users/avatar/upload`
+- **Headers**: `Authorization: Bearer <token>`
+- **请求体**: `FormData`
 - **响应**: `200 OK`
 
 ## 博客接口
@@ -281,4 +304,218 @@ API使用标准的HTTP状态码：
   "code": "ERROR_CODE",
   "details": "详细错误信息（可选）"
 }
-``` 
+```
+
+## 网站配置管理接口（管理员权限）
+
+### 获取所有网站配置
+- **URL**: `GET /admin/site-config`
+- **Headers**: `Authorization: Bearer <token>`
+- **响应**: `SiteConfig[]`
+
+### 根据键获取网站配置
+- **URL**: `GET /admin/site-config/:key`
+- **参数**: `key` - 配置键
+- **响应**: `SiteConfig` 或 `404 Not Found`
+
+### 更新网站配置
+- **URL**: `PUT /admin/site-config/:key`
+- **Headers**: `Authorization: Bearer <token>`
+- **参数**: `key` - 配置键
+- **请求体**: `SiteConfig`
+- **响应**: `200 OK` 或 `404 Not Found`
+
+### 创建网站配置
+- **URL**: `POST /admin/site-config`
+- **Headers**: `Authorization: Bearer <token>`
+- **请求体**: `SiteConfig`
+- **响应**: `201 Created`
+
+### 删除网站配置
+- **URL**: `DELETE /admin/site-config/:key`
+- **Headers**: `Authorization: Bearer <token>`
+- **参数**: `key` - 配置键
+- **响应**: `200 OK` 或 `404 Not Found`
+
+## 管理员用户管理接口（管理员权限）
+
+### 获取所有用户列表
+- **URL**: `GET /admin/users`
+- **Headers**: `Authorization: Bearer <token>`
+- **响应**: `List[UserResponse]`
+
+### 获取用户统计数据
+- **URL**: `GET /admin/users/stats`
+- **Headers**: `Authorization: Bearer <token>`
+- **响应**: `UserStatsResponse`
+  ```json
+  {
+    "total": 25,
+    "admins": 2,
+    "users": 23
+  }
+  ```
+
+### 更新用户角色
+- **URL**: `PUT /admin/users/:user_id/role`
+- **Headers**: `Authorization: Bearer <token>`
+- **参数**: `user_id` - 用户ID
+- **请求体**: `UserRoleUpdate`
+  ```json
+  {
+    "role": "admin" | "user"
+  }
+  ```
+- **限制**: 管理员不能修改自己的角色
+
+### 更新用户信息
+- **URL**: `PUT /admin/users/:user_id`
+- **Headers**: `Authorization: Bearer <token>`
+- **参数**: `user_id` - 用户ID
+- **请求体**: `AdminUserUpdate`
+  ```json
+  {
+    "username": "新用户名",
+    "email": "new@example.com",
+    "role": "admin" | "user"
+  }
+  ```
+- **限制**: 管理员不能修改自己的角色
+
+### 删除用户
+- **URL**: `DELETE /admin/users/:user_id`
+- **Headers**: `Authorization: Bearer <token>`
+- **参数**: `user_id` - 用户ID
+- **响应**: `200 OK` 或 `404 Not Found`
+
+### 重置用户密码
+- **URL**: `PUT /admin/users/:user_id/password`
+- **Headers**: `Authorization: Bearer <token>`
+- **参数**: `user_id` - 用户ID
+- **请求体**: `AdminPasswordReset`
+  ```json
+  {
+    "newPassword": "新密码"
+  }
+  ```
+
+## 权限控制
+
+### 管理员权限检查
+所有管理员接口都使用 `require_admin_permission` 依赖进行权限验证：
+- 验证用户是否已登录
+- 验证用户角色是否为 `admin`
+- 返回403错误如果权限不足
+
+### 自我保护机制
+- 管理员不能删除自己的账户
+- 管理员不能修改自己的角色
+- 系统不允许删除最后一个管理员账户
+
+## 开发者接口
+
+### 生成示例数据
+- **URL**: `POST /dev/generate-sample-data`
+- **Headers**: `Authorization: Bearer <token>`
+- **请求体**: `{}`
+- **响应**: `200 OK`
+
+## 文件存储接口
+
+### 上传文件
+- **URL**: `POST /resources/upload`
+- **Headers**: `Authorization: Bearer <token>`
+- **请求体**: `FormData`
+- **响应**: `200 OK`
+
+### 获取文件
+- **URL**: `GET /resources/:unique_id.:postfix`
+- **参数**: `unique_id` - 唯一标识符, `postfix` - 文件后缀
+- **响应**: 文件内容
+
+### 获取用户文件列表
+- **URL**: `GET /resources/list`
+- **Headers**: `Authorization: Bearer <token>`
+- **响应**: `List[Resource]`
+
+### 删除文件
+- **URL**: `DELETE /resources/:unique_id.:postfix`
+- **参数**: `unique_id` - 唯一标识符, `postfix` - 文件后缀
+- **Headers**: `Authorization: Bearer <token>`
+- **响应**: `200 OK` 或 `404 Not Found`
+
+## 新增管理员接口详细说明
+
+### 获取所有用户列表
+- **端点**: `GET /admin/users`
+- **权限**: 管理员
+- **响应**: 返回所有用户的详细信息列表
+- **响应模型**: `List[UserResponse]`
+
+### 获取用户统计数据
+- **端点**: `GET /admin/users/stats`
+- **权限**: 管理员
+- **响应**: 用户统计信息
+- **响应模型**: `UserStatsResponse`
+  ```json
+  {
+    "total": 25,
+    "admins": 2,
+    "users": 23
+  }
+  ```
+
+### 更新用户角色
+- **端点**: `PUT /admin/users/:user_id/role`
+- **权限**: 管理员
+- **请求体**: `UserRoleUpdate`
+  ```json
+  {
+    "role": "admin" | "user"
+  }
+  ```
+- **限制**: 管理员不能修改自己的角色
+
+### 更新用户信息
+- **端点**: `PUT /admin/users/:user_id`
+- **权限**: 管理员
+- **请求体**: `AdminUserUpdate`
+  ```json
+  {
+    "username": "新用户名",
+    "email": "new@example.com",
+    "role": "admin" | "user"
+  }
+  ```
+- **限制**: 管理员不能修改自己的角色
+
+### 删除用户
+- **端点**: `DELETE /admin/users/:user_id`
+- **权限**: 管理员
+- **限制**: 
+  - 不能删除自己的账户
+  - 不能删除最后一个管理员
+  - 删除用户时会同时删除其相关博客
+
+### 重置用户密码
+- **端点**: `PUT /admin/users/:user_id/password`
+- **权限**: 管理员
+- **请求体**: `AdminPasswordReset`
+  ```json
+  {
+    "newPassword": "新密码"
+  }
+  ```
+
+## 权限控制
+
+### 管理员权限检查
+所有管理员接口都使用 `require_admin_permission` 依赖进行权限验证：
+- 验证用户是否已登录
+- 验证用户角色是否为 `admin`
+- 返回403错误如果权限不足
+
+### 自我保护机制
+- 管理员不能删除自己的账户
+- 管理员不能修改自己的角色
+- 系统不允许删除最后一个管理员账户 

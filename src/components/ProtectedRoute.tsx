@@ -5,10 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
+  requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
-  const { isAuthenticated, loading } = useAuth();
+export function ProtectedRoute({ children, requireAuth = true, requireAdmin = false }: ProtectedRouteProps) {
+  const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
 
   // 如果正在加载认证状态，显示加载画面
@@ -28,6 +29,11 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
   if (!requireAuth && isAuthenticated) {
     // 如果已登录，不允许访问登录/注册页面
     return <Navigate to="/" replace />;
+  }
+
+  // 检查管理员权限
+  if (requireAdmin && user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

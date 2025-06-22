@@ -16,7 +16,7 @@ from models import (
     SiteConfig, SiteConfigCreate, SiteConfigUpdate,
     LoginResponse, RegisterResponse,
     BatchUsersRequest, BatchBlogsRequest, BatchCategoriesRequest,
-    ErrorResponse
+    ErrorResponse, UserStatsResponse, AdminUserUpdate, UserRoleUpdate, AdminPasswordReset
 )
 from database import db
 from auth import (
@@ -902,6 +902,95 @@ async def delete_site_config(
 
 # ===== 管理员用户管理接口 =====
 
+@app.get("/api/admin/users", response_model=List[UserResponse])
+async def get_all_users_by_admin(admin_user_id: str = Depends(require_admin_permission)):
+    """获取所有用户列表（管理员权限）"""
+    users = db.get_all_users()
+    return [
+        UserResponse(
+            id=user['id'],
+            username=user['username'],
+            email=user['email'],
+            avatar=user.get('avatar'),
+            role=user['role'],
+            registerTime=user['registerTime']
+        )
+        for user in users
+    ]
+
+
+@app.get("/api/admin/users/stats", response_model=UserStatsResponse)
+async def get_user_stats_by_admin(admin_user_id: str = Depends(require_admin_permission)):
+    """获取用户统计数据（管理员权限）"""
+    stats = db.get_user_stats()
+    return UserStatsResponse(**stats)
+
+
+@app.put("/api/admin/users/{user_id}/role")
+async def update_user_role_by_admin(
+    user_id: str,
+    role_data: UserRoleUpdate,
+    admin_user_id: str = Depends(require_admin_permission)
+):
+    """更新用户角色（管理员权限）"""
+    # 不能修改自己的角色
+    if user_id == admin_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="不能修改自己的角色"
+        )
+    
+    try:
+        success = db.update_user_role(user_id, role_data.role.value)
+        if not success:
+            raise HTTPException(status_code=404, detail="用户不存在")
+        return {"message": "用户角色更新成功"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@app.put("/api/admin/users/{user_id}")
+async def update_user_info_by_admin(
+    user_id: str,
+    user_updates: AdminUserUpdate,
+    admin_user_id: str = Depends(require_admin_permission)
+):
+    """更新用户信息（管理员权限）"""
+    # 将Pydantic模型转换为字典，排除None值
+    updates = user_updates.model_dump(exclude_unset=True)
+    
+    if not updates:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="没有可更新的字段"
+        )
+    
+    # 不能修改自己的角色
+    if 'role' in updates and user_id == admin_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="不能修改自己的角色"
+        )
+    
+    # 将UserRole枚举转换为字符串
+    if 'role' in updates:
+        updates['role'] = updates['role'].value
+    
+    try:
+        success = db.update_user_info_by_admin(user_id, updates)
+        if not success:
+            raise HTTPException(status_code=404, detail="用户不存在")
+        return {"message": "用户信息更新成功"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
 @app.delete("/api/admin/users/{user_id}")
 async def delete_user_by_admin(
     user_id: str,
@@ -930,19 +1019,12 @@ async def delete_user_by_admin(
 @app.put("/api/admin/users/{user_id}/password")
 async def reset_user_password_by_admin(
     user_id: str,
-    password_data: dict,
+    password_data: AdminPasswordReset,
     admin_user_id: str = Depends(require_admin_permission)
 ):
     """重置用户密码（管理员权限）"""
-    new_password = password_data.get('newPassword')
-    if not new_password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="新密码不能为空"
-        )
-    
     # 加密新密码
-    hashed_password = get_password_hash(new_password)
+    hashed_password = get_password_hash(password_data.newPassword)
     
     success = db.reset_user_password(user_id, hashed_password)
     if not success:

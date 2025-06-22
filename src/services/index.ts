@@ -8,6 +8,7 @@ export * from './api/UserApiService';
 export * from './api/BlogApiService';
 export * from './api/CategoryApiService';
 export * from './api/FileApiService';
+export * from './api/AdminApiService';
 export * from './api/ApiClient';
 
 // 直接导出API服务实例
@@ -15,6 +16,7 @@ import { UserApiService } from './api/UserApiService';
 import { BlogApiService } from './api/BlogApiService';
 import { CategoryApiService } from './api/CategoryApiService';
 import { FileApiService } from './api/FileApiService';
+import { AdminApiService } from './api/AdminApiService';
 import { apiClient } from './api/ApiClient';
 
 /**
@@ -36,6 +38,11 @@ export const categoryService = new CategoryApiService(apiClient);
  * 文件服务实例
  */
 export const fileService = new FileApiService(apiClient);
+
+/**
+ * 管理员服务实例
+ */
+export const adminService = new AdminApiService(apiClient);
 
 /**
  * API客户端实例

@@ -149,3 +149,29 @@ class ErrorResponse(BaseModel):
     message: str
     code: str
     details: Optional[str] = None
+
+
+# ===== 管理员专用模型 =====
+
+class UserStatsResponse(BaseModel):
+    """用户统计响应模型"""
+    total: int
+    admins: int
+    users: int
+
+
+class AdminUserUpdate(BaseModel):
+    """管理员更新用户信息模型"""
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[UserRole] = None
+
+
+class UserRoleUpdate(BaseModel):
+    """用户角色更新模型"""
+    role: UserRole
+
+
+class AdminPasswordReset(BaseModel):
+    """管理员重置密码模型"""
+    newPassword: str

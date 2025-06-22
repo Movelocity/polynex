@@ -652,6 +652,65 @@ class SQLiteDatabase:
 
     # ===== 管理员权限相关操作 =====
 
+    def get_user_stats(self) -> Dict[str, int]:
+        """获取用户统计数据（管理员权限）"""
+        session = self._get_session()
+        try:
+            total_count = session.query(User).count()
+            admin_count = session.query(User).filter(User.role == UserRole.ADMIN).count()
+            user_count = session.query(User).filter(User.role == UserRole.USER).count()
+            
+            return {
+                'total': total_count,
+                'admins': admin_count,
+                'users': user_count
+            }
+        finally:
+            session.close()
+
+    def update_user_role(self, user_id: str, role: str) -> bool:
+        """更新用户角色（管理员权限）"""
+        session = self._get_session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+            
+            # 验证角色值
+            if role not in ['admin', 'user']:
+                raise ValueError("无效的角色类型")
+            
+            user.role = UserRole(role)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def update_user_info_by_admin(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        """管理员更新用户信息"""
+        session = self._get_session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+            
+            for key, value in updates.items():
+                if key == 'role' and value in ['admin', 'user']:
+                    user.role = UserRole(value)
+                elif hasattr(user, key) and key not in ['id', 'register_time']:
+                    setattr(user, key, value)
+            
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
     def delete_user(self, user_id: str) -> bool:
         """删除用户（管理员权限）"""
         session = self._get_session()
@@ -660,10 +719,16 @@ class SQLiteDatabase:
             if not user:
                 return False
             
-            # 不能删除管理员
+            # 检查是否为最后一个管理员
             if user.role == UserRole.ADMIN:
-                raise ValueError("不能删除管理员账户")
+                admin_count = session.query(User).filter(User.role == UserRole.ADMIN).count()
+                if admin_count <= 1:
+                    raise ValueError("不能删除最后一个管理员账户")
             
+            # 删除用户相关的博客
+            session.query(Blog).filter(Blog.author_id == user_id).delete()
+            
+            # 删除用户
             session.delete(user)
             session.commit()
             return True

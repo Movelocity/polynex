@@ -11,6 +11,7 @@ import { Register } from '@/pages/Register';
 import { BlogDetail } from '@/pages/BlogDetail';
 import { WriteBlog } from '@/pages/WriteBlog';
 import { Dashboard } from '@/pages/Dashboard';
+import { UserManagement } from '@/pages/UserManagement';
 import { Search } from '@/pages/Search';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ArticleList } from '@/pages/ArticleList';
@@ -95,6 +96,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <UserSettings />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Admin routes */}
+            <Route 
+              path="admin/users" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <UserManagement />
                 </ProtectedRoute>
               } 
             />
