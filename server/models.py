@@ -1,8 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Literal
-from datetime import datetime
 from enum import Enum
-
 
 class UserRole(str, Enum):
     """用户角色枚举"""

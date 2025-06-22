@@ -288,8 +288,8 @@ export function UserManagement() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {/* 切换角色按钮 */}
-                          {user.id !== currentUser.id && (
+                          {/* 切换角色按钮 暂时关闭 */}
+                          {/* {user.id !== currentUser.id && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -302,7 +302,7 @@ export function UserManagement() {
                                 <UserCheck className="h-3 w-3" />
                               )}
                             </Button>
-                          )}
+                          )} */}
                           
                           {/* 删除按钮 */}
                           {user.id !== currentUser.id && (
