@@ -6,9 +6,13 @@ import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
+import { useTitle } from '@/hooks/usePageTitle';
 import { Loader2, Mail, Lock, User, BookOpen } from 'lucide-react';
 
 export function Register() {
+  // 设置页面标题
+  useTitle('注册');
+  
   const [formData, setFormData] = useState({
     username: '',
     email: '',

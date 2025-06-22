@@ -109,7 +109,7 @@ export function Layout() {
                     }`}
                   >
                     <PenTool className="w-4 h-4" />
-                    <span>写博客</span>
+                    <span>写文章</span>
                   </Link>
                   
                   <Link 

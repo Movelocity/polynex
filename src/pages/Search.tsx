@@ -7,6 +7,7 @@ import { Input } from '@/components/x-ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Badge } from '@/components/x-ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/x-ui/avatar';
+import { useTitle } from '@/hooks/usePageTitle';
 import { 
   Search as SearchIcon, 
   Calendar, 
@@ -34,6 +35,11 @@ export function Search() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 动态设置页面标题 - 根据搜索状态和关键词
+  useTitle(
+    searchQuery ? `搜索"${searchQuery}"` : '搜索文章'
+  );
 
   useEffect(() => {
     const query = searchParams.get('q');

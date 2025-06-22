@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/x-ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/x-ui/avatar';
 import { Separator } from '@/components/x-ui/separator';
+import { useTitle } from '@/hooks/usePageTitle';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -38,6 +39,9 @@ export function BlogDetail() {
   const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // 动态设置页面标题 - 根据文章标题更新
+  useTitle(blog ? blog.title : '文章详情');
 
   useEffect(() => {
     if (id) {

@@ -6,6 +6,7 @@ import { Button } from '@/components/x-ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Badge } from '@/components/x-ui/badge';
 import { BlogCard } from '@/components/common/blog/BlogCard';
+import { useTitle } from '@/hooks/usePageTitle';
 import { 
   Calendar, 
   Tag, 
@@ -26,6 +27,9 @@ const formatDate = (dateString: string): string => {
 };
 
 export function Home() {
+  // 设置页面标题
+  useTitle('首页');
+  
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');

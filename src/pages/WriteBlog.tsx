@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/x-ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
+import { useTitle } from '@/hooks/usePageTitle';
 import { 
   Save, 
   Eye, 
@@ -79,6 +80,9 @@ export function WriteBlog() {
   
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // 动态设置页面标题 - 根据是否为编辑模式设置不同标题
+  useTitle(isEdit ? '编辑文章' : '写文章');
 
   useEffect(() => {
     loadInitialData();

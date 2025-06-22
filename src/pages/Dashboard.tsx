@@ -9,6 +9,7 @@ import { BlogCard } from '@/components/common/blog/BlogCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Input } from '@/components/x-ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/x-ui/alert-dialog';
+import { useTitle } from '@/hooks/usePageTitle';
 import { 
   PenTool, 
   FileText, 
@@ -17,6 +18,9 @@ import {
 } from 'lucide-react';
 
 export function Dashboard() {
+  // 设置页面标题
+  useTitle('管理中心');
+  
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
