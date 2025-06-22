@@ -7,6 +7,7 @@ import { userService, blogService, categoryService, fileService } from '@/servic
 import { User, Blog, Category } from '@/types';
 import { FileUpload } from '@/components/common/file/FileUpload';
 import { FileInfo } from '@/services/api/FileApiService';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * API服务演示组件
@@ -45,8 +46,20 @@ export const ServiceDemo: React.FC = () => {
       setUsers(usersData);
       setBlogs(blogsData);
       setCategories(categoriesData);
+      
+      // 显示成功toast
+      toast.success({
+        title: "数据加载成功",
+        description: `成功加载 ${usersData.length} 个用户，${blogsData.length} 篇博客，${categoriesData.length} 个分类`
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载数据失败');
+      const errorMessage = err instanceof Error ? err.message : '加载数据失败';
+      setError(errorMessage);
+      // 显示错误toast
+      toast.error({
+        title: "数据加载失败",
+        description: errorMessage
+      });
     } finally {
       setLoading(false);
     }
@@ -55,7 +68,12 @@ export const ServiceDemo: React.FC = () => {
   // 测试添加博客
   const testAddBlog = async () => {
     if (users.length === 0) {
-      setError('请先加载用户数据');
+      const errorMsg = '请先加载用户数据';
+      setError(errorMsg);
+      toast.warning({
+        title: "操作提示",
+        description: errorMsg
+      });
       return;
     }
 
@@ -77,9 +95,18 @@ export const ServiceDemo: React.FC = () => {
     try {
       setLoading(true);
       await blogService.addBlog(newBlog);
+      toast.success({
+        title: "博客添加成功",
+        description: `博客"${newBlog.title}"已成功添加`
+      });
       await loadData(); // 重新加载数据
     } catch (err) {
-      setError(err instanceof Error ? err.message : '添加博客失败');
+      const errorMessage = err instanceof Error ? err.message : '添加博客失败';
+      setError(errorMessage);
+      toast.error({
+        title: "博客添加失败",
+        description: errorMessage
+      });
     } finally {
       setLoading(false);
     }
@@ -92,8 +119,17 @@ export const ServiceDemo: React.FC = () => {
       const results = await blogService.searchBlogs('测试');
       console.log('搜索结果:', results);
       setError(null);
+      toast.info({
+        title: "搜索完成",
+        description: `找到 ${results.length} 条包含"测试"的博客记录，请查看控制台`
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : '搜索失败');
+      const errorMessage = err instanceof Error ? err.message : '搜索失败';
+      setError(errorMessage);
+      toast.error({
+        title: "搜索失败",
+        description: errorMessage
+      });
     } finally {
       setLoading(false);
     }
@@ -107,13 +143,27 @@ export const ServiceDemo: React.FC = () => {
       if (result.success) {
         console.log('登录成功:', result.user);
         setError(null);
+        toast.success({
+          title: "登录成功",
+          description: `欢迎回来，${result.user?.username}!`
+        });
         // 重新加载数据以更新用户信息
         await loadData();
       } else {
-        setError(result.message || '登录失败');
+        const errorMsg = result.message || '登录失败';
+        setError(errorMsg);
+        toast.error({
+          title: "登录失败",
+          description: errorMsg
+        });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败');
+      const errorMessage = err instanceof Error ? err.message : '登录失败';
+      setError(errorMessage);
+      toast.error({
+        title: "登录失败",
+        description: errorMessage
+      });
     } finally {
       setLoading(false);
     }
@@ -136,13 +186,27 @@ export const ServiceDemo: React.FC = () => {
         if (result.success) {
           console.log('头像上传成功:', result.user);
           setError(null);
+          toast.success({
+            title: "头像上传成功",
+            description: `头像已更新为 ${file.name}`
+          });
           // 重新加载数据以更新用户信息
           await loadData();
         } else {
-          setError(result.message || '头像上传失败');
+          const errorMsg = result.message || '头像上传失败';
+          setError(errorMsg);
+          toast.error({
+            title: "头像上传失败",
+            description: errorMsg
+          });
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : '头像上传失败');
+        const errorMessage = err instanceof Error ? err.message : '头像上传失败';
+        setError(errorMessage);
+        toast.error({
+          title: "头像上传失败",
+          description: errorMessage
+        });
       } finally {
         setLoading(false);
       }
@@ -154,6 +218,47 @@ export const ServiceDemo: React.FC = () => {
   const handleFileUploadComplete = (fileInfo: FileInfo) => {
     setFiles(prev => [fileInfo, ...prev]);
     setError(null);
+    // 显示成功toast
+    toast.success({
+      title: "文件上传成功",
+      description: `文件 ${fileInfo.original_name} 已成功上传`
+    });
+  };
+
+  // Toast演示功能
+  const showInfoToast = () => {
+    toast.info({
+      title: "信息提示",
+      description: "这是一个信息提示的toast消息"
+    });
+  };
+
+  const showSuccessToast = () => {
+    toast.success({
+      title: "操作成功",
+      description: "您的操作已成功完成"
+    });
+  };
+
+  const showWarningToast = () => {
+    toast.warning({
+      title: "警告提示",
+      description: "请注意这个重要的警告信息"
+    });
+  };
+
+  const showErrorToast = () => {
+    toast.error({
+      title: "错误提示",
+      description: "操作失败，请检查后重试"
+    });
+  };
+
+  const showDefaultToast = () => {
+    toast({
+      title: "默认提示",
+      description: "这是一个默认样式的toast消息"
+    });
   };
 
   // 初始加载数据
@@ -190,6 +295,28 @@ export const ServiceDemo: React.FC = () => {
             <Button onClick={testAvatarUpload} disabled={loading}>
               测试头像上传
             </Button>
+          </div>
+          
+          {/* Toast演示按钮 */}
+          <div className="pt-4 border-t">
+            <h4 className="text-lg font-medium mb-3">Toast消息演示</h4>
+            <div className="flex gap-2 flex-wrap">
+              <Button onClick={showDefaultToast} variant="outline">
+                默认Toast
+              </Button>
+              <Button onClick={showInfoToast} variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                信息Toast
+              </Button>
+              <Button onClick={showSuccessToast} variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
+                成功Toast
+              </Button>
+              <Button onClick={showWarningToast} variant="outline" className="text-yellow-600 border-yellow-200 hover:bg-yellow-50">
+                警告Toast
+              </Button>
+              <Button onClick={showErrorToast} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                错误Toast
+              </Button>
+            </div>
           </div>
 
           {/* 错误信息 */}
@@ -352,10 +479,16 @@ export const ServiceDemo: React.FC = () => {
               </code>
             </p>
             <p>
+              <strong>Toast消息:</strong> 
+              <code className="ml-2 px-2 py-1 bg-gray-100 rounded">
+                import {`{ toast }`} from '@/hooks/use-toast'; toast.success({`{title, description}`});
+              </code>
+            </p>
+            <p>
               <strong>认证:</strong> 使用 JWT Token 进行API认证
             </p>
             <p>
-              <strong>错误处理:</strong> 所有API调用都包含完整的错误处理
+              <strong>错误处理:</strong> 所有API调用都包含完整的错误处理和Toast提示
             </p>
             <p>
               <strong>文件上传:</strong> 支持拖拽上传，自动生成唯一URL，支持图片预览
@@ -365,6 +498,9 @@ export const ServiceDemo: React.FC = () => {
             </p>
             <p>
               <strong>头像上传:</strong> 专门的头像上传接口，自动更新用户信息，限制5MB
+            </p>
+            <p>
+              <strong>Toast类型:</strong> 支持 info(蓝色)、success(绿色)、warning(黄色)、error(红色)、default 五种类型，带有对应图标
             </p>
           </div>
         </CardContent>

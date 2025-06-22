@@ -14,7 +14,8 @@ import { Badge } from '@/components/x-ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { useTitle } from '@/hooks/usePageTitle';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
+
 import { 
   Save, 
   Eye, 
@@ -81,7 +82,7 @@ export function WriteBlog() {
   
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  // const { toast } = useToast();
 
   // 动态设置页面标题 - 根据是否为编辑模式设置不同标题
   useTitle(isEdit ? '编辑文章' : '写文章');
@@ -219,13 +220,15 @@ export function WriteBlog() {
         });
 
         if (success) {
-          toast({
+          toast.success({
             title: "保存成功",
             description: status === 'published' ? "文章已成功发布！" : "文章已保存为草稿",
-            variant: "default",
           });
         } else {
-          setError('更新文章失败');
+          toast.error({
+            title: "更新文章失败",
+            description: "请检查网络连接后重试",
+          });
         }
       } else {
         // 创建新博客
@@ -244,11 +247,10 @@ export function WriteBlog() {
           views: 0,
         };
 
-        const createdBlog = await blogService.addBlog(newBlog);
-        toast({
+        await blogService.addBlog(newBlog);
+        toast.success({
           title: "创建成功",
           description: status === 'published' ? "文章已成功发布！" : "文章已保存为草稿",
-          variant: "default",
         });
       }
     } catch (err: any) {
@@ -256,26 +258,21 @@ export function WriteBlog() {
       
       // 处理认证相关错误 - 401错误由ApiClient自动处理，这里只处理用户提示
       if (err?.status === 401) {
-        setError('登录已过期，系统将自动跳转到登录页面，请重新登录后再保存文章');
+        toast.error({
+          title: "登录已过期",
+          description: "系统将自动跳转到登录页面，请重新登录后再保存文章",
+        });
       } else {
-        setError('保存文章失败，请检查网络连接后重试');
+        toast.error({
+          title: "保存文章失败",
+          description: "请检查网络连接后重试",
+        });
       }
     } finally {
       setLoading(false);
       setSaveLoading(false);
     }
   };
-
-  // if (loading && isEdit) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="text-center">
-  //         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-  //         <p className="text-slate-600">加载中...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

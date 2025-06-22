@@ -1,11 +1,29 @@
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
-import { X } from "lucide-react"
+import { X, Info, CheckCircle, AlertTriangle, AlertCircle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
 const ToastProvider = ToastPrimitives.Provider
+
+// 根据toast类型返回对应的图标
+const getToastIcon = (variant?: "default" | "destructive" | "info" | "success" | "warning" | "error") => {
+  switch (variant) {
+    case "info":
+      return <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+    case "success":
+      return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+    case "warning":
+      return <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+    case "error":
+      return <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+    case "destructive":
+      return <AlertCircle className="h-4 w-4 text-red-50" />
+    default:
+      return null
+  }
+}
 
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
@@ -30,6 +48,10 @@ const toastVariants = cva(
         default: "border bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50",
         destructive:
           "destructive group border-red-500 bg-red-500 text-zinc-50 dark:border-red-900 dark:bg-red-900 dark:text-zinc-50",
+        info: "border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100",
+        success: "border-green-200 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950 dark:text-green-100",
+        warning: "border-yellow-200 bg-yellow-50 text-yellow-900 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-100",
+        error: "border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100",
       },
     },
     defaultVariants: {
@@ -42,13 +64,24 @@ const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
+>(({ className, variant, children, ...props }, ref) => {
+  const icon = getToastIcon(variant)
+  
   return (
     <ToastPrimitives.Root
       ref={ref}
       className={cn(toastVariants({ variant }), className)}
       {...props}
-    />
+    >
+      {icon && (
+        <div className="flex-shrink-0">
+          {icon}
+        </div>
+      )}
+      <div className="flex-1">
+        {children}
+      </div>
+    </ToastPrimitives.Root>
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName

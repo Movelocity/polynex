@@ -16,6 +16,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  variant?: "default" | "destructive" | "info" | "success" | "warning" | "error"
 }
 
 const actionTypes = {
@@ -171,6 +172,14 @@ function toast({ ...props }: Toast) {
   }
 }
 
+// 为toast添加类型定义以支持便捷方法
+type ToastFunction = typeof toast & {
+  info: (props: Omit<Toast, "variant">) => ReturnType<typeof toast>
+  success: (props: Omit<Toast, "variant">) => ReturnType<typeof toast>
+  warning: (props: Omit<Toast, "variant">) => ReturnType<typeof toast>
+  error: (props: Omit<Toast, "variant">) => ReturnType<typeof toast>
+}
+
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
@@ -191,4 +200,15 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+// 便捷的toast类型方法
+const toastMethods = {
+  info: (props: Omit<Toast, "variant">) => toast({ ...props, variant: "info" }),
+  success: (props: Omit<Toast, "variant">) => toast({ ...props, variant: "success" }),
+  warning: (props: Omit<Toast, "variant">) => toast({ ...props, variant: "warning" }),
+  error: (props: Omit<Toast, "variant">) => toast({ ...props, variant: "error" }),
+}
+
+// 扩展toast对象以包含便捷方法
+const toastWithMethods = Object.assign(toast, toastMethods) as ToastFunction
+
+export { useToast, toastWithMethods as toast }
