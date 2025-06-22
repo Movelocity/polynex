@@ -14,6 +14,7 @@ import { Badge } from '@/components/x-ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { useTitle } from '@/hooks/usePageTitle';
+import { userService } from '@/services';
 import { 
   Save, 
   Eye, 
@@ -36,7 +37,7 @@ const generateSummary = (content: string): string => {
     .replace(/\n/g, ' ') // Replace newlines with spaces
     .trim();
   
-  return plainText.length > 200 ? plainText.substring(0, 200) + '...' : plainText;
+  return plainText.length > 120 ? plainText.substring(0, 120) + '...' : plainText;
 };
 
 function MarkdownGuide() {
@@ -66,7 +67,7 @@ export function WriteBlog() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category: '',
+    category: '随笔',
     tags: [] as string[],
     status: 'draft' as 'published' | 'draft',
   });
@@ -201,6 +202,18 @@ export function WriteBlog() {
     }
 
     try {
+      // 在保存前验证认证状态是否有效
+      const validation = await userService.validateToken();
+      if (!validation.valid) {
+        setError('登录已过期，请重新登录');
+        setLoading(false);
+        setSaveLoading(false);
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+        return;
+      }
+      
       const summary = generateSummary(formData.content);
       const now = new Date().toISOString();
 
@@ -241,9 +254,19 @@ export function WriteBlog() {
         const createdBlog = await blogService.addBlog(newBlog);
         navigate(status === 'published' ? `/blog/${createdBlog.id}` : '/dashboard');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('保存文章失败:', err);
-      setError('保存文章失败，请重试');
+      
+      // 处理认证相关错误
+      if (err?.status === 401 || err?.message?.includes('登录') || err?.message?.includes('认证') || err?.message?.includes('token')) {
+        setError('登录已过期，即将跳转到登录页面，请重新登录后再保存文章');
+        // 延迟跳转到登录页面，让用户看到错误信息
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+      } else {
+        setError('保存文章失败，请检查网络连接后重试');
+      }
     } finally {
       setLoading(false);
       setSaveLoading(false);

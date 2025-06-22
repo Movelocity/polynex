@@ -44,6 +44,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // 初始化时检查本地存储的登录状态和token有效性
   useEffect(() => {
     initializeAuth();
+    
+    // 监听localStorage变化，处理跨标签页认证状态同步
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth_token' || e.key === 'current_user') {
+        // 当token或用户信息在其他标签页中被修改时，重新初始化认证状态
+        console.log('检测到认证状态变化，重新初始化');
+        initializeAuth();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const initializeAuth = async () => {

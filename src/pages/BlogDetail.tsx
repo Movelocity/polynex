@@ -152,9 +152,9 @@ export function BlogDetail() {
           {blog.title}
         </h1>
         
-        <p className="mx-4 text-lg text-slate-600 mb-6">
+        {/* <p className="mx-4 text-lg text-slate-600 mb-6">
           {blog.summary}
-        </p>
+        </p> */}
         
         <div className="mx-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-4">

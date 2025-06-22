@@ -38,7 +38,7 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const blogsPerPage = 6;
+  const blogsPerPage = 9; // 改为9个，适配3x3网格
 
   useEffect(() => {
     loadData();
@@ -77,7 +77,6 @@ export function Home() {
   // 统计数据
   const totalBlogs = blogs.length;
   const totalViews = blogs.reduce((sum, blog) => sum + blog.views, 0);
-  const recentBlogs = blogs.slice(0, 3);
 
   if (loading) {
     return (
@@ -109,195 +108,147 @@ export function Home() {
   }
 
   return (
-    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-          分享你的故事
-        </h1>
-        <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-          在这里记录生活、分享知识、连接世界。每一篇文章都是一段独特的旅程。
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="mb-8">
+        <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+          Articles
+        </span>
+      </div>
+
+      {/* Category Filter Tabs */}
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Button
+            variant={selectedCategory === '' ? 'default' : 'outline'}
+            className={selectedCategory === '' ? 
+              'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 
+              'hover:bg-slate-100'
+            }
+            onClick={() => {
+              setSelectedCategory('');
+              setCurrentPage(1);
+            }}
+          >
+            全部
+          </Button>
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.name ? 'default' : 'outline'}
+              className={selectedCategory === category.name ? 
+                'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 
+                'hover:bg-slate-100'
+              }
+              onClick={() => {
+                setSelectedCategory(category.name);
+                setCurrentPage(1);
+              }}
+            >
+              {category.name}
+            </Button>
+          ))}
+        </div>
+
+        {/* Tags Section */}
+        {/* <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <Tag className="w-5 h-5 mr-2 text-slate-600" />
+            <span className="text-sm font-medium text-slate-600">按标签筛选</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                variant="ghost"
+                size="sm"
+                className="text-xs h-8 px-3 rounded-full border border-slate-200 hover:border-blue-300 hover:bg-blue-50"
+                onClick={() => {
+                  setSelectedCategory(category.name);
+                  setCurrentPage(1);
+                }}
+              >
+                {category.name} ({category.count})
+              </Button>
+            ))}
+          </div>
+        </div> */}
+      </div>
+
+      {/* Blog Grid */}
+      {currentBlogs.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-12">
+          {currentBlogs.map((blog) => (
+            <BlogCard
+              key={blog.id}
+              blog={blog}
+              layout="grid"
+              summaryLines={3}
+              maxTags={3}
+              className=""
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-12 h-12 text-slate-400" />
+          </div>
+          <h3 className="text-xl font-medium text-slate-600 mb-2">
+            {selectedCategory ? `"${selectedCategory}"分类下暂无文章` : '还没有文章'}
+          </h3>
+          <p className="text-slate-500 mb-6">
+            {selectedCategory ? '换个分类看看吧' : '成为第一个分享故事的人'}
+          </p>
           <Button 
-            size="lg" 
             onClick={() => navigate('/write')}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
-            <PenTool className="w-5 h-5 mr-2" />
-            开始写作
-          </Button>
-          <Button variant="outline" size="lg" onClick={() => navigate('/register')}>
-            加入我们
+            <PenTool className="w-4 h-4 mr-2" />
+            写第一篇文章
           </Button>
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-8">
-        {/* Sidebar */}
-        <div className="md:col-span-1 lg:col-span-1">
-          <div className="space-y-6">
-            {/* Stats Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BarChart3 className="w-5 h-5 mr-2" />
-                  站点统计
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">文章总数</span>
-                  <span className="font-semibold text-blue-600">{totalBlogs}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">总阅读量</span>
-                  <span className="font-semibold text-purple-600">{totalViews}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">分类数量</span>
-                  <span className="font-semibold text-green-600">{categories.length}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Categories */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Tag className="w-5 h-5 mr-2" />
-                  分类
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button
-                  variant={selectedCategory === '' ? 'default' : 'ghost'}
-                  className="w-full justify-between"
-                  onClick={() => {
-                    setSelectedCategory('');
-                    setCurrentPage(1);
-                  }}
-                >
-                  全部
-                  <Badge variant="secondary">{totalBlogs}</Badge>
-                </Button>
-                {categories.map((category) => (
-                  <Button
-                    key={category.id}
-                    variant={selectedCategory === category.name ? 'default' : 'ghost'}
-                    className="w-full justify-between"
-                    onClick={() => {
-                      setSelectedCategory(category.name);
-                      setCurrentPage(1);
-                    }}
-                  >
-                    {category.name}
-                    <Badge variant="secondary">{category.count}</Badge>
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Recent Posts */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  最新文章
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentBlogs.map((blog) => (
-                  <div key={blog.id} className="border-l-2 border-blue-200 pl-4">
-                    <Link 
-                      to={`/blog/${blog.id}`}
-                      className="text-sm font-medium hover:text-blue-600 transition-colors line-clamp-2"
-                    >
-                      {blog.title}
-                    </Link>
-                    <div className="flex items-center text-xs text-slate-500 mt-1">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {formatDate(blog.createTime)}
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="md:col-span-2 xl:col-span-3">
-          {/* Blog Grid */}
-          {currentBlogs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-              {currentBlogs.map((blog) => (
-                <BlogCard
-                  key={blog.id}
-                  blog={blog}
-                  layout="grid"
-                  summaryLines={3}
-                  maxTags={3}
-                  className="group border-0 bg-white/80 backdrop-blur-sm"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-12 h-12 text-slate-400" />
-              </div>
-              <h3 className="text-xl font-medium text-slate-600 mb-2">
-                {selectedCategory ? `"${selectedCategory}"分类下暂无文章` : '还没有文章'}
-              </h3>
-              <p className="text-slate-500 mb-6">
-                {selectedCategory ? '换个分类看看吧' : '成为第一个分享故事的人'}
-              </p>
-              <Button 
-                onClick={() => navigate('/write')}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                <PenTool className="w-4 h-4 mr-2" />
-                写第一篇文章
-              </Button>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center space-x-2">
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant="outline"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            className="hover:bg-slate-100"
+          >
+            上一页
+          </Button>
+          
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            const pageNum = i + 1;
+            return (
               <Button
-                variant="outline"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(currentPage - 1)}
+                key={pageNum}
+                variant={currentPage === pageNum ? 'default' : 'outline'}
+                onClick={() => setCurrentPage(pageNum)}
+                className={currentPage === pageNum ? 
+                  'bg-gradient-to-r from-blue-600 to-purple-600' : 
+                  'hover:bg-slate-100'
+                }
               >
-                上一页
+                {pageNum}
               </Button>
-              
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNum = i + 1;
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? 'default' : 'outline'}
-                    onClick={() => setCurrentPage(pageNum)}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-              
-              <Button
-                variant="outline"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                下一页
-              </Button>
-            </div>
-          )}
+            );
+          })}
+          
+          <Button
+            variant="outline"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            className="hover:bg-slate-100"
+          >
+            下一页
+          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
