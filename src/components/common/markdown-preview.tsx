@@ -3,8 +3,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
-// 引入语法高亮的 CSS 样式
-import 'highlight.js/styles/github.css';
 
 // 创建Context来跟踪是否在代码块内部
 const CodeBlockContext = createContext(false);

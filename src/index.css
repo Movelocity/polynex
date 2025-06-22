@@ -81,6 +81,23 @@
     --gray-700: 215.3 25% 26.7%;
     --gray-800: 217.2 32.6% 17.5%;
     --gray-900: 222.2 84% 4.9%;
+
+    /* Highlight.js 语法高亮变量 - 浅色主题 */
+    --hljs-bg: 240 4.8% 95.9%;
+    --hljs-color: 240 10% 3.9%;
+    --hljs-comment: 240 3.8% 46.1%;
+    --hljs-keyword: 262.1 83.3% 57.8%;
+    --hljs-string: 142.1 76.2% 36.3%;
+    --hljs-number: 24.6 95% 53.1%;
+    --hljs-function: 221.2 83.2% 53.3%;
+    --hljs-variable: 0 84.2% 60.2%;
+    --hljs-class: 330 81.2% 60.4%;
+    --hljs-property: 198.6 88.7% 48.4%;
+    --hljs-operator: 240 5.9% 10%;
+    --hljs-punctuation: 240 3.8% 46.1%;
+    --hljs-tag: 262.1 83.3% 57.8%;
+    --hljs-attribute: 24.6 95% 53.1%;
+    --hljs-value: 142.1 76.2% 36.3%;
   }
 
   .dark {
@@ -158,6 +175,23 @@
     --gray-700: 214.3 31.8% 91.4%;
     --gray-800: 210 40% 96%;
     --gray-900: 210 40% 98%;
+
+    /* Highlight.js 语法高亮变量 - 深色主题 */
+    --hljs-bg: 240 3.7% 15.9%;
+    --hljs-color: 0 0% 98%;
+    --hljs-comment: 240 5% 64.9%;
+    --hljs-keyword: 263.4 70% 50.4%;
+    --hljs-string: 142.1 70.6% 45.3%;
+    --hljs-number: 24.6 95% 53.1%;
+    --hljs-function: 217.2 91.2% 59.8%;
+    --hljs-variable: 330 81.2% 60.4%;
+    --hljs-class: 198.6 88.7% 48.4%;
+    --hljs-property: 239.1 94.5% 64.3%;
+    --hljs-operator: 0 0% 98%;
+    --hljs-punctuation: 240 5% 64.9%;
+    --hljs-tag: 263.4 70% 50.4%;
+    --hljs-attribute: 24.6 95% 53.1%;
+    --hljs-value: 142.1 70.6% 45.3%;
   }
 }
 
@@ -270,6 +304,129 @@
   .text-subtle { @apply text-muted-foreground; }
   .text-emphasis { @apply text-foreground font-medium; }
   .text-highlight { @apply text-[hsl(var(--primary))] font-semibold; }
+
+  /* Highlight.js 自定义主题样式 */
+  .hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 1rem;
+    background: hsl(var(--hljs-bg));
+    color: hsl(var(--hljs-color));
+    font-family: 'Fira Code', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* 语法高亮元素样式 */
+  .hljs-comment,
+  .hljs-quote {
+    color: hsl(var(--hljs-comment));
+    font-style: italic;
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-subst {
+    color: hsl(var(--hljs-keyword));
+    font-weight: 600;
+  }
+
+  .hljs-number,
+  .hljs-literal,
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-tag .hljs-attr {
+    color: hsl(var(--hljs-number));
+  }
+
+  .hljs-string,
+  .hljs-doctag {
+    color: hsl(var(--hljs-string));
+  }
+
+  .hljs-title,
+  .hljs-section,
+  .hljs-selector-id {
+    color: hsl(var(--hljs-function));
+    font-weight: 600;
+  }
+
+  .hljs-type,
+  .hljs-class .hljs-title {
+    color: hsl(var(--hljs-class));
+    font-weight: 600;
+  }
+
+  .hljs-tag,
+  .hljs-name,
+  .hljs-attribute {
+    color: hsl(var(--hljs-tag));
+    font-weight: normal;
+  }
+
+  .hljs-regexp,
+  .hljs-link {
+    color: hsl(var(--hljs-variable));
+  }
+
+  .hljs-symbol,
+  .hljs-bullet {
+    color: hsl(var(--hljs-property));
+  }
+
+  .hljs-built_in,
+  .hljs-builtin-name {
+    color: hsl(var(--hljs-function));
+  }
+
+  .hljs-meta {
+    color: hsl(var(--hljs-comment));
+  }
+
+  .hljs-deletion {
+    background: hsl(var(--red) / 0.1);
+    color: hsl(var(--red));
+  }
+
+  .hljs-addition {
+    background: hsl(var(--green) / 0.1);
+    color: hsl(var(--green));
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: bold;
+  }
+
+  /* 特定语言的增强样式 */
+  .hljs-attr {
+    color: hsl(var(--hljs-attribute));
+  }
+
+  .hljs-operator,
+  .hljs-punctuation {
+    color: hsl(var(--hljs-operator));
+  }
+
+  .hljs-property {
+    color: hsl(var(--hljs-property));
+  }
+
+  .hljs-params {
+    color: hsl(var(--hljs-variable));
+  }
+
+  .hljs-function .hljs-title {
+    color: hsl(var(--hljs-function));
+  }
+
+  .hljs-attr-value,
+  .hljs-attr-value .hljs-string {
+    color: hsl(var(--hljs-value));
+  }
 }
 
 /* 保留原有的自定义样式 */

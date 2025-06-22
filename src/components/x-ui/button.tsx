@@ -17,7 +17,7 @@ const buttonVariants = cva(
           "border border-[hsl(var(--border))] bg-transparent text-[hsl(var(--muted-foreground))] shadow-sm hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]",
         secondary:
           "bg-zinc-100 text-zinc-900 shadow-sm hover:bg-zinc-100/80 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-800/80",
-        ghost: "hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-50",
+        ghost: "text-muted-foreground hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-50",
         link: "text-zinc-900 underline-offset-4 hover:underline dark:text-zinc-50",
         pretty: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-zinc-50",
         prettyOutline: "border bg-white border-blue-200 text-blue-700 hover:bg-blue-50",

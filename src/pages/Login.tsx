@@ -57,7 +57,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -70,7 +70,7 @@ export function Login() {
           <p className="text-slate-600 mt-2">登录您的博客账户</p>
         </div>
 
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="shadow-xl border-0 bg-background backdrop-blur-sm">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">登录</CardTitle>
             <CardDescription className="text-center">
@@ -123,7 +123,8 @@ export function Login() {
             <CardFooter className="flex flex-col space-y-4">
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" 
+                variant="pretty"
+                className="w-full" 
                 disabled={loading}
               >
                 {loading ? (
