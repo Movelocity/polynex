@@ -20,6 +20,7 @@ import {
   Share2
 } from 'lucide-react';
 import { UserAvatar } from '@/components/common/user/UserAvatar';
+import { TOC } from '@/components/common/TOC';
 // Note: Highlight.js styles are included via CDN in index.html for better compatibility
 
 // Temporary formatDate function until we move it to a proper utils file
@@ -154,7 +155,7 @@ export function BlogDetail() {
         {/* 左侧栏 - 推荐文章 */}
         <aside className="hidden lg:block w-64 flex-shrink-0">
           {relatedBlogs.length > 0 && (
-            <div className="sticky top-4">
+            <div className="sticky top-20">
               <h3 className="text-lg font-bold text-slate-800 mb-4">推荐文章</h3>
               <div className="space-y-4">
                 {relatedBlogs.map((relatedBlog) => (
@@ -189,10 +190,10 @@ export function BlogDetail() {
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div className="flex items-center space-x-4">
-                <UserAvatar 
+                {/* <UserAvatar 
                   username={blog.authorName}
                   size="lg"
-                />
+                /> */}
                 <div>
                   <p className="font-medium text-slate-800">{blog.authorName}</p>
                   <div className="flex items-center text-sm text-slate-500">
@@ -237,11 +238,10 @@ export function BlogDetail() {
         
         {/* 右侧栏 - TOC */}
         <aside className="hidden xl:block w-64 flex-shrink-0">
-          <div className="sticky top-4">
+          <div className="sticky top-20">
             <h3 className="text-lg font-bold text-slate-800 mb-4">目录</h3>
             <div className="text-sm text-slate-600">
-              {/* TOC 内容待实现 */}
-              <p className="text-slate-400">目录功能开发中...</p>
+              <TOC content={blog.content} />
             </div>
           </div>
         </aside>
