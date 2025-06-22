@@ -19,7 +19,7 @@ export interface ImageCropperProps {
 
 type DragHandle = 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null;
 
-export function ImageCropper({
+export function ImageCropperPanel({
   imageUrl,
   cropArea,
   onCropAreaChange,
@@ -29,6 +29,10 @@ export function ImageCropper({
   maxContainerHeight = 600
 }: ImageCropperProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const animationFrameRef = useRef<number>();
+  
   const [isDragging, setIsDragging] = useState(false);
   const [dragHandle, setDragHandle] = useState<DragHandle>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -95,6 +99,118 @@ export function ImageCropper({
   }, [getCanvasScale]);
 
   const displayCropArea = toDisplayCoords(cropArea);
+
+  const drawImage = useCallback(() => {
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    if (!canvas || !img) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.drawImage(img, 0, 0, actualSize.displayWidth, actualSize.displayHeight);
+  }, [actualSize]);
+
+  const drawCropOverlay = useCallback(() => {
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    if (!canvas || !img) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.clearRect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
+    ctx.clip();
+    ctx.drawImage(img, 0, 0, actualSize.displayWidth, actualSize.displayHeight);
+    ctx.restore();
+
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
+
+    const handleSize = 8;
+    const handles = [
+      { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
+      { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
+      { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
+      { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
+      { x: displayCropArea.x + displayCropArea.width / 2 - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
+      { x: displayCropArea.x + displayCropArea.width / 2 - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
+      { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y + displayCropArea.height / 2 - handleSize / 2 },
+      { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y + displayCropArea.height / 2 - handleSize / 2 },
+    ];
+
+    ctx.fillStyle = '#fff';
+    handles.forEach(handle => {
+      ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
+    });
+  }, [displayCropArea, actualSize]);
+
+  const scheduleRedraw = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    
+    animationFrameRef.current = requestAnimationFrame(() => {
+      if (imageLoaded) {
+        drawImage();
+        drawCropOverlay();
+      }
+    });
+  }, [imageLoaded, drawImage, drawCropOverlay]);
+
+  useEffect(() => {
+    if (!imageUrl) return;
+
+    if (imageRef.current && imageRef.current.src === imageUrl && imageLoaded) {
+      scheduleRedraw();
+      return;
+    }
+
+    setImageLoaded(false);
+    const img = new Image();
+    img.src = imageUrl;
+
+    img.onload = () => {
+      imageRef.current = img;
+      setImageLoaded(true);
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load image:', imageUrl);
+      setImageLoaded(false);
+    };
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [imageUrl]);
+
+  useEffect(() => {
+    if (imageLoaded) {
+      scheduleRedraw();
+    }
+  }, [imageLoaded, displayCropArea, actualSize, scheduleRedraw]);
+
+  // 清理动画帧
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isDragging || !dragHandle) return;
@@ -165,56 +281,6 @@ export function ImageCropper({
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [isDragging, dragHandle, dragStart, initialCropArea, actualSize, onCropAreaChange, toOriginalCoords, getCanvasCoordinates]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = new Image();
-    img.src = imageUrl;
-
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.drawImage(img, 0, 0, actualSize.displayWidth, actualSize.displayHeight);
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.clearRect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
-
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
-
-      const handleSize = 8;
-      const handles = [
-        { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
-        { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
-        { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
-        { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
-        { x: displayCropArea.x + displayCropArea.width / 2 - handleSize / 2, y: displayCropArea.y - handleSize / 2 },
-        { x: displayCropArea.x + displayCropArea.width / 2 - handleSize / 2, y: displayCropArea.y + displayCropArea.height - handleSize / 2 },
-        { x: displayCropArea.x - handleSize / 2, y: displayCropArea.y + displayCropArea.height / 2 - handleSize / 2 },
-        { x: displayCropArea.x + displayCropArea.width - handleSize / 2, y: displayCropArea.y + displayCropArea.height / 2 - handleSize / 2 },
-      ];
-
-      ctx.fillStyle = '#fff';
-      handles.forEach(handle => {
-        ctx.fillRect(handle.x, handle.y, handleSize, handleSize);
-      });
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(displayCropArea.x, displayCropArea.y, displayCropArea.width, displayCropArea.height);
-      ctx.clip();
-      ctx.drawImage(img, 0, 0, actualSize.displayWidth, actualSize.displayHeight);
-      ctx.restore();
-    };
-  }, [imageUrl, displayCropArea, actualSize]);
 
   const getHandleAtPosition = useCallback((x: number, y: number): DragHandle => {
     const handleSize = 16;
@@ -294,7 +360,7 @@ export function ImageCropper({
         height={actualSize.displayHeight}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        className="border border-slate-200 rounded-lg max-w-full h-auto"
+        className="max-w-full h-auto"
         style={{ 
           maxWidth: '100%',
           height: 'auto',

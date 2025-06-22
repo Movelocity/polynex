@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 /**
  * 头像尺寸枚举
  */
-export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
 /**
  * 尺寸样式映射
@@ -18,6 +18,7 @@ const sizeStyles: Record<AvatarSize, string> = {
   md: 'h-10 w-10',    // 40px - 默认尺寸
   lg: 'h-12 w-12',    // 48px - 用于详情页
   xl: 'h-16 w-16',    // 64px - 用于个人资料页
+  '2xl': 'h-20 w-20', // 80px - 用于个人资料页
 };
 
 /**
@@ -29,6 +30,7 @@ const fallbackTextSizes: Record<AvatarSize, string> = {
   md: 'text-base',
   lg: 'text-lg',
   xl: 'text-xl',
+  '2xl': 'text-2xl',
 };
 
 /**

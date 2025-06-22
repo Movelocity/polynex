@@ -400,69 +400,6 @@ export function CropCanvas({
         onMouseDown={(e) => handleMouseDown(e, 'sw')}
       />
 
-      {/* 中心指示器 */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '8px',
-          height: '8px',
-          backgroundColor: '#3b82f6',
-          borderRadius: '50%',
-          border: '2px solid white',
-          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.3)',
-          pointerEvents: 'none',
-          opacity: 0.8
-        }}
-      />
-
-      {/* 网格线 */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '33.33%',
-          left: '0',
-          right: '0',
-          height: '1px',
-          backgroundColor: 'rgba(255, 255, 255, 0.6)',
-          pointerEvents: 'none'
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          top: '66.66%',
-          left: '0',
-          right: '0',
-          height: '1px',
-          backgroundColor: 'rgba(255, 255, 255, 0.6)',
-          pointerEvents: 'none'
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          left: '33.33%',
-          top: '0',
-          bottom: '0',
-          width: '1px',
-          backgroundColor: 'rgba(255, 255, 255, 0.6)',
-          pointerEvents: 'none'
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          left: '66.66%',
-          top: '0',
-          bottom: '0',
-          width: '1px',
-          backgroundColor: 'rgba(255, 255, 255, 0.6)',
-          pointerEvents: 'none'
-        }}
-      />
     </div>
   );
 } 

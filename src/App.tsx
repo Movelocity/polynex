@@ -15,10 +15,10 @@ import { CategoryPage } from '@/pages/CategoryPage';
 import { ArticleList } from '@/pages/ArticleList';
 import { UserSettings } from '@/pages/UserSettings';
 import { Tools } from '@/pages/Tools';
-import { ImageCropper } from '@/pages/ImageCropper';
-import { NewImageCropperDemo } from '@/pages/NewImageCropperDemo';
-import { ImageOCR } from '@/pages/ImageOCR';
-import { JsonFormatter } from '@/pages/JsonFormatter';
+import { ImageCropper } from '@/pages/tools/ImageCropper';
+import { NewImageCropperDemo } from '@/pages/tools/NewImageCropperDemo';
+import { ImageOCR } from '@/pages/tools/ImageOCR';
+import { JsonFormatter } from '@/pages/tools/JsonFormatter';
 import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
 

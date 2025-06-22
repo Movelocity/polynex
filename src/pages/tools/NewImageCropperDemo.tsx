@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { NewImageCropper } from '@/components/ImageCrop/NewImageCropper';
+import { NewImageCropper } from '@/components/ImageCropV2/NewImageCropper';
 import { Button } from '@/components/x-ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Input } from '@/components/x-ui/input';
@@ -113,7 +113,7 @@ export function NewImageCropperDemo() {
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                智能图片裁剪工具
+                图片裁剪工具 ver.2
               </span>
             </div>
           </div>
@@ -167,9 +167,9 @@ export function NewImageCropperDemo() {
           </Card>
         ) : (
           /* 裁剪界面 */
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 主裁剪区域 */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <NewImageCropper
                 imageData={imageData}
                 onCropComplete={handleCropComplete}
@@ -186,11 +186,10 @@ export function NewImageCropperDemo() {
                     操作面板
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="flex gap-3">
                   <Button 
                     onClick={handleNewImage}
                     variant="outline"
-                    className="w-full border-slate-200 hover:bg-slate-50"
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     选择新图片
@@ -199,7 +198,7 @@ export function NewImageCropperDemo() {
                   {croppedResult && (
                     <Button
                       onClick={() => downloadImage(croppedResult, `cropped-${Date.now()}.png`)}
-                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      variant="attractive"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       下载结果
@@ -239,7 +238,7 @@ export function NewImageCropperDemo() {
               </Card>
 
               {/* 结果预览 */}
-              {croppedResult && (
+              {/* {croppedResult && (
                 <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-lg flex items-center">
@@ -253,6 +252,7 @@ export function NewImageCropperDemo() {
                         <img 
                           src={croppedResult} 
                           alt="裁剪结果预览" 
+                          className="w-full h-full object-contain"
                         />
                       </div>
                       <div className="text-sm text-slate-600 space-y-1">
@@ -263,7 +263,7 @@ export function NewImageCropperDemo() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </div>
           </div>
         )}

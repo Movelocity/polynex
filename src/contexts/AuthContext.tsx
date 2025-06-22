@@ -57,16 +57,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // 验证token是否仍然有效
         const validation = await userService.validateToken();
         if (validation.valid && validation.user) {
+          console.log('token有效，设置认证状态');
           setAuthState({
             isAuthenticated: true,
             user: validation.user,
           });
         } else {
           // token无效，清除本地数据
+          console.log('token无效，清除本地数据');
           handleLogout();
         }
       } else {
         // 没有本地认证信息
+        console.log('没有本地认证信息');
         setAuthState({
           isAuthenticated: false,
           user: null,

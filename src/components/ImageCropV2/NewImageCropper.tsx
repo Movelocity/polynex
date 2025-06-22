@@ -127,10 +127,10 @@ export function NewImageCropper({
 
   // 预设尺寸选项
   const presetSizes = [
-    { label: '头像', width: 128, height: 128 },
-    { label: '图标', width: 256, height: 256 },
-    { label: '缩略图', width: 400, height: 300 },
-    { label: '标准', width: 512, height: 512 },
+    { width: 128, height: 128 },
+    { width: 256, height: 256 },
+    { width: 400, height: 300 },
+    { width: 512, height: 512 },
   ];
 
   const handlePresetSize = (width: number, height: number) => {
@@ -149,7 +149,7 @@ export function NewImageCropper({
                 <ImageIcon className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-xl text-slate-800">智能图片裁剪</CardTitle>
+                <CardTitle className="text-xl text-slate-800">图片裁剪</CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
                   {isCropping ? '调整裁剪区域' : '预览与调整'}
                 </p>
@@ -211,17 +211,16 @@ export function NewImageCropper({
 
                   <div className="flex items-center space-x-3">
                     <Button
-                      variant="outline"
                       size="sm"
                       onClick={handleMakeSquare}
-                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                      variant="prettyOutline"
                     >
                       <Square className="w-4 h-4 mr-2" />
                       正方形
                     </Button>
                     <Button 
                       onClick={handleConfirmCrop}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      variant="pretty"
                     >
                       <Crop className="w-4 h-4 mr-2" />
                       确认裁剪
@@ -256,22 +255,20 @@ export function NewImageCropper({
 
                 {/* 尺寸调整区域 */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-slate-700">尺寸调整</h4>
+                  <h4 className="font-medium text-slate-700">常用尺寸</h4>
                   
                   {/* 预设尺寸 */}
-                  <div className="grid grid-cols-4 gap-3">
-                    {presetSizes.map((preset) => (
+                  <div className="grid grid-cols-4 gap-2">
+                    {presetSizes.map((preset, index) => (
                       <Button
-                        key={preset.label}
+                        key={index}
                         variant="outline"
                         size="sm"
-                        onClick={() => handlePresetSize(preset.width, preset.height)}
-                        className="flex flex-col items-center py-3 h-auto border-slate-200 hover:border-blue-300 hover:bg-blue-50"
+                        onClick={() => {
+                          handlePresetSize(preset.width, preset.height)
+                        }}
                       >
-                        <span className="font-medium">{preset.label}</span>
-                        <span className="text-xs text-slate-500">
-                          {preset.width}×{preset.height}
-                        </span>
+                        {preset.width}×{preset.height}
                       </Button>
                     ))}
                   </div>

@@ -68,7 +68,7 @@ export function AvatarUpload({ user, onAvatarUpload, uploading = false, onError 
         <div className="relative">
           <UserAvatar 
             user={user}
-            size="xl"
+            size="2xl"
           />
           <Button
             size="sm"

@@ -12,8 +12,8 @@ export function Tools() {
       color: 'from-blue-500 to-cyan-500'
     },
     {
-      title: '智能图片裁剪',
-      description: '基于AI算法的智能裁剪工具，自动识别最佳裁剪区域，支持批量处理',
+      title: '图片裁剪 ver.2',
+      description: '上传图片并裁剪成所需尺寸，支持预设宽高比和自定义尺寸。换一种排版方式',
       icon: Sparkles,
       path: '/tools/advanced-image-cropper',
       color: 'from-indigo-500 to-purple-500'

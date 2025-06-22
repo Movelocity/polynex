@@ -1,187 +1,24 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useImageCrop } from '@/hooks/useImageCrop';
-import { ImageCropper as ImageCropperLegacy } from '@/components/ImageCropLegacy/ImageCropper';
+import { ImageCropperPanel } from '@/components/ImageCropV1/ImageCropperPanel';
 import { Button } from '@/components/x-ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
-import { Upload, RotateCw, Crop, Edit, Download, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { Upload, Crop, Edit, ArrowLeft, Image as ImageIcon, Settings } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+import { ImageDownloader } from '@/components/ImageCropV1/ImageDownloader';
 
-// 新增：下载组件
-function ImageDownloader({ imageUrl }: { imageUrl: string}) {
-  const [downloadWidth, setDownloadWidth] = useState(800);
-  const [downloadHeight, setDownloadHeight] = useState(600);
-  const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
-  const [originalAspectRatio, setOriginalAspectRatio] = useState(1);
-
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      const aspectRatio = img.width / img.height;
-      setOriginalAspectRatio(aspectRatio);
-      setDownloadWidth(img.width);
-      setDownloadHeight(img.height);
-    };
-    img.src = imageUrl;
-  }, [imageUrl]);
-
-  const handleWidthChange = useCallback((value: number) => {
-    setDownloadWidth(value);
-    if (maintainAspectRatio) {
-      setDownloadHeight(Math.round(value / originalAspectRatio));
-    }
-  }, [maintainAspectRatio, originalAspectRatio]);
-
-  const handleHeightChange = useCallback((value: number) => {
-    setDownloadHeight(value);
-    if (maintainAspectRatio) {
-      setDownloadWidth(Math.round(value * originalAspectRatio));
-    }
-  }, [maintainAspectRatio, originalAspectRatio]);
-
-  const handleDownload = useCallback(async () => {
-    try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      canvas.width = downloadWidth;
-      canvas.height = downloadHeight;
-
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, downloadWidth, downloadHeight);
-        
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/jpeg', 0.95);
-        link.download = `resized-image-${downloadWidth}x${downloadHeight}-${Date.now()}.jpg`;
-        link.click();
-
-        toast({
-          title: '成功',
-          description: `图片已下载 (${downloadWidth}×${downloadHeight})`
-        });
-      };
-      img.src = imageUrl;
-    } catch (error) {
-      toast({
-        title: '错误',
-        description: '下载失败',
-        variant: 'destructive'
-      });
-    }
-  }, [imageUrl, downloadWidth, downloadHeight]);
-
-  return (
-    <div className="space-y-6">
-      {/* 下载设置 */}
-      <Card>
-        <CardHeader>
-          <div className="flex gap-2 items-baseline">
-            <span className="text-lg font-bold">下载设置</span>
-            <CardDescription>调整图片尺寸后下载</CardDescription>
-          </div>
-          {/* <CardTitle className="text-lg">下载设置</CardTitle> */}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="width">宽度 (px)</Label>
-              <Input
-                id="width"
-                type="number"
-                value={downloadWidth}
-                onChange={(e) => handleWidthChange(Number(e.target.value))}
-                min="1"
-                max="4000"
-              />
-            </div>
-            <div>
-              <Label htmlFor="height">高度 (px)</Label>
-              <Input
-                id="height"
-                type="number"
-                value={downloadHeight}
-                onChange={(e) => handleHeightChange(Number(e.target.value))}
-                min="1"
-                max="4000"
-              />
-            </div>
-          </div>
-
-          {/* 宽高为1:1时，可以选择常用尺寸预设 */}
-          {downloadWidth===downloadHeight && (
-            <div>
-              <Label className="text-sm font-medium mb-3 block">常用尺寸</Label>
-              <div className="grid grid-cols-4 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDownloadWidth(64);
-                    setDownloadHeight(64);
-                  }}
-                >
-                  64×64
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDownloadWidth(128);
-                    setDownloadHeight(128);
-                  }}
-                >
-                  128×128
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDownloadWidth(256);
-                    setDownloadHeight(256);
-                  }}
-                >
-                  256×256
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDownloadWidth(512);
-                    setDownloadHeight(512);
-                  }}
-                >
-                  512×512
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="aspectRatio"
-              checked={maintainAspectRatio}
-              onChange={(e) => setMaintainAspectRatio(e.target.checked)}
-              className="rounded"
-            />
-            <Label htmlFor="aspectRatio">保持宽高比</Label>
-          </div>
-
-          <div className="flex gap-3 justify-center">
-            <Button onClick={handleDownload} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-              <Download className="w-4 h-4 mr-2" />
-              下载图片
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+// 宽高比预设配置
+const ASPECT_RATIO_PRESETS = [
+  { key: 'free', label: '自由', ratio: null },
+  { key: 'square', label: '1:1', ratio: 1 },
+  { key: 'landscape_16_9', label: '16:9', ratio: 16/9 },
+  { key: 'landscape_4_3', label: '4:3', ratio: 4/3 },
+  { key: 'landscape_3_2', label: '3:2', ratio: 3/2 },
+  { key: 'portrait_9_16', label: '9:16', ratio: 9/16 },
+] as const;
 
 export function ImageCropper() {
   const {
@@ -199,6 +36,7 @@ export function ImageCropper() {
     reset
   } = useImageCrop();
 
+  const [aspectRatioKey, setAspectRatioKey] = useState<string>('free');
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [maxWidth, setMaxWidth] = useState(800);
@@ -317,7 +155,8 @@ export function ImageCropper() {
   }, [finishCropping]);
 
   // 设置预设宽高比
-  const setPresetAspectRatio = useCallback((ratio: number | null) => {
+  const setPresetAspectRatio = useCallback((key: string, ratio: number | null) => {
+    setAspectRatioKey(key);
     setAspectRatio(ratio);
     if (ratio && imageDimensions) {
       const currentRatio = cropArea.width / cropArea.height;
@@ -347,7 +186,7 @@ export function ImageCropper() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
+      {/* <div className="mb-8">
         <div className="flex items-center space-x-4 mb-4">
           <Link 
             to="/tools" 
@@ -359,32 +198,43 @@ export function ImageCropper() {
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">图片裁剪工具</h1>
         <p className="text-slate-600">上传图片并裁剪成所需尺寸</p>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 主要操作区域 */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <ImageIcon className="w-5 h-5" />
-                <span>操作面板</span>
-              </CardTitle>
-                { proxyImage && mode !== 'cropping' && (
+              <div className="flex justify-between items-center">
+                <Link 
+                  to="/tools" 
+                  className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  返回页面
+                </Link>
+                <CardTitle className="hidden sm:flex items-center space-x-2 ">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-md">
+                    <ImageIcon className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    图片裁剪工具
+                  </span>
+                </CardTitle>
+                {mode !== 'cropping' && (
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={()=>{mode === 'preview'? reset() : backToPreview()}}>
+                    {/* <Button variant="outline" onClick={()=>{mode === 'preview'? reset() : backToPreview()}}>
                       <RotateCw className="w-4 h-4" />
-                    </Button>
-                    <Button onClick={handleStartCropping}>
+                    </Button> */}
+                    <Button variant="pretty" onClick={handleStartCropping} disabled={!proxyImage}>
                       <Edit className="w-4 h-4 mr-2" />
                       裁剪
                     </Button>
                   </div>
-                  )
+                  ) 
                 }
                 {mode === 'cropping' && (
-                  <div className="mt-4 flex gap-3 justify-end">
+                  <div className="flex gap-3 justify-end">
                     <Button
                       variant="outline"
                       onClick={backToPreview}
@@ -394,6 +244,7 @@ export function ImageCropper() {
                       取消
                     </Button>
                     <Button
+                      variant="pretty"
                       onClick={handleFinishCropping}
                       disabled={isProcessing}
                     >
@@ -408,18 +259,30 @@ export function ImageCropper() {
             <CardContent className="px-6">
               {!proxyImage ? (
                 <div
-                  className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center hover:border-slate-400 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-blue-300 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer"
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Upload className="w-12 h-12 mx-auto text-slate-400 mb-4" />
-                  <p className="text-lg font-medium text-slate-700 mb-2">
-                    拖放图片到这里或点击上传
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    支持 JPG、PNG、GIF 等格式
-                  </p>
+                  <div className="space-y-4">
+                  <div className="mx-auto w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Upload className="w-10 h-10 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-semibold text-slate-700 mb-2">
+                      拖放图片到这里或点击上传
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      最大文件大小: 10MB
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                  >
+                    选择文件
+                  </Button>
+                </div>
                   <Input
                     ref={fileInputRef}
                     type="file"
@@ -430,21 +293,21 @@ export function ImageCropper() {
                 </div>
               ) : mode === 'preview' ? (
                 // 预览模式
-                <div className="space-y-4">
-                  <div className="flex justify-center">
+                <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden">
+                  <div className="flex justify-center h-[65vh]">
                     <img 
                       src={proxyImage} 
                       alt="图片预览" 
-                      className="max-w-full max-h-96 rounded-lg border border-slate-200"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 </div>
               ) : mode === 'cropping' ? (
                 // 裁剪模式
                 <div className="relative">
-                  <div className="w-full max-w-full overflow-auto rounded-lg bg-slate-50 flex justify-center p-4">
+                  <div className="w-full max-w-full h-[65vh] rounded-lg bg-black/40 flex justify-center p-4">
                     {imageDimensions && (
-                      <ImageCropperLegacy
+                      <ImageCropperPanel
                         imageUrl={proxyImage}
                         cropArea={cropArea}
                         onCropAreaChange={handleCropAreaChange}
@@ -459,11 +322,11 @@ export function ImageCropper() {
               ) : mode === 'result' && croppedImage ? (
                 // 结果模式
                 <div className="space-y-6">
-                  <div className="w-full max-w-full overflow-auto rounded-lg bg-slate-50 flex justify-center p-4">
+                  <div className="w-full max-w-full h-[65vh] overflow-auto rounded-lg bg-slate-100 flex justify-center p-4">
                     <img 
                       src={croppedImage} 
                       alt="裁剪结果" 
-                      className="max-w-full max-h-96 rounded-lg border border-slate-200"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 </div>
@@ -477,12 +340,12 @@ export function ImageCropper() {
           {/* 图片信息 */}
           {mode === 'result' && croppedImage && (
             <Card>
-              <ImageDownloader imageUrl={croppedImage} />
+              <ImageDownloader imageUrl={croppedImage} onReset={reset} />
             </Card>
           )}
           {mode === 'preview' && proxyImage && (
             <Card>
-              <ImageDownloader imageUrl={proxyImage} />
+              <ImageDownloader imageUrl={proxyImage} onReset={reset} />
             </Card>
           )}
 
@@ -490,56 +353,27 @@ export function ImageCropper() {
           {mode === 'cropping' && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">裁剪设置</CardTitle>
-                <CardDescription>调整裁剪区域和宽高比</CardDescription>
+                <CardTitle className="text-lg flex items-center">
+                  <Settings className="w-5 h-5 mr-2 text-blue-600" />
+                  裁剪设置
+                </CardTitle>
+                {/* <CardDescription>调整裁剪区域和宽高比</CardDescription> */}
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* 宽高比预设 */}
                 <div>
                   <Label className="text-sm font-medium mb-3 block">宽高比预设</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant={aspectRatio === null ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setPresetAspectRatio(null)}
-                    >
-                      自由
-                    </Button>
-                    <Button
-                      variant={aspectRatio === 1 ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setPresetAspectRatio(1)}
-                    >
-                      1:1
-                    </Button>
-                    <Button
-                      variant={aspectRatio === 16/9 ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setPresetAspectRatio(16/9)}
-                    >
-                      16:9
-                    </Button>
-                    <Button
-                      variant={aspectRatio === 4/3 ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setPresetAspectRatio(4/3)}
-                    >
-                      4:3
-                    </Button>
-                    <Button
-                      variant={aspectRatio === 3/2 ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setPresetAspectRatio(3/2)}
-                    >
-                      3:2
-                    </Button>
-                    <Button
-                      variant={aspectRatio === 9/16 ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setPresetAspectRatio(9/16)}
-                    >
-                      9:16
-                    </Button>
+                    {ASPECT_RATIO_PRESETS.map((preset) => (
+                      <Button
+                        key={preset.key}
+                        variant={aspectRatioKey === preset.key ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setPresetAspectRatio(preset.key, preset.ratio)}
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
                   </div>
                 </div>
 
