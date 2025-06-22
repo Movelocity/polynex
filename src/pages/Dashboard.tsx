@@ -444,7 +444,7 @@ export function Dashboard() {
                 <span className="font-semibold text-purple-600">{stats.totalViews}</span>
               </div>
               {debouncedSearchQuery.trim() && (
-                <div className="flex items-center justify-between border-t pt-3">
+                <div className="flex items-center justify-between border-t border-border pt-3">
                   <span className="text-sm text-slate-600">搜索结果</span>
                   <span className="font-semibold text-orange-600">{filteredBlogs.length}</span>
                 </div>

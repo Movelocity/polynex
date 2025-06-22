@@ -148,14 +148,14 @@ export function ImageOCR() {
         <div className="flex items-center space-x-4 mb-4">
           <Link 
             to="/tools" 
-            className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
+            className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             返回工具列表
           </Link>
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">图片OCR识别</h1>
-        <p className="text-slate-600">上传图片或粘贴图片进行文字识别（演示版本）</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">图片OCR识别</h1>
+        <p className="text-muted-foreground">上传图片或粘贴图片进行文字识别（演示版本）</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -208,7 +208,7 @@ export function ImageCropper() {
               <div className="flex justify-between items-center">
                 <Link 
                   to="/tools" 
-                  className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
+                  className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   返回页面
@@ -259,7 +259,7 @@ export function ImageCropper() {
             <CardContent className="px-6">
               {!proxyImage ? (
                 <div
-                  className="border-2 border-dashed border-blue-300 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-blue-300 rounded-xl p-12 text-center hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer"
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
                   onClick={() => fileInputRef.current?.click()}
@@ -278,7 +278,6 @@ export function ImageCropper() {
                   </div>
                   <Button 
                     variant="outline" 
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50"
                   >
                     选择文件
                   </Button>
@@ -293,7 +292,7 @@ export function ImageCropper() {
                 </div>
               ) : mode === 'preview' ? (
                 // 预览模式
-                <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden">
+                <div className="bg-white dark:bg-gray-900 rounded-xl border-2 border-slate-200 dark:border-gray-800 overflow-hidden">
                   <div className="flex justify-center h-[65vh]">
                     <img 
                       src={proxyImage} 
@@ -305,7 +304,7 @@ export function ImageCropper() {
               ) : mode === 'cropping' ? (
                 // 裁剪模式
                 <div className="relative">
-                  <div className="w-full max-w-full h-[65vh] rounded-lg bg-black/40 flex justify-center p-4">
+                  <div className="w-full max-w-full max-h-[65vh] rounded-lg bg-black/40 flex justify-center p-4">
                     {imageDimensions && (
                       <ImageCropperPanel
                         imageUrl={proxyImage}

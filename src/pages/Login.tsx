@@ -148,7 +148,7 @@ export function Login() {
         </Card>
 
         {/* Demo Accounts */}
-        <Card className="mt-6 bg-slate-50 border-slate-200">
+        {/* <Card className="mt-6 bg-slate-50 border-slate-200">
           <CardHeader>
             <CardTitle className="text-sm">演示账户</CardTitle>
           </CardHeader>
@@ -157,7 +157,7 @@ export function Login() {
             <p>密码: demo123</p>
             <p className="text-slate-500 mt-2">您也可以注册新账户体验完整功能</p>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );
