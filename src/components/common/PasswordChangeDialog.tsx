@@ -126,7 +126,7 @@ export function PasswordChangeDialog({ open, onOpenChange, onPasswordChange }: P
 
         <form onSubmit={handlePasswordChange} className="space-y-4 mt-4">
           <div>
-            <Label htmlFor="currentPassword">当前密码</Label>
+            <Label htmlFor="currentPassword" className="text-foreground">当前密码</Label>
             <div className="relative mt-1">
               <Input
                 id="currentPassword"
@@ -151,7 +151,7 @@ export function PasswordChangeDialog({ open, onOpenChange, onPasswordChange }: P
           </div>
 
           <div>
-            <Label htmlFor="newPassword">新密码</Label>
+            <Label htmlFor="newPassword" className="text-foreground">新密码</Label>
             <div className="relative mt-1">
               <Input
                 id="newPassword"
@@ -177,7 +177,7 @@ export function PasswordChangeDialog({ open, onOpenChange, onPasswordChange }: P
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword">确认新密码</Label>
+            <Label htmlFor="confirmPassword" className="text-foreground">确认新密码</Label>
             <div className="relative mt-1">
               <Input
                 id="confirmPassword"

@@ -280,7 +280,7 @@ export function UserSettings() {
               <CardDescription>管理您的账户密码</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted">
+              <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted">
                 <div>
                   <h4 className="font-medium">账户密码</h4>
                   <p className="text-sm text-muted-foreground mt-1">定期更改密码可以提高账户安全性</p>
@@ -300,7 +300,7 @@ export function UserSettings() {
               <CardDescription>更多安全相关的设置选项</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
                 <div>
                   <h4 className="font-medium">两步验证</h4>
                   <p className="text-sm text-muted-foreground mt-1">增加额外的安全保护层</p>
@@ -308,7 +308,7 @@ export function UserSettings() {
                 <Badge variant="secondary">即将推出</Badge>
               </div>
               
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
                 <div>
                   <h4 className="font-medium">登录历史</h4>
                   <p className="text-sm text-muted-foreground mt-1">查看您的账户登录记录</p>

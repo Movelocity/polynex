@@ -97,8 +97,8 @@ export function Search() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Search Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 mb-4">搜索文章</h1>
-        <p className="text-slate-600 mb-6">
+        <h1 className="text-3xl font-bold text-foreground mb-4">搜索文章</h1>
+        <p className="text-muted-foreground mb-6">
           在这里搜索您感兴趣的文章内容
         </p>
         
@@ -106,19 +106,19 @@ export function Search() {
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
           <div className="flex space-x-2">
             <div className="relative flex-1">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 type="text"
                 placeholder="输入关键词搜索文章..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-3 text-lg"
+                className="pl-10 pr-4 py-3 text-lg text-foreground"
               />
             </div>
             <Button 
               type="submit" 
               size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              variant="attractive"
               disabled={loading}
             >
               {loading ? '搜索中...' : '搜索'}
@@ -133,7 +133,7 @@ export function Search() {
           {/* Results Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-semibold text-slate-800">
+              <h2 className="text-xl font-semibold text-foreground">
                 搜索结果
               </h2>
               {searchQuery && (

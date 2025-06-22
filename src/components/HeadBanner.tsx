@@ -80,18 +80,6 @@ export function HeadBanner({
               <span>首页</span>
             </Link>
             
-            {/* <Link 
-              to="/articles" 
-              className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                isActivePath('/articles') 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>文章</span>
-            </Link> */}
-            
             <Link 
               to="/tools" 
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
@@ -135,15 +123,10 @@ export function HeadBanner({
 
           {/* Right Side Controls */}
           <div className="flex items-center space-x-4">
+
             {/* Theme Toggle */}
-            <div className="hidden md:flex items-center space-x-2">
-              <Sun className="h-4 w-4 text-muted-foreground" />
-              <Switch 
-                checked={isDark} 
-                onCheckedChange={toggleTheme}
-                aria-label="切换深浅色主题"
-              />
-              <Moon className="h-4 w-4 text-muted-foreground" />
+            <div className="items-center space-x-2 cursor-pointer" onClick={toggleTheme}>
+              {isDark ? <Sun className="h-4 w-4 text-muted-foreground" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
             </div>
 
             {/* Search Bar */}
@@ -155,7 +138,7 @@ export function HeadBanner({
                   placeholder="搜索公开博客..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full bg-muted border-border focus:bg-background"
+                  className="pl-10 pr-4 py-2 w-full bg-muted border-border focus:bg-background text-foreground"
                 />
               </form>
             </div>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BlogCard } from '@/components/common/blog/BlogCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Input } from '@/components/x-ui/input';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/x-ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/x-ui/alert-dialog';
 import { useTitle } from '@/hooks/usePageTitle';
 import { 
   PenTool, 
@@ -17,6 +17,7 @@ import {
   Search,
   Shield,
   Users,
+  User,
 } from 'lucide-react';
 
 export function Dashboard() {
@@ -390,18 +391,29 @@ export function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center font-bold text-xl">
                   <Shield className="w-5 h-5 mr-2" />
-                  管理员功能
+                  账户管理
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button 
-                  onClick={() => navigate('/admin/users')}
-                  className="w-full justify-start"
-                  variant="outline"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  用户管理
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    onClick={() => navigate('/settings')}
+                    className="justify-start"
+                    variant="outline"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    个人中心
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/admin/users')}
+                    className="justify-start"
+                    variant="outline"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    用户管理
+                  </Button>
+                </div>
+                
               </CardContent>
             </Card>
           )}

@@ -72,7 +72,7 @@ export function FileList({ files, loading = false, onDelete, onRefresh }: FileLi
         {files.map((file) => {
           const fileTypeInfo = fileService.getFileTypeInfo(`${file.unique_id}${file.extension}`);
           return (
-            <div key={file.unique_id} className="flex items-center justify-between p-3 border rounded-lg">
+            <div key={file.unique_id} className="flex items-center justify-between p-3 border border-border rounded-lg">
               <div className="flex items-center space-x-3">
                 {fileTypeInfo.isImage ? (
                   <ImageIcon className="w-5 h-5 text-blue-500" />

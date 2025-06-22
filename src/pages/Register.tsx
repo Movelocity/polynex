@@ -7,7 +7,7 @@ import { Label } from '@/components/x-ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { useTitle } from '@/hooks/usePageTitle';
-import { Loader2, Mail, Lock, User, BookOpen } from 'lucide-react';
+import { Loader2, Mail, Lock, User, BookOpen, Eye, EyeOff } from 'lucide-react';
 
 export function Register() {
   // 设置页面标题
@@ -21,6 +21,8 @@ export function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -166,14 +168,26 @@ export function Register() {
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
                 </div>
+                <p className="text-xs text-slate-500">密码至少需要6个字符</p>
               </div>
               
               <div className="space-y-2">
@@ -183,13 +197,24 @@ export function Register() {
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
                 </div>
               </div>
             </CardContent>
