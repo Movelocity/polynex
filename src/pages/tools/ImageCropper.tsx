@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useImageCrop } from '@/hooks/useImageCrop';
+import { useImageCrop } from '@/components/ImageCropV1/useImageCrop';
 import { ImageCropperPanel } from '@/components/ImageCropV1/ImageCropperPanel';
 import { Button } from '@/components/x-ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Upload, Crop, Edit, ArrowLeft, Image as ImageIcon, Settings } from 'lucide-react';

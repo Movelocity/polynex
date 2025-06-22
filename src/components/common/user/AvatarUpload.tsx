@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/x-ui/button';
 import { UserAvatar } from '@/components/common/user/UserAvatar';
-import { ImageCropperDialog } from '@/components/common/ImageCropperDialog';
+import { ImageCropperDialog } from '@/components/ImageCropV1/ImageCropperDialog';
 import { Camera, Upload } from 'lucide-react';
 
 interface User {
