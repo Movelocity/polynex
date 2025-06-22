@@ -22,6 +22,7 @@ import { ImageOCR } from '@/pages/tools/ImageOCR';
 import { JsonFormatter } from '@/pages/tools/JsonFormatter';
 import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
+import { ThemeDemo } from '@/components/ThemeDemo';
 
 function App() {
 
@@ -48,6 +49,7 @@ function App() {
           />
 
           <Route path="/service-demo" element={<ServiceDemo />} />
+          <Route path="/theme-demo" element={<ThemeDemo />} />
 
           {/* Routes with layout */}
           <Route path="/" element={<Layout />}>

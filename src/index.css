@@ -4,7 +4,43 @@
 
 @layer base {
   :root {
+    /* 基础设置 */
     --radius: 0.5rem;
+    
+    /* 基础颜色系统 - 浅色主题 */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    
+    /* 主要色彩 */
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    
+    /* 状态色彩 */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 355.7 100% 97.3%;
+    --warning: 32.9 81.6% 50.4%;
+    --warning-foreground: 339.2 100% 97.3%;
+    --info: 221.2 83.2% 53.3%;
+    --info-foreground: 210 40% 98%;
+    
+    /* 边框和分割线 */
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    
+    /* Sidebar 颜色 */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -12,10 +48,76 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* 扩展主题色 */
+    --blue: 221.2 83.2% 53.3%;
+    --blue-foreground: 210 40% 98%;
+    --green: 142.1 76.2% 36.3%;
+    --green-foreground: 355.7 100% 97.3%;
+    --yellow: 47.9 95.8% 53.1%;
+    --yellow-foreground: 26 83.3% 14.1%;
+    --red: 0 84.2% 60.2%;
+    --red-foreground: 0 0% 98%;
+    --purple: 262.1 83.3% 57.8%;
+    --purple-foreground: 210 40% 98%;
+    --pink: 330 81.2% 60.4%;
+    --pink-foreground: 355.7 100% 97.3%;
+    --orange: 24.6 95% 53.1%;
+    --orange-foreground: 60 9.1% 97.8%;
+    --cyan: 198.6 88.7% 48.4%;
+    --cyan-foreground: 210 40% 98%;
+    --indigo: 239.1 94.5% 64.3%;
+    --indigo-foreground: 210 40% 98%;
+    
+    /* 灰度扩展 */
+    --gray-50: 210 40% 98%;
+    --gray-100: 210 40% 96%;
+    --gray-200: 214.3 31.8% 91.4%;
+    --gray-300: 212.7 26.8% 83.9%;
+    --gray-400: 215.4 16.3% 65.9%;
+    --gray-500: 215.4 16.3% 46.9%;
+    --gray-600: 215.4 19.3% 34.5%;
+    --gray-700: 215.3 25% 26.7%;
+    --gray-800: 217.2 32.6% 17.5%;
+    --gray-900: 222.2 84% 4.9%;
   }
 
   .dark {
+    /* 基础颜色系统 - 深色主题 */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* 主要色彩 */
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    
+    /* 状态色彩 */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 144.9 80.4% 10%;
+    --warning: 32.9 81.6% 50.4%;
+    --warning-foreground: 339.2 100% 97.3%;
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 222.2 84% 4.9%;
+    
+    /* 边框和分割线 */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    /* Sidebar 颜色 */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -23,10 +125,154 @@
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* 扩展主题色 - 深色版本 */
+    --blue: 217.2 91.2% 59.8%;
+    --blue-foreground: 222.2 84% 4.9%;
+    --green: 142.1 70.6% 45.3%;
+    --green-foreground: 144.9 80.4% 10%;
+    --yellow: 47.9 95.8% 53.1%;
+    --yellow-foreground: 26 83.3% 14.1%;
+    --red: 0 62.8% 30.6%;
+    --red-foreground: 0 0% 98%;
+    --purple: 263.4 70% 50.4%;
+    --purple-foreground: 210 40% 98%;
+    --pink: 330 81.2% 60.4%;
+    --pink-foreground: 355.7 100% 97.3%;
+    --orange: 24.6 95% 53.1%;
+    --orange-foreground: 60 9.1% 97.8%;
+    --cyan: 198.6 88.7% 48.4%;
+    --cyan-foreground: 210 40% 98%;
+    --indigo: 239.1 94.5% 64.3%;
+    --indigo-foreground: 210 40% 98%;
+    
+    /* 灰度扩展 - 深色版本 */
+    --gray-50: 222.2 84% 4.9%;
+    --gray-100: 217.2 32.6% 17.5%;
+    --gray-200: 215.3 25% 26.7%;
+    --gray-300: 215.4 19.3% 34.5%;
+    --gray-400: 215.4 16.3% 46.9%;
+    --gray-500: 215.4 16.3% 65.9%;
+    --gray-600: 212.7 26.8% 83.9%;
+    --gray-700: 214.3 31.8% 91.4%;
+    --gray-800: 210 40% 96%;
+    --gray-900: 210 40% 98%;
   }
 }
 
+/* 自定义实用类 */
+@layer components {
+  /* 主题色彩背景类 */
+  .bg-theme-blue { @apply bg-[hsl(var(--blue))]; }
+  .bg-theme-green { @apply bg-[hsl(var(--green))]; }
+  .bg-theme-yellow { @apply bg-[hsl(var(--yellow))]; }
+  .bg-theme-red { @apply bg-[hsl(var(--red))]; }
+  .bg-theme-purple { @apply bg-[hsl(var(--purple))]; }
+  .bg-theme-pink { @apply bg-[hsl(var(--pink))]; }
+  .bg-theme-orange { @apply bg-[hsl(var(--orange))]; }
+  .bg-theme-cyan { @apply bg-[hsl(var(--cyan))]; }
+  .bg-theme-indigo { @apply bg-[hsl(var(--indigo))]; }
+  
+  /* 主题色彩文字类 */
+  .text-theme-blue { @apply text-[hsl(var(--blue))]; }
+  .text-theme-green { @apply text-[hsl(var(--green))]; }
+  .text-theme-yellow { @apply text-[hsl(var(--yellow))]; }
+  .text-theme-red { @apply text-[hsl(var(--red))]; }
+  .text-theme-purple { @apply text-[hsl(var(--purple))]; }
+  .text-theme-pink { @apply text-[hsl(var(--pink))]; }
+  .text-theme-orange { @apply text-[hsl(var(--orange))]; }
+  .text-theme-cyan { @apply text-[hsl(var(--cyan))]; }
+  .text-theme-indigo { @apply text-[hsl(var(--indigo))]; }
+  
+  /* 主题色彩边框类 */
+  .border-theme-blue { @apply border-[hsl(var(--blue))]; }
+  .border-theme-green { @apply border-[hsl(var(--green))]; }
+  .border-theme-yellow { @apply border-[hsl(var(--yellow))]; }
+  .border-theme-red { @apply border-[hsl(var(--red))]; }
+  .border-theme-purple { @apply border-[hsl(var(--purple))]; }
+  .border-theme-pink { @apply border-[hsl(var(--pink))]; }
+  .border-theme-orange { @apply border-[hsl(var(--orange))]; }
+  .border-theme-cyan { @apply border-[hsl(var(--cyan))]; }
+  .border-theme-indigo { @apply border-[hsl(var(--indigo))]; }
+
+  /* 状态色彩类 */
+  .bg-success { @apply bg-[hsl(var(--success))]; }
+  .text-success { @apply text-[hsl(var(--success))]; }
+  .border-success { @apply border-[hsl(var(--success))]; }
+  
+  .bg-warning { @apply bg-[hsl(var(--warning))]; }
+  .text-warning { @apply text-[hsl(var(--warning))]; }
+  .border-warning { @apply border-[hsl(var(--warning))]; }
+  
+  .bg-info { @apply bg-[hsl(var(--info))]; }
+  .text-info { @apply text-[hsl(var(--info))]; }
+  .border-info { @apply border-[hsl(var(--info))]; }
+
+  /* 灰度扩展类 */
+  .bg-gray-50 { @apply bg-[hsl(var(--gray-50))]; }
+  .bg-gray-100 { @apply bg-[hsl(var(--gray-100))]; }
+  .bg-gray-200 { @apply bg-[hsl(var(--gray-200))]; }
+  .bg-gray-300 { @apply bg-[hsl(var(--gray-300))]; }
+  .bg-gray-400 { @apply bg-[hsl(var(--gray-400))]; }
+  .bg-gray-500 { @apply bg-[hsl(var(--gray-500))]; }
+  .bg-gray-600 { @apply bg-[hsl(var(--gray-600))]; }
+  .bg-gray-700 { @apply bg-[hsl(var(--gray-700))]; }
+  .bg-gray-800 { @apply bg-[hsl(var(--gray-800))]; }
+  .bg-gray-900 { @apply bg-[hsl(var(--gray-900))]; }
+
+  .text-gray-50 { @apply text-[hsl(var(--gray-50))]; }
+  .text-gray-100 { @apply text-[hsl(var(--gray-100))]; }
+  .text-gray-200 { @apply text-[hsl(var(--gray-200))]; }
+  .text-gray-300 { @apply text-[hsl(var(--gray-300))]; }
+  .text-gray-400 { @apply text-[hsl(var(--gray-400))]; }
+  .text-gray-500 { @apply text-[hsl(var(--gray-500))]; }
+  .text-gray-600 { @apply text-[hsl(var(--gray-600))]; }
+  .text-gray-700 { @apply text-[hsl(var(--gray-700))]; }
+  .text-gray-800 { @apply text-[hsl(var(--gray-800))]; }
+  .text-gray-900 { @apply text-[hsl(var(--gray-900))]; }
+
+  /* 渐变背景类 */
+  .bg-gradient-primary { @apply bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))]; }
+  .bg-gradient-blue { @apply bg-gradient-to-r from-[hsl(var(--blue))] to-[hsl(var(--cyan))]; }
+  .bg-gradient-green { @apply bg-gradient-to-r from-[hsl(var(--green))] to-[hsl(var(--cyan))]; }
+  .bg-gradient-purple { @apply bg-gradient-to-r from-[hsl(var(--purple))] to-[hsl(var(--pink))]; }
+  .bg-gradient-warm { @apply bg-gradient-to-r from-[hsl(var(--orange))] to-[hsl(var(--red))]; }
+  .bg-gradient-cool { @apply bg-gradient-to-r from-[hsl(var(--blue))] to-[hsl(var(--indigo))]; }
+
+  /* 卡片样式扩展 */
+  .card-elevated {
+    @apply bg-card text-card-foreground shadow-lg border border-border rounded-lg;
+  }
+  
+  .card-subtle {
+    @apply bg-card text-card-foreground shadow-sm border border-border rounded-md;
+  }
+  
+  .card-flat {
+    @apply bg-muted text-muted-foreground border border-border rounded-md;
+  }
+
+  /* 按钮样式扩展 */
+  .btn-success {
+    @apply bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] hover:bg-[hsl(var(--success))]/90;
+  }
+  
+  .btn-warning {
+    @apply bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:bg-[hsl(var(--warning))]/90;
+  }
+  
+  .btn-info {
+    @apply bg-[hsl(var(--info))] text-[hsl(var(--info-foreground))] hover:bg-[hsl(var(--info))]/90;
+  }
+
+  /* 文本样式 */
+  .text-subtle { @apply text-muted-foreground; }
+  .text-emphasis { @apply text-foreground font-medium; }
+  .text-highlight { @apply text-[hsl(var(--primary))] font-semibold; }
+}
+
+/* 保留原有的自定义样式 */
 img {
   object-position: top;
 }
@@ -36,7 +282,7 @@ img {
   display: inline-block;
   font-size: 1.25rem;
   line-height: 1.6;
-  cursor: pointer
+  cursor: pointer;
 }
 
 .item-title:after {
@@ -44,17 +290,17 @@ img {
   position: absolute;
   inset: auto 0 0;
   height: 2px;
-  background: #7693e9;
+  background: hsl(var(--primary));
   visibility: hidden;
   transition: transform .3s ease;
-  transform: scaleX(0)
+  transform: scaleX(0);
 }
 
 .item-title:hover {
-  cursor: pointer
+  cursor: pointer;
 }
 
 .item-title:hover:after {
   visibility: visible;
-  transform: scaleX(1)
+  transform: scaleX(1);
 }
