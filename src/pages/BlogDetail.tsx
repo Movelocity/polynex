@@ -129,13 +129,13 @@ export function BlogDetail() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-8">
+    <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-8">
       {/* 顶部导航区域 */}
       <div className="my-6">
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <span 
             onClick={() => navigate(-1)}
-            className="cursor-pointer flex items-center hover:text-theme-blue mr-2"
+            className="cursor-pointer flex items-center text-foreground hover:text-theme-blue mr-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回
@@ -162,9 +162,9 @@ export function BlogDetail() {
                   <Link 
                     key={relatedBlog.id}
                     to={`/blog/${relatedBlog.id}`}
-                    className="group block p-3 rounded-lg border border-border hover:border-theme-blue/30 hover:shadow-md transition-all"
+                    className="group block px-3 py-1 rounded-lg transition-all hover:bg-muted"
                   >
-                    <h4 className="font-medium text-foreground group-hover:text-theme-blue transition-colors mb-2 line-clamp-2">
+                    <h4 className="font-medium text-foreground group-hover:text-theme-blue transition-colors mb-1 line-clamp-2">
                       {relatedBlog.title}
                     </h4>
                     <div className="flex flex-col text-xs text-muted-foreground space-y-1">

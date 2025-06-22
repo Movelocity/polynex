@@ -199,8 +199,8 @@ export function Dashboard() {
           />
         )}
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">欢迎回来，{user.username}</h1>
-          <p className="text-slate-600">管理您的博客内容</p>
+          <h1 className="text-2xl font-bold text-foreground">欢迎回来，{user.username}</h1>
+          <p className="text-muted-foreground">管理您的博客内容</p>
         </div>
       </div>
 

@@ -1,7 +1,13 @@
+import React, { createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+// 引入语法高亮的 CSS 样式
+import 'highlight.js/styles/github.css';
+
+// 创建Context来跟踪是否在代码块内部
+const CodeBlockContext = createContext(false);
 
 // 将标题文本转换为ID
 const generateId = (text: string): string => {
@@ -40,7 +46,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             const text = extractText(children);
             const id = generateId(text);
             return (
-              <h1 id={id} className="text-3xl font-bold text-slate-800 mb-6 mt-8 first:mt-0 border-b border-slate-200 pb-2">
+              <h1 id={id} className="text-3xl font-bold text-foreground mb-6 mt-8 first:mt-0 border-b border-border pb-2">
                 {children}
               </h1>
             );
@@ -49,7 +55,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             const text = extractText(children);
             const id = generateId(text);
             return (
-              <h2 id={id} className="text-2xl font-bold text-slate-800 mb-4 mt-8 first:mt-0">
+              <h2 id={id} className="text-2xl font-bold text-foreground mb-4 mt-8 first:mt-0">
                 {children}
               </h2>
             );
@@ -58,7 +64,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             const text = extractText(children);
             const id = generateId(text);
             return (
-              <h3 id={id} className="text-xl font-bold text-slate-800 mb-3 mt-6">
+              <h3 id={id} className="text-xl font-bold text-foreground mb-3 mt-6">
                 {children}
               </h3>
             );
@@ -67,7 +73,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             const text = extractText(children);
             const id = generateId(text);
             return (
-              <h4 id={id} className="text-lg font-bold text-slate-800 mb-3 mt-6">
+              <h4 id={id} className="text-lg font-bold text-foreground mb-3 mt-6">
                 {children}
               </h4>
             );
@@ -76,7 +82,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             const text = extractText(children);
             const id = generateId(text);
             return (
-              <h5 id={id} className="text-base font-bold text-slate-800 mb-2 mt-4">
+              <h5 id={id} className="text-base font-bold text-foreground mb-2 mt-4">
                 {children}
               </h5>
             );
@@ -85,52 +91,129 @@ export function MarkdownPreview({ content }: { content: string }) {
             const text = extractText(children);
             const id = generateId(text);
             return (
-              <h6 id={id} className="text-sm font-bold text-slate-800 mb-2 mt-4">
+              <h6 id={id} className="text-sm font-bold text-foreground mb-2 mt-4">
                 {children}
               </h6>
             );
           },
           p: ({ children }) => (
-            <p className="text-slate-700 mb-4 leading-relaxed">
+            <p className="text-muted-foreground mb-4 leading-relaxed">
               {children}
             </p>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-blue-300 pl-4 py-2 my-6 bg-blue-50 italic text-slate-700">
+            <blockquote className="border-l-4 border-primary pl-4 py-2 my-6 bg-muted/50 italic text-muted-foreground">
               {children}
             </blockquote>
           ),
-          code: ({ children, ...props }) => {
-            const inline = !props.className?.includes('language-');
-            return inline ? (
-              <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded text-sm">
-                {children}
-              </code>
-            ) : (
-              <code className="block bg-slate-50 p-4 rounded-lg overflow-x-auto text-sm">
+          // 处理代码块的容器 pre 标签
+          pre: ({ children, ...props }) => {
+            return (
+              <CodeBlockContext.Provider value={true}>
+                <pre className="bg-muted border border-border rounded-lg overflow-x-auto my-4 shadow-sm">
+                  {children}
+                </pre>
+              </CodeBlockContext.Provider>
+            );
+          },
+          // 处理代码元素
+          code: ({ children, className, node, ...props }) => {
+            const isInCodeBlock = useContext(CodeBlockContext);
+            
+            if (!isInCodeBlock) {
+              // 内联代码样式 - 使用主题色
+              return (
+                <code className="bg-muted text-foreground px-1.5 py-0.5 rounded text-sm font-mono border border-border">
+                  {children}
+                </code>
+              );
+            }
+            
+            // 代码块样式 - 使用主题色
+            return (
+              <code 
+                className={`block p-4 text-sm font-mono leading-relaxed text-foreground ${className || ''}`}
+                {...props}
+              >
                 {children}
               </code>
             );
           },
           ul: ({ children }) => (
-            <ul className="list-disc list-inside mb-4 space-y-2 text-slate-700">
+            <ul className="list-disc list-inside mb-4 space-y-2 text-muted-foreground">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside mb-4 space-y-2 text-slate-700">
+            <ol className="list-decimal list-inside mb-4 space-y-2 text-muted-foreground">
               {children}
             </ol>
+          ),
+          li: ({ children }) => (
+            <li className="text-muted-foreground leading-relaxed">
+              {children}
+            </li>
+          ),
+          // 处理表格
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-6">
+              <table className="min-w-full border-collapse border border-border">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-muted">
+              {children}
+            </thead>
+          ),
+          tbody: ({ children }) => (
+            <tbody className="divide-y divide-border">
+              {children}
+            </tbody>
+          ),
+          tr: ({ children }) => (
+            <tr className="hover:bg-muted/50">
+              {children}
+            </tr>
+          ),
+          th: ({ children }) => (
+            <th className="border border-border px-4 py-2 text-left font-semibold text-foreground">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border border-border px-4 py-2 text-muted-foreground">
+              {children}
+            </td>
           ),
           a: ({ href, children }) => (
             <a 
               href={href} 
-              className="text-blue-600 hover:text-blue-800 underline"
+              className="text-primary hover:text-primary/80 underline decoration-primary/30 hover:decoration-primary/50 transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
               {children}
             </a>
+          ),
+          // 处理删除线
+          del: ({ children }) => (
+            <del className="text-muted-foreground/60 line-through">
+              {children}
+            </del>
+          ),
+          // 处理强调文本
+          em: ({ children }) => (
+            <em className="italic text-muted-foreground">
+              {children}
+            </em>
+          ),
+          // 处理加粗文本
+          strong: ({ children }) => (
+            <strong className="font-bold text-foreground">
+              {children}
+            </strong>
           ),
         }}
       >
