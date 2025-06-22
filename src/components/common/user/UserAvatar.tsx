@@ -139,7 +139,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       )}
       <AvatarFallback 
         className={cn(
-          'bg-gradient-to-br from-blue-600 to-purple-600 text-white font-medium',
+          'bg-gradient-to-br from-theme-blue to-theme-purple text-white font-medium',
           fallbackTextSizes[size]
         )}
       >

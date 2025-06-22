@@ -42,11 +42,11 @@ const generateSummary = (content: string): string => {
 
 function MarkdownGuide() {
   return (
-    <Card className="hidden lg:block bg-blue-50 border-blue-200">
+    <Card className="hidden lg:block bg-theme-blue/5 border-theme-blue/20">
       <CardHeader>
-        <CardTitle className="text-lg text-blue-800">Markdown 快速指南</CardTitle>
+        <CardTitle className="text-lg text-theme-blue">Markdown 快速指南</CardTitle>
       </CardHeader>
-      <CardContent className="text-sm text-blue-700 space-y-2">
+      <CardContent className="text-sm text-theme-blue space-y-2">
         <div><code># 标题</code> - 一级标题</div>
         <div><code>## 标题</code> - 二级标题</div>
         <div><code>**粗体**</code> - 粗体文字</div>
@@ -289,14 +289,14 @@ export function WriteBlog() {
 
         {/* Editor */}
         <div className="col-span-1 lg:col-span-3">
-          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+          <Card className="border-0  backdrop-blur-sm shadow-xl">
             <CardHeader>
               <input
                 id="title"
                 placeholder="输入一个吸引人的标题..."
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                className="text-3xl font-bold outline-none"
+                className="text-3xl font-bold outline-none bg-background/80"
               />
             </CardHeader>
             <CardContent>
@@ -333,7 +333,7 @@ export function WriteBlog() {
                   <Button 
                     onClick={() => handleSave('published')}
                     disabled={loading || saveLoading}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    variant="pretty"
                   >
                     {loading ? (
                       <>
@@ -356,10 +356,10 @@ export function WriteBlog() {
                       placeholder="开始编写您的文章... 支持 Markdown 语法"
                       value={formData.content}
                       onChange={(e) => handleInputChange('content', e.target.value)}
-                      className="w-full mt-2 border rounded-lg resize-none border-transparent outline-none"
+                      className="w-full p-2 rounded-lg resize-none outline-none bg-background"
                       minRows={20}
                     />
-                    <div className="text-xs text-slate-500 absolute bottom-0">
+                    <div className="text-xs text-muted-foreground absolute bottom-0">
                       支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等
                     </div>
                   </div>
@@ -420,7 +420,7 @@ export function WriteBlog() {
                         添加
                       </Button>
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       最多可添加 5 个标签，按回车键快速添加
                     </div>
                   </div>
@@ -434,7 +434,7 @@ export function WriteBlog() {
                             {tag}
                             <button
                               onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 hover:text-red-600"
+                              className="ml-1 hover:text-destructive"
                             >
                               <X className="w-3 h-3" />
                             </button>

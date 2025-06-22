@@ -94,14 +94,14 @@ export function NewImageCropperDemo() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-theme-blue/5 via-theme-indigo/5 to-theme-purple/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面标题 */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
             <Link 
               to="/tools" 
-              className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
+              className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               返回工具列表
@@ -109,10 +109,10 @@ export function NewImageCropperDemo() {
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center mb-4 gap-2">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gradient-to-r from-theme-blue to-theme-indigo rounded-2xl shadow-lg">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+              <span className="text-4xl font-bold bg-gradient-to-r from-theme-blue to-theme-indigo bg-clip-text text-transparent mb-2">
                 图片裁剪工具 ver.2
               </span>
             </div>
@@ -121,37 +121,37 @@ export function NewImageCropperDemo() {
 
         {!imageData ? (
           /* 上传区域 */
-          <Card className="max-w-2xl mx-auto border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+          <Card className="max-w-2xl mx-auto border-0 shadow-2xl bg-background/80 backdrop-blur-sm">
             <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                <ImageIcon className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-2xl text-slate-800">上传图片开始处理</CardTitle>
-              <p className="text-slate-600 mt-2">支持 JPG、PNG、GIF 等常见格式</p>
+                              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-theme-blue to-theme-indigo rounded-2xl flex items-center justify-center mb-4">
+                  <ImageIcon className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl text-foreground">上传图片开始处理</CardTitle>
+                <p className="text-muted-foreground mt-2">支持 JPG、PNG、GIF 等常见格式</p>
             </CardHeader>
             <CardContent>
               <div
-                className="border-2 border-dashed border-blue-300 rounded-2xl p-12 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer group"
+                                  className="border-2 border-dashed border-theme-blue/30 rounded-2xl p-12 text-center hover:border-theme-blue/40 hover:bg-theme-blue/5 transition-all cursor-pointer group"
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <div className="space-y-4">
-                  <div className="mx-auto w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                    <Upload className="w-10 h-10 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-semibold text-slate-700 mb-2">
-                      拖放图片到这里或点击上传
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      最大文件大小: 10MB
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                  >
+                                      <div className="mx-auto w-20 h-20 bg-theme-blue/10 rounded-full flex items-center justify-center group-hover:bg-theme-blue/20 transition-colors">
+                      <Upload className="w-10 h-10 text-theme-blue" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-foreground mb-2">
+                        拖放图片到这里或点击上传
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        最大文件大小: 10MB
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="border-theme-blue/30 text-theme-blue hover:bg-theme-blue/5"
+                    >
                     选择文件
                   </Button>
                 </div>

@@ -39,7 +39,7 @@ export function UserSettings() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
       </div>
     );
   }
@@ -202,7 +202,7 @@ export function UserSettings() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回
           </Button>
-          <h1 className="text-2xl font-bold text-slate-800">账户设置</h1>
+          <h1 className="text-2xl font-bold text-foreground">账户设置</h1>
         </div>
       </div>
 
@@ -215,9 +215,9 @@ export function UserSettings() {
       )}
 
       {success && (
-        <Alert className="mb-6 border-green-200 bg-green-50">
-          <Check className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">{success}</AlertDescription>
+        <Alert className="mb-6 border-success/20 bg-success/5">
+          <Check className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">{success}</AlertDescription>
         </Alert>
       )}
 
@@ -280,10 +280,10 @@ export function UserSettings() {
               <CardDescription>管理您的账户密码</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted">
                 <div>
                   <h4 className="font-medium">账户密码</h4>
-                  <p className="text-sm text-slate-500 mt-1">定期更改密码可以提高账户安全性</p>
+                  <p className="text-sm text-muted-foreground mt-1">定期更改密码可以提高账户安全性</p>
                 </div>
                 <PasswordChangeDialog
                   open={isPasswordDialogOpen}
@@ -303,7 +303,7 @@ export function UserSettings() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <h4 className="font-medium">两步验证</h4>
-                  <p className="text-sm text-slate-500 mt-1">增加额外的安全保护层</p>
+                  <p className="text-sm text-muted-foreground mt-1">增加额外的安全保护层</p>
                 </div>
                 <Badge variant="secondary">即将推出</Badge>
               </div>
@@ -311,7 +311,7 @@ export function UserSettings() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <h4 className="font-medium">登录历史</h4>
-                  <p className="text-sm text-slate-500 mt-1">查看您的账户登录记录</p>
+                  <p className="text-sm text-muted-foreground mt-1">查看您的账户登录记录</p>
                 </div>
                 <Badge variant="secondary">即将推出</Badge>
               </div>

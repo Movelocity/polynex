@@ -113,7 +113,7 @@ export function TOC({ content }: TOCProps) {
 
   if (tocItems.length === 0) {
     return (
-      <div className="text-sm text-slate-400">
+      <div className="text-sm text-muted-foreground">
         此文章暂无目录
       </div>
     );
@@ -131,10 +131,10 @@ export function TOC({ content }: TOCProps) {
             onClick={() => handleItemClick(item.id)}
             className={`
               w-full text-left text-sm transition-colors duration-200 py-1.5 px-2 rounded-md
-              hover:bg-blue-50 hover:text-blue-700 
+              hover:bg-theme-blue/5 hover:text-theme-blue 
               ${isActive 
-                ? 'text-blue-600 bg-blue-50 border-l-2 border-blue-600' 
-                : 'text-slate-600 hover:text-slate-800'
+                ? 'text-theme-blue bg-theme-blue/5 border-l-2 border-theme-blue' 
+                : 'text-foreground hover:text-foreground'
               }
             `}
             style={{ paddingLeft: `${Math.max(8, paddingLeft)}px` }}
@@ -142,7 +142,7 @@ export function TOC({ content }: TOCProps) {
             <div className="flex items-start">
               {item.level > 1 && (
                 <ChevronRight className={`w-3 h-3 mt-0.5 mr-1 flex-shrink-0 ${
-                  isActive ? 'text-blue-600' : 'text-slate-400'
+                  isActive ? 'text-theme-blue' : 'text-muted-foreground'
                 }`} />
               )}
               <span className="line-clamp-2 leading-relaxed">

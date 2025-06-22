@@ -30,7 +30,7 @@ export function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <HeadBanner
         isAuthenticated={isAuthenticated}
@@ -52,16 +52,16 @@ export function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200">
+      <footer className="bg-background border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-6 h-6 bg-gradient-to-br from-theme-blue to-theme-purple rounded-lg flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm text-slate-600">© 2025 博客空间. 分享知识，记录生活.</span>
+              <span className="text-sm text-foreground">© 2025 博客空间. 分享知识，记录生活.</span>
             </div>
-            <div className="text-sm text-slate-500">
+            <div className="text-sm text-muted-foreground">
               用心记录每一个美好时刻
             </div>
           </div>

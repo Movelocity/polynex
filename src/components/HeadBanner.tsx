@@ -4,6 +4,7 @@ import { Link} from 'react-router-dom';
 import { Button } from '@/components/x-ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/x-ui/dropdown-menu';
 import { Input } from '@/components/x-ui/input';
+import { Switch } from '@/components/x-ui/switch';
 import { 
   BookOpen, 
   User, 
@@ -15,9 +16,12 @@ import {
   Menu,
   X,
   FileText,
-  Wrench
+  Wrench,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { UserAvatar } from '@/components/common/user/UserAvatar';
+import { useTheme } from '@/hooks/useTheme';
 
 interface HeadBannerProps {
   isAuthenticated: boolean;
@@ -46,16 +50,18 @@ export function HeadBanner({
   navigate,
   location
 }: HeadBannerProps) {
+  const { isDark, toggleTheme } = useTheme();
+
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-50">
+    <header className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
       <div className=" mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group mr-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 bg-gradient-to-br from-theme-blue to-theme-purple rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-theme-blue to-theme-purple bg-clip-text text-transparent">
               FastDraft
             </h1>
           </Link>
@@ -66,8 +72,8 @@ export function HeadBanner({
               to="/" 
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
                 isActivePath('/') 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+                  ? 'bg-theme-blue/10 text-theme-blue' 
+                  : 'text-foreground hover:text-theme-blue hover:bg-theme-blue/5'
               }`}
             >
               <Home className="w-4 h-4" />
@@ -90,8 +96,8 @@ export function HeadBanner({
               to="/tools" 
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
                 location.pathname.startsWith('/tools') 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+                  ? 'bg-theme-blue/10 text-theme-blue' 
+                  : 'text-foreground hover:text-theme-blue hover:bg-theme-blue/5'
               }`}
             >
               <Wrench className="w-4 h-4" />
@@ -104,8 +110,8 @@ export function HeadBanner({
                   to="/write" 
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
                     isActivePath('/write') 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+                      ? 'bg-theme-blue/10 text-theme-blue' 
+                      : 'text-foreground hover:text-theme-blue hover:bg-theme-blue/5'
                   }`}
                 >
                   <PenTool className="w-4 h-4" />
@@ -116,8 +122,8 @@ export function HeadBanner({
                   to="/dashboard" 
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
                     isActivePath('/dashboard') 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'
+                      ? 'bg-theme-blue/10 text-theme-blue' 
+                      : 'text-foreground hover:text-theme-blue hover:bg-theme-blue/5'
                   }`}
                 >
                   <User className="w-4 h-4" />
@@ -127,22 +133,34 @@ export function HeadBanner({
             )}
           </nav>
 
-          {/* Search Bar */}
-          <div className="hidden md:block flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="搜索公开博客..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full bg-slate-50 border-slate-200 focus:bg-white"
-              />
-            </form>
-          </div>
-
-          {/* User Menu or Auth Buttons */}
+          {/* Right Side Controls */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <div className="hidden md:flex items-center space-x-2">
+              <Sun className="h-4 w-4 text-muted-foreground" />
+              <Switch 
+                checked={isDark} 
+                onCheckedChange={toggleTheme}
+                aria-label="切换深浅色主题"
+              />
+              <Moon className="h-4 w-4 text-muted-foreground" />
+            </div>
+
+            {/* Search Bar */}
+            <div className="hidden md:block flex-1 max-w-md">
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="搜索公开博客..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full bg-muted border-border focus:bg-background"
+                />
+              </form>
+            </div>
+
+            {/* User Menu or Auth Buttons */}
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -158,7 +176,7 @@ export function HeadBanner({
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
                       <p className="font-medium">{user.username}</p>
-                      <p className="w-[200px] truncate text-sm text-slate-500">
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {user.email}
                       </p>
                     </div>
@@ -208,11 +226,25 @@ export function HeadBanner({
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-slate-200">
+          <div className="md:hidden py-4 border-t border-border">
+            {/* Mobile Theme Toggle */}
+            <div className="mb-4 flex items-center justify-between px-3">
+              <span className="text-sm font-medium">主题模式</span>
+              <div className="flex items-center space-x-2">
+                <Sun className="h-3 w-3 text-muted-foreground" />
+                <Switch 
+                  checked={isDark} 
+                  onCheckedChange={toggleTheme}
+                  aria-label="切换深浅色主题"
+                />
+                <Moon className="h-3 w-3 text-muted-foreground" />
+              </div>
+            </div>
+
             {/* Mobile Search */}
             <form onSubmit={handleSearch} className="mb-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   type="text"
                   placeholder="搜索博客..."
@@ -227,7 +259,7 @@ export function HeadBanner({
             <nav className="space-y-2">
               <Link 
                 to="/" 
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Home className="w-4 h-4" />
@@ -236,7 +268,7 @@ export function HeadBanner({
               
               <Link 
                 to="/articles" 
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <FileText className="w-4 h-4" />
@@ -245,7 +277,7 @@ export function HeadBanner({
               
               <Link 
                 to="/tools" 
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Wrench className="w-4 h-4" />
@@ -256,7 +288,7 @@ export function HeadBanner({
                 <>
                   <Link 
                     to="/write" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <PenTool className="w-4 h-4" />
@@ -265,7 +297,7 @@ export function HeadBanner({
                   
                   <Link 
                     to="/dashboard" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <User className="w-4 h-4" />
@@ -277,14 +309,14 @@ export function HeadBanner({
                       handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 w-full text-left"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted w-full text-left"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>退出登录</span>
                   </button>
                 </>
               ) : (
-                <div className="space-y-2 pt-2 border-t border-slate-200">
+                <div className="space-y-2 pt-2 border-t border-border">
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start"

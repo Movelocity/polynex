@@ -120,11 +120,7 @@ export function Home() {
       <div className="mb-8">
         <div className="flex flex-wrap gap-2 mb-6">
           <Button
-            variant={selectedCategory === '' ? 'default' : 'outline'}
-            className={selectedCategory === '' ? 
-              'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 
-              'hover:bg-slate-100'
-            }
+            variant={selectedCategory === '' ? 'pretty' : 'outline'}
             onClick={() => {
               setSelectedCategory('');
               setCurrentPage(1);
@@ -135,11 +131,7 @@ export function Home() {
           {categories.map((category) => (
             <Button
               key={category.id}
-              variant={selectedCategory === category.name ? 'default' : 'outline'}
-              className={selectedCategory === category.name ? 
-                'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 
-                'hover:bg-slate-100'
-              }
+              variant={selectedCategory === category.name ? 'pretty' : 'outline'}
               onClick={() => {
                 setSelectedCategory(category.name);
                 setCurrentPage(1);
@@ -202,7 +194,7 @@ export function Home() {
           </p>
           <Button 
             onClick={() => navigate('/write')}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            variant="pretty"
           >
             <PenTool className="w-4 h-4 mr-2" />
             写第一篇文章

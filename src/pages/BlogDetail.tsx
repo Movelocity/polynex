@@ -103,10 +103,10 @@ export function BlogDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto animate-pulse">
+          <div className="w-16 h-16 bg-gradient-to-br from-theme-blue to-theme-purple rounded-2xl flex items-center justify-center mb-4 mx-auto animate-pulse">
             <BookOpen className="w-8 h-8 text-white" />
           </div>
-          <p className="text-slate-600">加载中...</p>
+          <p className="text-muted-foreground">加载中...</p>
         </div>
       </div>
     );
@@ -116,10 +116,10 @@ export function BlogDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-            <BookOpen className="w-8 h-8 text-red-500" />
+          <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <BookOpen className="w-8 h-8 text-destructive" />
           </div>
-          <p className="text-red-600 mb-4">{error || '文章不存在'}</p>
+          <p className="text-destructive mb-4">{error || '文章不存在'}</p>
           <Button onClick={() => navigate('/')} variant="outline">
             返回首页
           </Button>
@@ -135,15 +135,15 @@ export function BlogDetail() {
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <span 
             onClick={() => navigate(-1)}
-            className="cursor-pointer flex items-center hover:text-blue-600 mr-2"
+            className="cursor-pointer flex items-center hover:text-theme-blue mr-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回
           </span>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+          <Badge variant="secondary" className="bg-theme-blue/10 text-theme-blue">
             {blog.category}
           </Badge>
-          <div className="flex items-center text-slate-500 text-sm">
+          <div className="flex items-center text-muted-foreground text-sm">
             <Eye className="w-4 h-4 mr-1" />
             {blog.views} 次阅读
           </div>
@@ -156,18 +156,18 @@ export function BlogDetail() {
         <aside className="hidden lg:block w-64 flex-shrink-0">
           {relatedBlogs.length > 0 && (
             <div className="sticky top-20">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">推荐文章</h3>
+              <h3 className="text-lg font-bold text-foreground mb-4">推荐文章</h3>
               <div className="space-y-4">
                 {relatedBlogs.map((relatedBlog) => (
                   <Link 
                     key={relatedBlog.id}
                     to={`/blog/${relatedBlog.id}`}
-                    className="group block p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all"
+                    className="group block p-3 rounded-lg border border-border hover:border-theme-blue/30 hover:shadow-md transition-all"
                   >
-                    <h4 className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors mb-2 line-clamp-2">
+                    <h4 className="font-medium text-foreground group-hover:text-theme-blue transition-colors mb-2 line-clamp-2">
                       {relatedBlog.title}
                     </h4>
-                    <div className="flex flex-col text-xs text-slate-500 space-y-1">
+                    <div className="flex flex-col text-xs text-muted-foreground space-y-1">
                       <span className="flex items-center">
                         <Calendar className="w-3 h-3 mr-1" />
                         {formatDate(relatedBlog.createTime)}
@@ -184,7 +184,7 @@ export function BlogDetail() {
         <main className="flex-1 min-w-0">
           {/* 文章头部信息 */}
           <header className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-6 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6 leading-tight">
               {blog.title}
             </h1>
             
@@ -195,8 +195,8 @@ export function BlogDetail() {
                   size="lg"
                 /> */}
                 <div>
-                  <p className="font-medium text-slate-800">{blog.authorName}</p>
-                  <div className="flex items-center text-sm text-slate-500">
+                  <p className="font-medium text-foreground">{blog.authorName}</p>
+                  <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4 mr-1" />
                     {formatDate(blog.createTime)}
                     {blog.updateTime !== blog.createTime && (
@@ -239,8 +239,8 @@ export function BlogDetail() {
         {/* 右侧栏 - TOC */}
         <aside className="hidden xl:block w-64 flex-shrink-0">
           <div className="sticky top-20">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">目录</h3>
-            <div className="text-sm text-slate-600">
+            <h3 className="text-lg font-bold text-foreground mb-4">目录</h3>
+            <div className="text-sm text-foreground">
               <TOC content={blog.content} />
             </div>
           </div>
@@ -251,18 +251,18 @@ export function BlogDetail() {
       <div className="lg:hidden mt-12">
         {relatedBlogs.length > 0 && (
           <div>
-            <h3 className="text-xl font-bold text-slate-800 mb-6">推荐文章</h3>
+            <h3 className="text-xl font-bold text-foreground mb-6">推荐文章</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               {relatedBlogs.map((relatedBlog) => (
                 <Link 
                   key={relatedBlog.id}
                   to={`/blog/${relatedBlog.id}`}
-                  className="group block p-4 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all"
+                  className="group block p-4 rounded-lg border border-border hover:border-theme-blue/30 hover:shadow-md transition-all"
                 >
-                  <h4 className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors mb-2">
+                  <h4 className="font-medium text-foreground group-hover:text-theme-blue transition-colors mb-2">
                     {relatedBlog.title}
                   </h4>
-                  <div className="flex items-center text-xs text-slate-500 space-x-4">
+                  <div className="flex items-center text-xs text-muted-foreground space-x-4">
                     <span className="flex items-center">
                       <Calendar className="w-3 h-3 mr-1" />
                       {formatDate(relatedBlog.createTime)}

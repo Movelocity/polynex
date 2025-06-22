@@ -187,14 +187,14 @@ export function JsonFormatter() {
         <div className="flex items-center space-x-4 mb-4">
           <Link 
             to="/tools" 
-            className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
+            className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             返回工具列表
           </Link>
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">JSON 格式化工具</h1>
-        <p className="text-slate-600">格式化、压缩、验证JSON数据，支持语法高亮显示</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">JSON 格式化工具</h1>
+        <p className="text-muted-foreground">格式化、压缩、验证JSON数据，支持语法高亮显示</p>
       </div>
 
       {/* 控制面板 */}
@@ -220,9 +220,9 @@ export function JsonFormatter() {
               
               <Button onClick={validateJson} variant="outline" className="flex items-center space-x-2">
                 {isValid === true ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-success" />
                 ) : isValid === false ? (
-                  <XCircle className="w-4 h-4 text-red-600" />
+                  <XCircle className="w-4 h-4 text-destructive" />
                 ) : (
                   <FileJson className="w-4 h-4" />
                 )}
@@ -258,20 +258,20 @@ export function JsonFormatter() {
       {/* 验证状态显示 */}
       {(isValid !== null || errorMessage) && (
         <div className="mb-6">
-          <Card className={`border ${isValid ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+          <Card className={`border ${isValid ? 'border-success/20 bg-success/5' : 'border-destructive/20 bg-destructive/5'}`}>
             <CardContent className="pt-6">
               <div className="flex items-start space-x-3">
                 {isValid ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-success mt-0.5" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-destructive mt-0.5" />
                 )}
                 <div>
-                  <p className={`font-medium ${isValid ? 'text-green-800' : 'text-red-800'}`}>
+                  <p className={`font-medium ${isValid ? 'text-success' : 'text-destructive'}`}>
                     {isValid ? 'JSON格式正确' : 'JSON格式错误'}
                   </p>
                   {errorMessage && (
-                    <p className="text-red-700 text-sm mt-1 font-mono">
+                    <p className="text-destructive text-sm mt-1 font-mono">
                       {errorMessage}
                     </p>
                   )}
@@ -351,17 +351,16 @@ export function JsonFormatter() {
             <CardContent>
               {outputJson ? (
                 <div className="space-y-4">
-                  {/* <Label htmlFor="output-json">处理结果：</Label> */}
                   <Textarea
                     id="output-json"
                     value={outputJson}
                     readOnly
                     rows={25}
-                    className="resize-none font-mono text-sm bg-slate-50 border-slate-200"
+                    className="resize-none font-mono text-sm bg-muted border-border"
                   />
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-96 text-slate-400">
+                <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
                   <FileJson className="w-16 h-16 mb-4" />
                   <p className="text-lg font-medium mb-2">等待处理</p>
                   <p className="text-sm text-center">
@@ -380,43 +379,43 @@ export function JsonFormatter() {
           <CardHeader>
             <CardTitle className="text-lg">使用说明</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-600">
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <h4 className="font-medium text-slate-800">功能介绍：</h4>
+                <h4 className="font-medium text-foreground">功能介绍：</h4>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span><strong>格式化：</strong>将压缩的JSON格式化为易读的格式</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span><strong>压缩：</strong>移除空格和换行，压缩JSON体积</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span><strong>验证：</strong>检查JSON语法是否正确</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span><strong>复制：</strong>一键复制输入或输出内容</span>
                 </div>
               </div>
               <div className="space-y-3">
-                <h4 className="font-medium text-slate-800">使用技巧：</h4>
+                <h4 className="font-medium text-foreground">使用技巧：</h4>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span>可以调整缩进大小（1-8个空格）</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span>点击"使用示例"可以快速体验功能</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span>支持复杂嵌套的JSON结构</span>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="font-medium text-slate-800">•</span>
+                  <span className="font-medium text-foreground">•</span>
                   <span>实时显示验证状态和错误信息</span>
                 </div>
               </div>

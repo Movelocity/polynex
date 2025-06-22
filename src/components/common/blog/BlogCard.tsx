@@ -73,7 +73,7 @@ export function BlogCard({
               {showStatus && (
                 <Badge 
                   variant={blog.status === 'published' ? 'default' : 'secondary'}
-                  className={blog.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}
+                  className={blog.status === 'published' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}
                 >
                   {blog.status === 'published' ? '已发布' : '草稿'}
                 </Badge>
@@ -81,23 +81,23 @@ export function BlogCard({
               <Badge variant={showStatus ? 'outline' : 'secondary'}>
                 {blog.category}
               </Badge>
-              <div className="flex items-center text-slate-500 text-sm">
+              <div className="flex items-center text-muted-foreground text-sm">
                 <Eye className="w-4 h-4 mr-1" />
                 {blog.views}
               </div>
             </div>
 
             {/* Title */}
-            <CardTitle className={`text-xl mb-2 ${layout === 'grid' ? 'group-hover:text-blue-600 transition-colors' : ''}`}>
+            <CardTitle className={`text-xl mb-2 ${layout === 'grid' ? 'group-hover:text-theme-blue transition-colors' : ''}`}>
               {canNavigate ? (
                 <Link 
                   to={`/blog/${blog.id}`}
-                  className="hover:text-blue-600 transition-colors item-title"
+                  className="hover:text-theme-blue transition-colors item-title"
                 >
                   {blog.title}
                 </Link>
               ) : (
-                <span className="text-slate-800 item-title">
+                <span className="text-foreground item-title">
                   {blog.title}
                 </span>
               )}
@@ -116,14 +116,14 @@ export function BlogCard({
                     username={blog.authorName}
                     size="xs"
                   />
-                  <span className="text-sm text-slate-600">{blog.authorName}</span>
+                  <span className="text-sm text-foreground">{blog.authorName}</span>
                 </div>
-                <div className="flex items-center text-sm text-slate-500">
+                <div className="flex items-center text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4 mr-1" />
                   创建：{formatDate(blog.createTime)}
                 </div>
                 {showUpdateTime && blog.updateTime !== blog.createTime && (
-                  <div className="flex items-center text-sm text-slate-500">
+                  <div className="flex items-center text-sm text-muted-foreground">
                     <Clock className="w-4 h-4 mr-1" />
                     更新：{formatDate(blog.updateTime)}
                   </div>
@@ -176,7 +176,7 @@ export function BlogCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/5"
                   onClick={() => onDelete(blog.id)}
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
