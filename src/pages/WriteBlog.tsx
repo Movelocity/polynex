@@ -14,7 +14,7 @@ import { Badge } from '@/components/x-ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { useTitle } from '@/hooks/usePageTitle';
-import { userService } from '@/services';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Save, 
   Eye, 
@@ -81,6 +81,7 @@ export function WriteBlog() {
   
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // 动态设置页面标题 - 根据是否为编辑模式设置不同标题
   useTitle(isEdit ? '编辑文章' : '写文章');
@@ -202,18 +203,6 @@ export function WriteBlog() {
     }
 
     try {
-      // 在保存前验证认证状态是否有效
-      const validation = await userService.validateToken();
-      if (!validation.valid) {
-        setError('登录已过期，请重新登录');
-        setLoading(false);
-        setSaveLoading(false);
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
-        return;
-      }
-      
       const summary = generateSummary(formData.content);
       const now = new Date().toISOString();
 
@@ -230,7 +219,11 @@ export function WriteBlog() {
         });
 
         if (success) {
-          navigate(status === 'published' ? `/blog/${id}` : '/dashboard');
+          toast({
+            title: "保存成功",
+            description: status === 'published' ? "文章已成功发布！" : "文章已保存为草稿",
+            variant: "default",
+          });
         } else {
           setError('更新文章失败');
         }
@@ -252,18 +245,18 @@ export function WriteBlog() {
         };
 
         const createdBlog = await blogService.addBlog(newBlog);
-        navigate(status === 'published' ? `/blog/${createdBlog.id}` : '/dashboard');
+        toast({
+          title: "创建成功",
+          description: status === 'published' ? "文章已成功发布！" : "文章已保存为草稿",
+          variant: "default",
+        });
       }
     } catch (err: any) {
       console.error('保存文章失败:', err);
       
-      // 处理认证相关错误
-      if (err?.status === 401 || err?.message?.includes('登录') || err?.message?.includes('认证') || err?.message?.includes('token')) {
-        setError('登录已过期，即将跳转到登录页面，请重新登录后再保存文章');
-        // 延迟跳转到登录页面，让用户看到错误信息
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
+      // 处理认证相关错误 - 401错误由ApiClient自动处理，这里只处理用户提示
+      if (err?.status === 401) {
+        setError('登录已过期，系统将自动跳转到登录页面，请重新登录后再保存文章');
       } else {
         setError('保存文章失败，请检查网络连接后重试');
       }
@@ -273,16 +266,16 @@ export function WriteBlog() {
     }
   };
 
-  if (loading && isEdit) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-600">加载中...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (loading && isEdit) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+  //         <p className="text-slate-600">加载中...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -328,7 +321,7 @@ export function WriteBlog() {
                     {saveLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        保存中...
+                        正在保存
                       </>
                     ) : (
                       <>
@@ -345,7 +338,7 @@ export function WriteBlog() {
                     {loading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        发布中...
+                        正在发布
                       </>
                     ) : (
                       <>
@@ -357,7 +350,7 @@ export function WriteBlog() {
                 </div>
                 </div>
                 <TabsContent value="write" className="min-h-[600px]">
-                  <div>
+                  <div className="relative min-h-[600px]">
                     <TextareaAutosize
                       id="content"
                       placeholder="开始编写您的文章... 支持 Markdown 语法"
@@ -366,7 +359,7 @@ export function WriteBlog() {
                       className="w-full mt-2 border rounded-lg resize-none border-transparent outline-none"
                       minRows={20}
                     />
-                    <div className="text-xs text-slate-500 mt-2">
+                    <div className="text-xs text-slate-500 absolute bottom-0">
                       支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等
                     </div>
                   </div>

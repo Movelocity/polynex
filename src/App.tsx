@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Layout } from '@/components/Layout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Toaster } from '@/components/x-ui/toaster';
 
 // Pages
 import { Home } from '@/pages/Home';
@@ -100,6 +101,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
+        <Toaster />
       </Router>
     </AuthProvider>
   );
