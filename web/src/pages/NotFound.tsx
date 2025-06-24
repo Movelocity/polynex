@@ -8,9 +8,9 @@ export function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 px-4">
-      <Card className="w-full max-w-md text-center shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-        <CardContent className="pt-8 pb-8">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-muted/50">
+      <Card className="w-full max-w-md text-center shadow-xl border-0 backdrop-blur-sm">
+        <CardContent className="pt-8 pb-8 bg-background">
           {/* 404 Illustration */}
           <div className="mb-6">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full mb-4">
@@ -22,10 +22,10 @@ export function NotFound() {
           </div>
 
           {/* Error Message */}
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             页面未找到
           </h1>
-          <p className="text-slate-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             抱歉，您访问的页面不存在或已被移动。
           </p>
 
@@ -33,7 +33,8 @@ export function NotFound() {
           <div className="space-y-3">
             <Button 
               onClick={() => navigate('/')}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              variant="pretty"
+              className="w-full"
               size="lg"
             >
               <Home className="w-4 h-4 mr-2" />

@@ -204,10 +204,19 @@ export interface AgentMessage {
   content: string;
 }
 
+// 头像配置
+export interface AvatarConfig {
+  emoji?: string;
+  bg_color?: string;
+  variant: 'emoji' | 'link';
+  link?: string;
+}
+
 // 应用预设配置
 export interface AppPreset {
   name: string;
   description: string;
+  avatar?: AvatarConfig;
   greetings?: string;
   suggested_questions?: string[];
   creation_date?: string;
@@ -223,6 +232,7 @@ export interface AgentSummary {
   model: string;
   name: string;
   description: string;
+  avatar?: AvatarConfig;
   is_public: boolean;
   is_default: boolean;
   create_time: string;

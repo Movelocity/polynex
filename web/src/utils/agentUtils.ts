@@ -9,6 +9,7 @@ import { AgentSummary, AgentDetail, AgentCreate, AppPreset } from '@/types';
  * @param agent 代理信息
  */
 export const formatAgentDisplayName = (agent: AgentSummary | AgentDetail): string => {
+  // AgentSummary has name field, AgentDetail has app_preset with name
   if ('name' in agent) {
     return agent.name || '未命名代理';
   }
