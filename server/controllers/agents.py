@@ -11,19 +11,26 @@ from services.conversation_service import ConversationService
 from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/api/agents", tags=["AI代理管理"])
 
 # 全局会话服务实例
 conversation_service = ConversationService()
 
 
-@router.post("/agents", response_model=AgentSummary)
+@router.post("/agents", response_model=AgentSummary, summary="创建AI代理")
 async def create_agent(
     agent_data: AgentCreate,
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """创建新的AI代理"""
+    """
+    创建新的AI代理
+    
+    需要用户登录权限。创建一个新的AI代理配置，包括模型选择、预设消息、应用配置等。
+    
+    - **agent_data**: 代理创建数据，包含名称、描述、模型配置等信息
+    - **返回**: 创建成功的代理摘要信息
+    """
     try:
         agent = await conversation_service.create_agent(
             agent_data=agent_data,
@@ -35,7 +42,8 @@ async def create_agent(
             id=agent.id,
             agent_id=agent.agent_id,
             user_id=agent.user_id,
-            provider_config_id=agent.provider_config_id,
+            provider=agent.provider,
+            model=agent.model,
             name=agent.app_preset.get('name', 'Unnamed Agent'),
             description=agent.app_preset.get('description', ''),
             is_public=agent.is_public,
@@ -51,7 +59,7 @@ async def create_agent(
         )
 
 
-@router.get("/agents", response_model=List[AgentSummary])
+@router.get("/agents", response_model=List[AgentSummary], summary="获取AI代理列表")
 async def get_agents(
     include_public: bool = True,
     limit: int = 20,
@@ -59,7 +67,16 @@ async def get_agents(
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """获取AI代理列表"""
+    """
+    获取AI代理列表
+    
+    需要用户登录权限。获取当前用户的代理列表，可选择是否包含公开代理。
+    
+    - **include_public**: 是否包含公开的代理（默认: true）
+    - **limit**: 限制返回数量（默认: 20）
+    - **offset**: 偏移量，用于分页（默认: 0）
+    - **返回**: 代理摘要信息列表
+    """
     try:
         agents = await conversation_service.get_user_agents(
             user_id=current_user_id,
@@ -74,7 +91,8 @@ async def get_agents(
                 id=agent.id,
                 agent_id=agent.agent_id,
                 user_id=agent.user_id,
-                provider_config_id=agent.provider_config_id,
+                provider=agent.provider,
+                model=agent.model,
                 name=agent.app_preset.get('name', 'Unnamed Agent'),
                 description=agent.app_preset.get('description', ''),
                 is_public=agent.is_public,
@@ -92,13 +110,20 @@ async def get_agents(
         )
 
 
-@router.get("/agents/{agent_id}", response_model=AgentDetail)
+@router.get("/agents/{agent_id}", response_model=AgentDetail, summary="获取AI代理详情")
 async def get_agent(
     agent_id: str,
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """获取指定AI代理的详细信息"""
+    """
+    获取指定AI代理的详细信息
+    
+    需要用户登录权限。获取指定代理的完整配置信息，包括预设消息、模型参数等。
+    
+    - **agent_id**: 代理ID
+    - **返回**: 代理的详细配置信息
+    """
     try:
         agent = await conversation_service.get_agent(
             agent_id=agent_id,
@@ -116,7 +141,7 @@ async def get_agent(
             id=agent.id,
             agent_id=agent.agent_id,
             user_id=agent.user_id,
-            provider_config_id=agent.provider_config_id,
+            provider=agent.provider,
             model=agent.model,
             top_p=agent.top_p,
             temperature=agent.temperature,
@@ -138,14 +163,22 @@ async def get_agent(
         )
 
 
-@router.put("/agents/{agent_id}", response_model=AgentDetail)
+@router.put("/agents/{agent_id}", response_model=AgentDetail, summary="更新AI代理")
 async def update_agent(
     agent_id: str,
     agent_update: AgentUpdate,
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """更新AI代理"""
+    """
+    更新AI代理
+    
+    需要用户登录权限。更新指定代理的配置信息。只有代理的创建者可以更新代理。
+    
+    - **agent_id**: 代理ID
+    - **agent_update**: 代理更新数据
+    - **返回**: 更新后的代理详细信息
+    """
     try:
         agent = await conversation_service.update_agent(
             agent_id=agent_id,
@@ -164,7 +197,7 @@ async def update_agent(
             id=agent.id,
             agent_id=agent.agent_id,
             user_id=agent.user_id,
-            provider_config_id=agent.provider_config_id,
+            provider=agent.provider,
             model=agent.model,
             top_p=agent.top_p,
             temperature=agent.temperature,
@@ -186,13 +219,20 @@ async def update_agent(
         )
 
 
-@router.delete("/agents/{agent_id}")
+@router.delete("/agents/{agent_id}", summary="删除AI代理")
 async def delete_agent(
     agent_id: str,
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """删除AI代理"""
+    """
+    删除AI代理
+    
+    需要用户登录权限。删除指定的AI代理。只有代理的创建者可以删除代理。
+    
+    - **agent_id**: 代理ID
+    - **返回**: 删除成功消息
+    """
     try:
         success = await conversation_service.delete_agent(
             agent_id=agent_id,
@@ -217,13 +257,21 @@ async def delete_agent(
         )
 
 
-@router.get("/agents/public/list", response_model=List[AgentSummary])
+@router.get("/public", response_model=List[AgentSummary], summary="获取公开AI代理列表")
 async def get_public_agents(
     limit: int = 20,
     offset: int = 0,
     db: Session = Depends(get_db)
 ):
-    """获取公开的AI代理列表（无需认证）"""
+    """
+    获取公开的AI代理列表
+    
+    **无需认证**。获取所有公开可用的AI代理列表，供未登录用户浏览。
+    
+    - **limit**: 限制返回数量（默认: 20）
+    - **offset**: 偏移量，用于分页（默认: 0）
+    - **返回**: 公开代理的摘要信息列表
+    """
     try:
         agents = await conversation_service.get_public_agents(
             limit=limit,
@@ -236,7 +284,8 @@ async def get_public_agents(
                 id=agent.id,
                 agent_id=agent.agent_id,
                 user_id=agent.user_id,
-                provider_config_id=agent.provider_config_id,
+                provider=agent.provider,
+                model=agent.model,
                 name=agent.app_preset.get('name', 'Unnamed Agent'),
                 description=agent.app_preset.get('description', ''),
                 is_public=agent.is_public,

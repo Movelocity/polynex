@@ -9,7 +9,7 @@ import sys
 from constants import get_settings, configure_logging, print_config_status
 
 # 导入路由模块
-from controllers import auth, users, blogs, categories, files, admin, dev, conversations, agents, ai_providers
+from controllers import auth, users, blogs, categories, files, admin, dev, conversations, agents, ai_providers, docs
 
 # 初始化配置和日志
 settings = get_settings()
@@ -17,8 +17,39 @@ configure_logging()
 
 app = FastAPI(
     title="博客平台 API",
-    description="一个简单的博客平台后端 API",
-    version="1.0.0"
+    description="""
+    ## 功能强大的博客平台后端 API
+    
+    ### 主要功能：
+    - **🔐 用户认证**: JWT Token认证，支持用户注册、登录
+    - **👥 用户管理**: 完整的用户管理系统，支持管理员权限控制  
+    - **🤖 AI供应商管理**: 支持多种AI服务提供商配置和管理
+    - **🎭 AI代理系统**: 创建和管理自定义AI对话代理
+    - **📝 博客管理**: 博客文章的创建、编辑、发布功能
+    - **📁 文件管理**: 文件上传、存储和管理
+    - **⚙️ 系统配置**: 网站配置和系统参数管理
+    
+    ### 权限说明：
+    - **🟢 公开接口**: 无需认证即可访问
+    - **🔵 用户接口**: 需要登录用户权限
+    - **🔴 管理员接口**: 需要管理员权限
+    
+    ### 认证方式：
+    请在请求头中添加：`Authorization: Bearer <your_jwt_token>`
+    
+    获取Token请先调用登录接口：`POST /api/auth/login`
+    """,
+    version="1.0.0",
+    contact={
+        "name": "博客平台开发团队",
+        "email": "admin@blogplatform.com"
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+    },
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # 配置 CORS
@@ -44,17 +75,44 @@ app.include_router(admin.router)
 app.include_router(dev.router)
 app.include_router(conversations.router)
 app.include_router(agents.router)
-app.include_router(ai_providers.router, prefix="/api")
+app.include_router(ai_providers.router)  # 已经有前缀 /api/ai
+app.include_router(docs.router)  # API文档路由
 
 # 根路径欢迎信息
 @app.get("/")
 async def root():
-    """API根路径"""
+    """
+    API根路径 - 欢迎页面
+    
+    返回API的基本信息和文档链接。
+    """
     return {
-        "message": "欢迎使用博客平台 API",
+        "message": "🎉 欢迎使用博客平台 API",
         "version": "1.0.0",
-        "docs": "/docs",
-        "redoc": "/redoc"
+        "description": "功能强大的博客平台后端服务",
+        "features": {
+            "authentication": "JWT Token认证系统",
+            "ai_integration": "AI供应商和代理管理",
+            "blog_management": "完整的博客管理功能",
+            "user_management": "用户和权限管理",
+            "file_management": "文件上传和管理"
+        },
+        "documentation": {
+            "swagger_ui": "/docs",
+            "redoc": "/redoc", 
+            "custom_docs": "/api/docs/",
+            "api_status": "/api/docs/status",
+            "permissions_info": "/api/docs/permissions"
+        },
+        "endpoints": {
+            "health_check": "/health",
+            "authentication": "/api/auth/*",
+            "ai_providers": "/api/ai/*",
+            "ai_agents": "/api/agents/*",
+            "admin": "/api/admin/*",
+            "users": "/api/users/*",
+            "blogs": "/api/blogs/*"
+        }
     }
 
 # 健康检查

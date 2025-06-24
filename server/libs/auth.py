@@ -10,8 +10,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 import threading
 import time
+from models.database import get_db
 
 # 密码加密上下文
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -198,4 +200,43 @@ def get_current_user_id_optional(credentials: Optional[HTTPAuthorizationCredenti
     try:
         return get_current_user_id(credentials)
     except HTTPException:
-        return None 
+        return None
+
+
+def check_admin_permission(current_user_id: str, db: Session) -> bool:
+    """检查用户是否为管理员"""
+    from core.user_service import UserService
+    user_service = UserService(db)
+    user_data = user_service.get_user_by_id(current_user_id)
+    return user_data and user_data['role'] == 'admin'
+
+
+def require_admin_permission(
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+) -> str:
+    """要求管理员权限的依赖"""
+    if not check_admin_permission(current_user_id, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="需要管理员权限访问此资源"
+        )
+    return current_user_id
+
+
+def get_current_user_info(
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+) -> dict:
+    """获取当前用户完整信息的依赖"""
+    from core.user_service import UserService
+    user_service = UserService(db)
+    user_data = user_service.get_user_by_id(current_user_id)
+    
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="用户不存在或已被删除"
+        )
+    
+    return user_data 

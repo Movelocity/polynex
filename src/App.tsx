@@ -21,6 +21,9 @@ import { ImageCropper } from '@/pages/tools/ImageCropper';
 import { NewImageCropperDemo } from '@/pages/tools/NewImageCropperDemo';
 import { ImageOCR } from '@/pages/tools/ImageOCR';
 import { JsonFormatter } from '@/pages/tools/JsonFormatter';
+import { AIProviderManagement } from '@/pages/tools/AIProviderManagement';
+import { AgentManagement } from '@/pages/tools/AgentManagement';
+import { ConversationManagement } from '@/pages/tools/ConversationManagement';
 import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
 import { ThemeDemo } from '@/components/ThemeDemo';
@@ -65,6 +68,9 @@ function App() {
             <Route path="tools/advanced-image-cropper" element={<NewImageCropperDemo />} />
             <Route path="tools/image-ocr" element={<ImageOCR />} />
             <Route path="tools/json-formatter" element={<JsonFormatter />} />
+            <Route path="tools/ai-provider-management" element={<AIProviderManagement />} />
+            <Route path="tools/agent-management" element={<AgentManagement />} />
+            <Route path="tools/conversation-management" element={<ConversationManagement />} />
 
             {/* Protected routes */}
             <Route 

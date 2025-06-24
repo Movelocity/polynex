@@ -20,8 +20,17 @@ class ConversationStatus(str, Enum):
     ARCHIVED = "archived"
     DELETED = "deleted"
 
+class AIProviderType(str, Enum):
+    """AI提供商技术类型枚举"""
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    GOOGLE = "google"
+    OLLAMA = "ollama"
+    CUSTOM = "custom"
+
+# 保持向后兼容，后续可以移除
 class AIProvider(str, Enum):
-    """AI提供商枚举"""
+    """AI提供商枚举（已废弃，使用AIProviderType）"""
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -326,7 +335,8 @@ class AgentSummary(BaseModel):
     id: str
     agent_id: str
     user_id: str
-    provider_config_id: Optional[str] = None
+    provider: str  # 供应商名称
+    model: str  # 模型名称
     name: str
     description: str
     is_public: bool
@@ -340,8 +350,8 @@ class AgentDetail(BaseModel):
     id: str
     agent_id: str
     user_id: str
-    provider_config_id: Optional[str] = None
-    model: Optional[str] = None
+    provider: str  # 供应商名称
+    model: str  # 模型名称
     top_p: Optional[float] = None
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
@@ -356,8 +366,8 @@ class AgentDetail(BaseModel):
 class AgentCreate(BaseModel):
     """创建Agent模型"""
     agent_id: str
-    provider_config_id: Optional[str] = None
-    model: Optional[str] = None
+    provider: str  # 供应商名称
+    model: str  # 模型名称
     top_p: Optional[float] = None
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
@@ -369,8 +379,8 @@ class AgentCreate(BaseModel):
 
 class AgentUpdate(BaseModel):
     """更新Agent模型"""
-    provider_config_id: Optional[str] = None
-    model: Optional[str] = None
+    provider: Optional[str] = None  # 供应商名称
+    model: Optional[str] = None  # 模型名称
     top_p: Optional[float] = None
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None

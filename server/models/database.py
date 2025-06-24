@@ -25,8 +25,17 @@ class ConversationStatus(enum.Enum):
     ARCHIVED = "archived"
     DELETED = "deleted"
 
+class AIProviderType(enum.Enum):
+    """AI提供商技术类型枚举"""
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    GOOGLE = "google"
+    OLLAMA = "ollama"
+    CUSTOM = "custom"
+
+# 保持向后兼容，后续可以移除
 class AIProvider(enum.Enum):
-    """AI提供商枚举"""
+    """AI提供商枚举（已废弃，使用AIProviderType）"""
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -111,10 +120,12 @@ class AIProviderConfig(Base):
     __tablename__ = "ai_provider_configs"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(100), nullable=False)  # 配置名称，如 "OpenAI主账户"
-    provider = Column(SQLEnum(AIProvider), nullable=False)  # 供应商类型
+    name = Column(String(100), nullable=False)  # 配置显示名称，如 "OpenAI主账户"
+    provider = Column(String(100), nullable=False, unique=True)  # 供应商自定义名称，如 "my-openai", "company-claude"，必须唯一
+    provider_type = Column(SQLEnum(AIProviderType), nullable=False)  # 供应商技术类型
     base_url = Column(String(500), nullable=False)  # API基础URL
     api_key = Column(String(500), nullable=False)  # API密钥（应该加密存储）
+    proxy = Column(JSON, nullable=True)  # 代理配置 {"host": "127.0.0.1", "port": 7890, "username": "", "password": ""}
     models = Column(JSON, nullable=False, default=list)  # 支持的模型列表
     default_model = Column(String(100), nullable=True)  # 默认模型
     default_temperature = Column(Float, nullable=True, default=0.7)  # 默认温度
@@ -129,17 +140,17 @@ class AIProviderConfig(Base):
     update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Agent(Base):
-    """对话预设表"""
+    """对话代理表"""
     __tablename__ = "agents"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     agent_id = Column(String(100), nullable=False, unique=True)  # agent唯一标识
     user_id = Column(String, nullable=False)  # 创建者ID
-    provider_config_id = Column(String, nullable=True)  # 关联的供应商配置ID，如果为None则使用默认配置
-    model = Column(String(100), nullable=True)  # 模型（覆盖供应商默认模型）
-    top_p = Column(Float, nullable=True)  # top_p
-    temperature = Column(Float, nullable=True)  # 温度（覆盖供应商默认温度）
-    max_tokens = Column(Integer, nullable=True)  # 最大tokens（覆盖供应商默认值）
+    provider = Column(String(100), nullable=False)  # 关联的供应商名称（对应AIProviderConfig.provider）
+    model = Column(String(100), nullable=False)  # 使用的模型名称
+    top_p = Column(Float, nullable=True)  # top_p参数
+    temperature = Column(Float, nullable=True)  # 温度参数
+    max_tokens = Column(Integer, nullable=True)  # 最大tokens
     preset_messages = Column(JSON, nullable=False, default=list)  # 预设消息（prompt）
     app_preset = Column(JSON, nullable=False, default=dict)  # 应用配置：{name, description, greetings, suggested_questions, creation_date, ...}
     is_public = Column(Boolean, nullable=False, default=False)  # 是否公开

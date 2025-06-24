@@ -10,41 +10,23 @@ from fields import (
 )
 from models.database import get_db
 from core import UserService, ConfigService
-from libs.auth import get_current_user_id, get_password_hash
+from libs.auth import get_current_user_id, get_password_hash, require_admin_permission
 
-router = APIRouter(prefix="/api/admin", tags=["管理员"])
-
-
-# ===== 权限检查函数 =====
-
-def check_admin_permission(current_user_id: str, db: Session) -> bool:
-    """检查用户是否为管理员"""
-    user_service = UserService(db)
-    user_data = user_service.get_user_by_id(current_user_id)
-    return user_data and user_data['role'] == 'admin'
-
-
-def require_admin_permission(
-    current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
-):
-    """要求管理员权限的依赖"""
-    if not check_admin_permission(current_user_id, db):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="需要管理员权限"
-        )
-    return current_user_id
+router = APIRouter(prefix="/api/admin", tags=["管理员权限接口"])
 
 
 # ===== 网站配置管理接口（管理员权限）=====
 
-@router.get("/site-config", response_model=List[SiteConfigResponse])
+@router.get("/site-config", response_model=List[SiteConfigResponse], summary="获取所有网站配置")
 async def get_site_configs(
     admin_user_id: str = Depends(require_admin_permission),
     db: Session = Depends(get_db)
 ):
-    """获取所有网站配置（管理员权限）"""
+    """
+    获取所有网站配置
+    
+    **需要管理员权限**。获取系统中的所有配置项，包括配置键、值、描述等信息。
+    """
     config_service = ConfigService(db)
     configs = config_service.get_all_site_configs()
     
@@ -61,13 +43,17 @@ async def get_site_configs(
     ]
 
 
-@router.get("/site-config/{key}", response_model=SiteConfig)
+@router.get("/site-config/{key}", response_model=SiteConfig, summary="根据键获取网站配置")
 async def get_site_config_by_key(
     key: str, 
     admin_user_id: str = Depends(require_admin_permission),
     db: Session = Depends(get_db)
 ):
-    """根据键获取网站配置（管理员）"""
+    """
+    根据键获取网站配置
+    
+    **需要管理员权限**。根据配置键获取特定的配置项信息。
+    """
     config_service = ConfigService(db)
     config = config_service.get_site_config_by_key(key)
     if not config:
@@ -75,14 +61,18 @@ async def get_site_config_by_key(
     return config
 
 
-@router.put("/site-config/{key}")
+@router.put("/site-config/{key}", summary="更新网站配置")
 async def update_site_config(
     key: str,
     config_update: SiteConfigUpdate,
     admin_user_id: str = Depends(require_admin_permission),
     db: Session = Depends(get_db)
 ):
-    """更新网站配置（管理员权限）"""
+    """
+    更新网站配置
+    
+    **需要管理员权限**。更新指定键的配置项值和描述。
+    """
     config_service = ConfigService(db)
     success = config_service.update_site_config(
         key,
@@ -201,12 +191,16 @@ async def update_invite_code_config(
 
 # ===== 管理员用户管理接口 =====
 
-@router.get("/users", response_model=List[UserResponse])
+@router.get("/users", response_model=List[UserResponse], summary="获取所有用户")
 async def get_all_users(
     admin_user_id: str = Depends(require_admin_permission),
     db: Session = Depends(get_db)
 ):
-    """获取所有用户（管理员权限）"""
+    """
+    获取所有用户
+    
+    **需要管理员权限**。获取系统中的所有用户信息，包括用户名、邮箱、角色等。
+    """
     user_service = UserService(db)
     users = user_service.get_all_users()
     
@@ -223,12 +217,16 @@ async def get_all_users(
     ]
 
 
-@router.get("/users/stats")
+@router.get("/users/stats", summary="获取用户统计数据")
 async def get_user_stats(
     admin_user_id: str = Depends(require_admin_permission),
     db: Session = Depends(get_db)
 ):
-    """获取用户统计数据（管理员权限）"""
+    """
+    获取用户统计数据
+    
+    **需要管理员权限**。获取用户统计信息，包括总用户数、管理员数量、普通用户数量等。
+    """
     user_service = UserService(db)
     stats = user_service.get_user_stats()
     return stats

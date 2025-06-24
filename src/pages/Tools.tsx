@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
-import { Crop, ScanText, FileJson, Sparkles } from 'lucide-react';
+import { Crop, ScanText, FileJson, Sparkles, Settings, Bot, MessageCircle } from 'lucide-react';
 
 export function Tools() {
   const tools = [
@@ -31,6 +31,29 @@ export function Tools() {
       icon: FileJson,
       path: '/tools/json-formatter',
       color: 'from-theme-purple to-theme-pink'
+    },
+    {
+      title: 'AI供应商管理',
+      description: '管理和配置AI服务供应商，设置API密钥和模型参数',
+      icon: Settings,
+      path: '/tools/ai-provider-management',
+      color: 'from-theme-orange to-theme-red'
+    },
+    {
+      title: 'AI Agent管理',
+      description: '创建和管理智能AI Agent，配置个性化对话助手',
+      icon: Bot,
+      path: '/tools/agent-management',
+      // color: 'from-theme-teal to-theme-green'
+      color: 'from-theme-orange to-theme-red'
+    },
+    {
+      title: '对话管理',
+      description: '管理AI对话历史，查看和整理您的聊天记录',
+      icon: MessageCircle,
+      path: '/tools/conversation-management',
+      // color: 'from-theme-violet to-theme-purple'
+      color: 'from-theme-orange to-theme-red'
     }
   ];
 
