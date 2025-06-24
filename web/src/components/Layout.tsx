@@ -5,7 +5,11 @@ import { BookOpen } from 'lucide-react';
 
 import { HeadBanner } from '@/components/HeadBanner';
 
-export function Layout() {
+export type LayoutProps = {
+  showFooter?: boolean;
+}
+
+export function Layout({ showFooter = true }: LayoutProps) {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,7 +56,8 @@ export function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-background border-t border-border">
+      {showFooter && (
+        <footer className="bg-background border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
@@ -65,8 +70,9 @@ export function Layout() {
               用心记录每一个美好时刻
             </div>
           </div>
-        </div>
-      </footer>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

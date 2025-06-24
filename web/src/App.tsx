@@ -21,10 +21,10 @@ import { ImageCropper } from '@/pages/tools/ImageCropper';
 import { NewImageCropperDemo } from '@/pages/tools/NewImageCropperDemo';
 import { ImageOCR } from '@/pages/tools/ImageOCR';
 import { JsonFormatter } from '@/pages/tools/JsonFormatter';
-import { AIProviderManagement } from '@/pages/tools/AIProviderManagement';
-import { AgentManagement } from '@/pages/tools/AgentManagement';
-import { ConversationManagement } from '@/pages/tools/ConversationManagement';
-import { Conversation } from '@/pages/tools/Conversation';
+import { AIProviderManagement } from '@/pages/chat/AIProviderManagement';
+import { AgentManagement } from '@/pages/chat/AgentManagement';
+import { ConversationManagement } from '@/pages/chat/ConversationManagement';
+import { Conversation } from '@/pages/chat/Conversation';
 import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
 import { ThemeDemo } from '@/components/ThemeDemo';
@@ -69,10 +69,7 @@ function App() {
             <Route path="tools/advanced-image-cropper" element={<NewImageCropperDemo />} />
             <Route path="tools/image-ocr" element={<ImageOCR />} />
             <Route path="tools/json-formatter" element={<JsonFormatter />} />
-            <Route path="tools/ai-provider-management" element={<AIProviderManagement />} />
-            <Route path="tools/agent-management" element={<AgentManagement />} />
-            <Route path="tools/conversation-management" element={<ConversationManagement />} />
-            <Route path="tools/conversation" element={<Conversation />} />
+            
 
             {/* Protected routes */}
             <Route 
@@ -121,6 +118,30 @@ function App() {
             {/* 404 page */}
             <Route path="*" element={<NotFound />} />
           </Route>
+
+          <Route path="/chat" element={<Layout showFooter={false} />} >
+            <Route path="ai-provider-management" element={
+              <ProtectedRoute requireAdmin>
+                <AIProviderManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="agent-management" element={
+              <ProtectedRoute requireAdmin>
+                <AgentManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="conversation-management" element={
+              <ProtectedRoute>
+                <ConversationManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="conversation" element={
+              <ProtectedRoute>
+                <Conversation />
+              </ProtectedRoute>
+            } />
+          </Route>
+
         </Routes>
         <Toaster />
       </Router>

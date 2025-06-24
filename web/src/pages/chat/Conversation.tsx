@@ -6,6 +6,8 @@ import { Input } from '@/components/x-ui/input';
 import { Badge } from '@/components/x-ui/badge';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { MarkdownPreview } from '@/components/common/markdown-preview';
+import { ConversationHistorySidebar } from '@/components/chat/ConversationHistorySidebar';
+import { MessageEditDialog } from '@/components/chat/MessageEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { conversationService } from '@/services';
@@ -19,7 +21,10 @@ import {
   AlertCircle,
   Loader2,
   Copy,
-  Check
+  Check,
+  Edit,
+  Sidebar,
+  X
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import cn from 'classnames';
@@ -28,28 +33,31 @@ import cn from 'classnames';
 interface ConversationHeaderProps {
   selectedAgent: any;
   onBack: () => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
-const ConversationHeader: React.FC<ConversationHeaderProps> = ({ selectedAgent, onBack }) => (
-  <div className="flex-shrink-0 bg-background border-b border-border">
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div className="flex items-center space-x-4 mb-2">
-        {/* <Button
-          variant="outline"
+const ConversationHeader: React.FC<ConversationHeaderProps> = ({ selectedAgent, onBack, isSidebarOpen, setIsSidebarOpen }) => (
+  <div className="bg-background border-b border-border">
+    <div className="px-4 py-4">
+      <div className="flex items-center space-x-4">
+        {/* 侧边栏切换按钮 */}
+        <Button
+          variant="ghost"
           size="sm"
-          onClick={onBack}
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          
         >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          返回
-        </Button> */}
+          <Sidebar className="h-4 w-4" />
+        </Button>
         {selectedAgent && (
           <div className="flex items-center space-x-3">
             <Bot className="h-6 w-6 text-theme-blue" />
-            <div>
+            <div className="flex items-center space-x-2">
               <span className="text-xl font-bold text-foreground">{selectedAgent.app_preset.name}</span>
-              <p className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {selectedAgent.provider} • {selectedAgent.model}
-              </p>
+              </span>
             </div>
             <Badge variant={selectedAgent.is_public ? "default" : "secondary"}>
               {selectedAgent.is_public ? 'public' : 'private'}
@@ -57,10 +65,6 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({ selectedAgent, 
           </div>
         )}
       </div>
-      
-      {/* {selectedAgent?.app_preset?.description && (
-        <p className="text-muted-foreground text-sm">{selectedAgent.app_preset.description}</p>
-      )} */}
     </div>
   </div>
 );
@@ -70,6 +74,7 @@ interface MessageActionsProps {
   message: ConversationMessage;
   index: number;
   onCopy: (content: string, index: number) => void;
+  onEdit: (message: ConversationMessage, index: number) => void;
   copiedIndex: number | null;
   isUser: boolean;
 }
@@ -78,6 +83,7 @@ const MessageActions: React.FC<MessageActionsProps> = ({
   message, 
   index, 
   onCopy, 
+  onEdit,
   copiedIndex,
   isUser 
 }) => (
@@ -85,6 +91,14 @@ const MessageActions: React.FC<MessageActionsProps> = ({
     'flex items-center space-x-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity',
     isUser ? 'justify-end' : 'justify-start'
   )}>
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-6 px-2 text-xs hover:bg-muted"
+      onClick={() => onEdit(message, index)}
+    >
+      <Edit className="h-3 w-3" />
+    </Button>
     <Button
       variant="ghost"
       size="sm"
@@ -110,6 +124,7 @@ interface MessageBubbleProps {
   index: number;
   agentName?: string;
   onCopy: (content: string, index: number) => void;
+  onEdit: (message: ConversationMessage, index: number) => void;
   copiedIndex: number | null;
 }
 
@@ -118,6 +133,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   index, 
   agentName, 
   onCopy, 
+  onEdit,
   copiedIndex 
 }) => (
   <div className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}>
@@ -128,7 +144,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       {/* 头像 */}
       <div className={cn(
         'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-        message.role === 'user' ? 'bg-blue-600' : 'bg-gray-600'
+        message.role === 'user' ? 'bg-theme-blue' : 'bg-gray-600'
       )}>
         {message.role === 'user' ? (
           <User className="h-5 w-5 text-white" />
@@ -158,8 +174,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={cn(
           'rounded-lg px-3 py-2',
           message.role === 'user' 
-            ? 'bg-theme-blue/20 text-foreground' 
-            : 'bg-muted text-foreground border border-border'
+            ? 'bg-theme-blue/80 text-white' 
+            : 'bg-muted/50 text-foreground border border-border'
         )}>
           {message.role === 'assistant' ? (
             <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
@@ -175,6 +191,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           message={message}
           index={index}
           onCopy={onCopy}
+          onEdit={onEdit}
           copiedIndex={copiedIndex}
           isUser={message.role === 'user'}
         />
@@ -224,7 +241,7 @@ const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({ questions, onQu
       <div className="w-4 h-4 rounded-full bg-gradient-to-r from-theme-blue to-theme-indigo flex items-center justify-center">
         <span className="text-white text-xs">💡</span>
       </div>
-      <p className="text-sm font-medium text-foreground">建议问题</p>
+      <p className="text-sm font-medium text-foreground">试试这样问</p>
     </div>
     <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
       {questions.map((question: string, index: number) => (
@@ -308,11 +325,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
     <div className="flex-shrink-0">
       <div className={cn(
         'relative bg-card border border-border rounded-xl shadow-lg transition-all duration-200',
-        isFocused ? 'ring-2 ring-theme-blue/20 border-theme-blue shadow-xl' : 'hover:shadow-xl',
+        isFocused ? 'ring-2 ring-theme-blue/70 shadow-xl' : 'hover:shadow-xl',
         disabled && 'opacity-50'
       )}>
         {/* 输入区域容器 */}
-        <div className="flex items-end p-4 space-x-3">
+        <div className="flex items-end p-4 pb-2 space-x-3">
           {/* 文本输入区域 */}
           <div className="flex-1 relative">
             <textarea
@@ -347,31 +364,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
               </div>
             )}
           </div>
-
-          {/* 发送按钮 */}
-          <div className="flex-shrink-0">
-            <Button 
-              onClick={onSend}
-              disabled={disabled || !value.trim() || isOverLimit}
-              size="icon"
-              className={cn(
-                'h-12 w-12 rounded-xl shadow-md transition-all duration-200 text-foreground',
-                !disabled && value.trim() && !isOverLimit 
-                  ? 'bg-gradient-to-r from-theme-blue to-theme-indigo hover:from-theme-blue/90 hover:to-theme-indigo/90 hover:shadow-lg hover:scale-105' 
-                  : 'bg-muted hover:bg-muted/80'
-              )}
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5 " />
-              )}
-            </Button>
-          </div>
         </div>
 
         {/* 底部工具栏 */}
-        <div className="flex items-center justify-between px-4 pb-3 pt-0">
+        <div className="flex items-center justify-between px-2 pb-3">
           {/* 快捷键提示 */}
           <div className="flex items-center space-x-4 text-xs text-muted-foreground">
             <span className="flex items-center space-x-1">
@@ -392,14 +388,22 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 <span>正在发送...</span>
               </div>
             )}
-            {!disabled && !isLoading && (
-              <div className={cn(
-                'text-xs transition-colors',
-                value.trim() ? 'text-success' : 'text-muted-foreground'
-              )}>
-                {value.trim() ? '就绪' : '输入消息'}
-              </div>
-            )}
+            {/* 发送按钮 */}
+            <div className="flex-shrink-0">
+              <Button 
+                variant="attractive"
+                onClick={onSend}
+                disabled={disabled || !value.trim() || isOverLimit}
+                size="icon"
+                className="rounded-xl"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5 " />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -421,6 +425,9 @@ export function Conversation() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [editingMessage, setEditingMessage] = useState<ConversationMessage | null>(null);
+  const [editingMessageIndex, setEditingMessageIndex] = useState<number>(-1);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const agentId = searchParams.get('agent');
@@ -489,6 +496,71 @@ export function Conversation() {
         description: "无法复制消息内容",
         variant: "destructive",
       });
+    }
+  };
+
+  // 编辑消息
+  const handleEditMessage = (message: ConversationMessage, index: number) => {
+    setEditingMessage(message);
+    setEditingMessageIndex(index);
+  };
+
+  // 保存编辑的消息
+  const handleSaveEditedMessage = async (messageIndex: number, newContent: string) => {
+    if (!conversationId) {
+      throw new Error('没有活动的对话');
+    }
+
+    // 更新本地消息
+    const updatedMessages = [...messages];
+    updatedMessages[messageIndex] = {
+      ...updatedMessages[messageIndex],
+      content: newContent
+    };
+    
+    try {
+      // 同步到后端
+      await conversationService.updateConversationContext(conversationId, updatedMessages);
+      setMessages(updatedMessages);
+    } catch (error) {
+      throw new Error('更新消息失败');
+    }
+  };
+
+  // 对话选择处理
+  const handleConversationSelect = async (selectedConversationId: string) => {
+    try {
+      setIsLoading(true);
+      const conversation = await conversationService.getConversation(selectedConversationId);
+      
+      setConversationId(selectedConversationId);
+      setMessages(conversation.messages || []);
+      
+      // 如果对话有关联的agent，加载agent信息
+      if (conversation.agent_id && conversation.agent_id !== selectedAgent?.agent_id) {
+        await loadAgent(conversation.agent_id);
+      }
+    } catch (error) {
+      toast({
+        title: "错误",
+        description: "加载对话失败",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 新建对话
+  const handleNewConversation = () => {
+    setConversationId(null);
+    setMessages([]);
+    if (selectedAgent?.app_preset?.greetings) {
+      setMessages([{
+        role: 'assistant',
+        content: selectedAgent.app_preset.greetings,
+        timestamp: new Date().toISOString()
+      }]);
     }
   };
 
@@ -623,71 +695,108 @@ export function Conversation() {
   }
 
   return (
-    <div className="flex flex-col">
-      {/* 头部 */}
-      <ConversationHeader 
-        selectedAgent={selectedAgent}
-        onBack={() => navigate('/tools/agent-management')}
-      />
+    <div className="flex h-[calc(100vh-65px)]">
+      {/* 侧边栏 */}
+      {isSidebarOpen && (
+        <div className="w-80 flex-shrink-0">
+          <ConversationHistorySidebar
+            currentConversationId={conversationId}
+            onConversationSelect={handleConversationSelect}
+            onNewConversation={handleNewConversation}
+          />
+        </div>
+      )}
 
-      {/* 对话区域 */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* 消息列表 */}
-          <div className="h-full overflow-y-auto py-4 pb-32">
-            <div className="space-y-4">
-              {messages.length === 0 && selectedAgent && !selectedAgent.app_preset?.greetings && (
-                <div className="text-center text-muted-foreground py-16">
-                  <Bot className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">开始与 {selectedAgent.app_preset.name} 对话吧</p>
-                </div>
-              )}
-              
-              {messages.map((message, index) => (
-                <MessageBubble
-                  key={index}
-                  message={message}
-                  index={index}
-                  agentName={selectedAgent?.app_preset?.name}
-                  onCopy={copyMessage}
-                  copiedIndex={copiedIndex}
-                />
-              ))}
-              
-              {isLoading && (
-                <LoadingMessage agentName={selectedAgent?.app_preset?.name} />
-              )}
-              
-              <div ref={messagesEndRef} />
+      {/* 主要内容区域 */}
+      <div className="flex-1 flex flex-col">
+        {/* 头部 */}
+        <div className="flex-shrink-0">
+          <div className="flex items-center">
+            
+            
+            <div className="flex-1">
+              <ConversationHeader 
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                selectedAgent={selectedAgent}
+                onBack={() => navigate('/chat/agent-management')}
+              />
             </div>
+          </div>
+        </div>
+
+        {/* 对话区域 */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* 消息列表 */}
+            <div className="h-full py-4 pb-32 mb-32">
+              <div className="space-y-4">
+                {messages.length === 0 && selectedAgent && !selectedAgent.app_preset?.greetings && (
+                  <div className="text-center text-muted-foreground py-16">
+                    <Bot className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg">开始与 {selectedAgent.app_preset.name} 对话吧</p>
+                  </div>
+                )}
+                
+                {messages.map((message, index) => (
+                  <MessageBubble
+                    key={index}
+                    message={message}
+                    index={index}
+                    agentName={selectedAgent?.app_preset?.name}
+                    onCopy={copyMessage}
+                    onEdit={handleEditMessage}
+                    copiedIndex={copiedIndex}
+                  />
+                ))}
+                
+                {isLoading && (
+                  <LoadingMessage agentName={selectedAgent?.app_preset?.name} />
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 固定在屏幕底部的输入区域 */}
+        <div className="flex-shrink-0">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+            {/* 建议问题区域 */}
+            {shouldShowSuggestedQuestions && (
+              <div className="p-2">
+                <SuggestedQuestions
+                  questions={selectedAgent.app_preset.suggested_questions}
+                  onQuestionClick={handleSuggestedQuestion}
+                />
+              </div>
+            )}
+
+            {/* 输入区域 */}
+            <MessageInput
+              value={inputMessage}
+              onChange={setInputMessage}
+              onSend={handleSendMessage}
+              onKeyPress={handleKeyPress}
+              disabled={isLoading || !selectedAgent}
+              isLoading={isLoading}
+            />
           </div>
         </div>
       </div>
 
-      {/* 固定在屏幕底部的输入区域 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border shadow-2xl">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-4">
-          {/* 建议问题区域 */}
-          {shouldShowSuggestedQuestions && (
-            <div className="p-2">
-              <SuggestedQuestions
-                questions={selectedAgent.app_preset.suggested_questions}
-                onQuestionClick={handleSuggestedQuestion}
-              />
-            </div>
-          )}
-
-          {/* 输入区域 */}
-          <MessageInput
-            value={inputMessage}
-            onChange={setInputMessage}
-            onSend={handleSendMessage}
-            onKeyPress={handleKeyPress}
-            disabled={isLoading || !selectedAgent}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
+      {/* 消息编辑对话框 */}
+      <MessageEditDialog
+        isOpen={editingMessage !== null}
+        onClose={() => {
+          setEditingMessage(null);
+          setEditingMessageIndex(-1);
+        }}
+        message={editingMessage}
+        messageIndex={editingMessageIndex}
+        onSave={handleSaveEditedMessage}
+      />
     </div>
   );
 } 

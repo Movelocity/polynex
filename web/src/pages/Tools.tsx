@@ -36,21 +36,21 @@ export function Tools() {
       title: 'AI供应商管理',
       description: '管理和配置AI服务供应商，设置API密钥和模型参数',
       icon: Settings,
-      path: '/tools/ai-provider-management',
+      path: '/chat/ai-provider-management',
       color: 'from-theme-orange to-theme-red'
     },
     {
       title: 'AI Agent管理',
       description: '创建和管理智能AI Agent，配置个性化对话助手',
       icon: Bot,
-      path: '/tools/agent-management',
+      path: '/chat/agent-management',
       color: 'from-theme-teal to-theme-green'
     },
     {
       title: '对话管理',
       description: '管理AI对话历史，查看和整理您的聊天记录',
       icon: MessageCircle,
-      path: '/tools/conversation-management',
+      path: '/chat/conversation-management',
       color: 'from-theme-violet to-theme-purple'
     }
   ];

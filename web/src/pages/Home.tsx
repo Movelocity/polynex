@@ -17,14 +17,14 @@ import {
 } from 'lucide-react';
 
 // Temporary formatDate function until we move it to a proper utils file
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
+// const formatDate = (dateString: string): string => {
+//   const date = new Date(dateString);
+//   return date.toLocaleDateString('zh-CN', {
+//     year: 'numeric',
+//     month: 'long',
+//     day: 'numeric'
+//   });
+// };
 
 export function Home() {
   // 设置页面标题

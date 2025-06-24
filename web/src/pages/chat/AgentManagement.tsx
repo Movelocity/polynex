@@ -258,7 +258,7 @@ export function AgentManagement() {
   };
 
   const handleStartConversation = (agent: any) => {
-    navigate(`/tools/conversation?agent=${agent.agent_id}`);
+    navigate(`/chat/conversation?agent=${agent.agent_id}`);
   };
 
   const getSelectedProvider = () => {
