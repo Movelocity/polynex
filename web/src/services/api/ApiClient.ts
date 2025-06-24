@@ -14,6 +14,10 @@ export class ApiClient {
     this.loadToken();
   }
 
+  getBaseURL(): string {
+    return this.baseURL;
+  }
+
   /**
    * 设置未授权回调函数
    */

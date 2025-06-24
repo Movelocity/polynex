@@ -167,7 +167,7 @@ class OpenAIService:
                         "type": "content",
                         "data": {
                             "content": content,
-                            "timestamp": datetime.utcnow().isoformat()
+                            "timestamp": datetime.now().isoformat()
                         }
                     }
                 
@@ -205,7 +205,7 @@ class OpenAIService:
                         "data": {
                             "finish_reason": finish_reason,
                             "full_response": full_response,
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now().isoformat(),
                             "token_count": total_tokens,
                             "prompt_tokens": prompt_tokens,
                             "completion_tokens": completion_tokens,

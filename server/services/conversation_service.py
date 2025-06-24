@@ -1095,6 +1095,241 @@ class ConversationService:
             logger.error(f"Error deleting agent {agent_id}: {str(e)}")
             raise
 
+    async def stream_create_conversation(
+        self, 
+        user_id: str, 
+        agent_id: Optional[str] = None,
+        title: Optional[str] = None,
+        initial_message: Optional[str] = None,
+        db: Session = None
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """
+        流式创建新对话并处理初始消息
+        
+        Args:
+            user_id: 用户ID
+            agent_id: Agent ID
+            title: 对话标题
+            initial_message: 初始消息
+            db: 数据库会话
+            
+        Yields:
+            Dict[str, Any]: 流式响应数据
+        """
+        try:
+            # 先创建基本的对话记录
+            session_id = str(uuid.uuid4())
+            
+            conversation = Conversation(
+                session_id=session_id,
+                user_id=user_id,
+                agent_id=agent_id,
+                title=title or "新对话",
+                messages=[],
+                status=ConversationStatus.ACTIVE
+            )
+            
+            db.add(conversation)
+            db.commit()
+            db.refresh(conversation)
+            
+            logger.info(f"Created conversation {conversation.id} for user {user_id}")
+            
+            # 发送对话创建完成事件
+            yield {
+                "type": "conversation_created",
+                "data": {
+                    "conversation_id": conversation.id,
+                    "session_id": conversation.session_id,
+                    "title": conversation.title,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+            # 如果有初始消息，进行流式处理
+            if initial_message:
+                # 获取会话锁
+                session_lock = self._get_session_lock(conversation.session_id)
+                
+                # 检查是否已有活跃的流
+                if conversation.session_id in self.active_streams:
+                    yield {
+                        "type": "error",
+                        "data": {"error": "Another stream is active for this session"}
+                    }
+                    return
+                
+                # 标记流为活跃状态
+                self.active_streams[conversation.session_id] = True
+                
+                try:
+                    # 准备消息历史
+                    messages = []
+                    
+                    # 添加用户消息
+                    user_message = {
+                        "role": "user",
+                        "content": initial_message,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    messages.append(user_message)
+                    
+                    # 获取 Agent 配置
+                    openai_service = None
+                    model = None
+                    temperature = None
+                    max_tokens = None
+                    
+                    if conversation.agent_id:
+                        agent = db.query(Agent).filter(Agent.id == conversation.agent_id).first()
+                        if agent:
+                            # 供应商配置系统
+                            provider_service = AIProviderService(db)
+                            provider_config = provider_service.get_provider_config_by_name(agent.provider)
+                            
+                            if provider_config and provider_config.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
+                                # 创建OpenAI服务实例
+                                openai_service = OpenAIService(
+                                    provider_config=provider_config,
+                                    db=db
+                                )
+                                
+                                # 使用Agent的特定配置覆盖默认值
+                                model = agent.model or provider_config.default_model
+                                temperature = agent.temperature if agent.temperature is not None else provider_config.default_temperature
+                                max_tokens = agent.max_tokens if agent.max_tokens is not None else provider_config.default_max_tokens
+                                
+                                # 添加预设消息
+                                if agent.preset_messages:
+                                    preset_msgs = [
+                                        {"role": msg.get("role", "system"), "content": msg.get("content", "")}
+                                        for msg in agent.preset_messages
+                                    ]
+                                    messages = preset_msgs + messages
+                            else:
+                                logger.warning(f"Agent {agent.id} uses provider '{agent.provider}' which is not found or not OpenAI-compatible")
+                    
+                    # 如果没有Agent配置或Agent配置无效，使用默认配置
+                    if not openai_service:
+                        provider_service = AIProviderService(db)
+                        default_config = provider_service.get_default_provider_config()
+                        if not default_config:
+                            default_config = provider_service.get_best_provider_config(AIProviderType.OPENAI)
+                        
+                        if default_config:
+                            openai_service = OpenAIService(
+                                provider_config=default_config,
+                                db=db
+                            )
+                            model = default_config.default_model
+                            temperature = default_config.default_temperature
+                            max_tokens = default_config.default_max_tokens
+                        else:
+                            yield {
+                                "type": "error",
+                                "data": {"error": "No valid AI provider configuration found"}
+                            }
+                            return
+                    
+                    # 限制并发请求
+                    async with self.llm_semaphore:
+                        # 准备OpenAI消息格式
+                        openai_messages = [
+                            {"role": msg["role"], "content": msg["content"]}
+                            for msg in messages
+                            if msg.get("role") and msg.get("content")
+                        ]
+                        
+                        assistant_response = ""
+                        
+                        # 流式处理，传递Agent的特定配置
+                        async for chunk in openai_service.stream_chat(
+                            openai_messages,
+                            model=model,
+                            temperature=temperature,
+                            max_tokens=max_tokens,
+                            user_id=user_id,
+                            conversation_id=conversation.id,
+                            agent_id=conversation.agent_id
+                        ):
+                            yield chunk
+                            
+                            # 收集助手响应内容
+                            if chunk.get("type") == "content":
+                                assistant_response += chunk["data"]["content"]
+                            
+                            # 处理完成事件
+                            elif chunk.get("type") == "done":
+                                # 在会话锁内更新数据库
+                                async with session_lock:
+                                    try:
+                                        # 重新获取最新的对话记录
+                                        fresh_conversation = db.query(Conversation).filter(
+                                            Conversation.id == conversation.id
+                                        ).first()
+                                        
+                                        if fresh_conversation:
+                                            # 构建完整的消息列表
+                                            updated_messages = []
+                                            updated_messages.append(user_message)
+                                            
+                                            if assistant_response:
+                                                assistant_message = {
+                                                    "role": "assistant",
+                                                    "content": assistant_response,
+                                                    "timestamp": datetime.utcnow().isoformat()
+                                                }
+                                                updated_messages.append(assistant_message)
+                                            
+                                            fresh_conversation.messages = updated_messages
+                                            
+                                            # 自动更新标题（如果是默认标题）
+                                            if fresh_conversation.title == "新对话":
+                                                fresh_conversation.title = initial_message[:50] + ("..." if len(initial_message) > 50 else "")
+                                            
+                                            fresh_conversation.update_time = datetime.utcnow()
+                                            db.commit()
+                                            
+                                            logger.info(f"Updated conversation {conversation.id} with initial message and AI response")
+                                            
+                                    except Exception as e:
+                                        logger.error(f"Error updating conversation in stream: {str(e)}")
+                                        db.rollback()
+                            
+                            # 处理错误
+                            elif chunk.get("type") == "error":
+                                logger.error(f"Stream error for new conversation {conversation.id}: {chunk['data']['error']}")
+                                # 仍然保存用户消息，即使AI回复失败
+                                async with session_lock:
+                                    try:
+                                        fresh_conversation = db.query(Conversation).filter(
+                                            Conversation.id == conversation.id
+                                        ).first()
+                                        if fresh_conversation:
+                                            fresh_conversation.messages = [user_message]
+                                            if fresh_conversation.title == "新对话":
+                                                fresh_conversation.title = initial_message[:50] + ("..." if len(initial_message) > 50 else "")
+                                            fresh_conversation.update_time = datetime.utcnow()
+                                            db.commit()
+                                    except Exception as e:
+                                        logger.error(f"Error saving user message after stream error: {str(e)}")
+                                        db.rollback()
+                
+                finally:
+                    # 清理活跃流标记
+                    self.active_streams.pop(conversation.session_id, None)
+            
+        except Exception as e:
+            logger.error(f"Error in stream_create_conversation: {str(e)}")
+            db.rollback()
+            yield {
+                "type": "error",
+                "data": {
+                    "error": str(e),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
 
 # 全局服务实例
 _conversation_service: Optional[ConversationService] = None

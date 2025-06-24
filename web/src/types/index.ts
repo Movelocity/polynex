@@ -308,6 +308,7 @@ export interface ConversationCreateRequest {
   agent_id?: string;
   title?: string;
   message: string;
+  stream?: boolean;
 }
 
 // 聊天请求

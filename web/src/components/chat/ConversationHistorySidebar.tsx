@@ -152,7 +152,7 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
                 <div
                   key={conversation.id}
                   className={cn(
-                    "group relative rounded-lg p-3 cursor-pointer transition-all hover:bg-muted/50",
+                    "group relative rounded-lg p-3 cursor-pointer hover:bg-muted/50",
                     currentConversationId === conversation.id ? "bg-theme-blue/10 border border-theme-blue/30" : "hover:bg-muted"
                   )}
                   onClick={() => onConversationSelect?.(conversation.id)}

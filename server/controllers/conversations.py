@@ -23,6 +23,7 @@ class SessionCreateRequest(BaseModel):
     agent_id: Optional[str] = None
     title: Optional[str] = None
     message: Optional[str] = None
+    stream: bool = False
 
 
 @router.post("", response_model=ConversationDetail)
@@ -33,25 +34,59 @@ async def create_conversation(
 ):
     """创建新的对话会话"""
     try:
-        conversation = await conversation_service.create_conversation(
-            user_id=current_user_id,
-            agent_id=request.agent_id,
-            title=request.title,
-            initial_message=request.message,
-            db=db
-        )
-        
-        return ConversationDetail(
-            id=conversation.id,
-            session_id=conversation.session_id,
-            user_id=conversation.user_id,
-            agent_id=conversation.agent_id,
-            title=conversation.title,
-            messages=[Message(**msg) for msg in conversation.messages] if conversation.messages else [],
-            status=conversation.status,
-            create_time=conversation.create_time.isoformat() + 'Z',
-            update_time=conversation.update_time.isoformat() + 'Z'
-        )
+        # 如果请求流式响应且有初始消息
+        if request.stream and request.message:
+            # 流式响应
+            async def generate():
+                # 发送初始心跳
+                yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
+                
+                async for chunk in conversation_service.stream_create_conversation(
+                    user_id=current_user_id,
+                    agent_id=request.agent_id,
+                    title=request.title,
+                    initial_message=request.message,
+                    db=db
+                ):
+                    # 根据chunk类型发送不同的事件
+                    chunk_type = chunk.get("type", "data")
+                    yield f"event: {chunk_type}\ndata: {json.dumps(chunk)}\n\n"
+                
+                # 发送完成事件
+                yield "event: done\ndata: {\"type\": \"done\"}\n\n"
+            
+            return StreamingResponse(
+                generate(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "Content-Type": "text/event-stream",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Headers": "Cache-Control",
+                }
+            )
+        else:
+            # 非流式响应，使用原有逻辑
+            conversation = await conversation_service.create_conversation(
+                user_id=current_user_id,
+                agent_id=request.agent_id,
+                title=request.title,
+                initial_message=request.message,
+                db=db
+            )
+            
+            return ConversationDetail(
+                id=conversation.id,
+                session_id=conversation.session_id,
+                user_id=conversation.user_id,
+                agent_id=conversation.agent_id,
+                title=conversation.title,
+                messages=[Message(**msg) for msg in conversation.messages] if conversation.messages else [],
+                status=conversation.status,
+                create_time=conversation.create_time.isoformat() + 'Z',
+                update_time=conversation.update_time.isoformat() + 'Z'
+            )
     except Exception as e:
         logger.error(f"Error creating conversation: {str(e)}")
         raise HTTPException(

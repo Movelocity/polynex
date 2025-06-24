@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { Badge } from '@/components/x-ui/badge';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
+import { ScrollArea } from '@/components/x-ui/scroll-area';
 import { MarkdownPreview } from '@/components/common/markdown-preview';
 import { ConversationHistorySidebar } from '@/components/chat/ConversationHistorySidebar';
 import { MessageEditDialog } from '@/components/chat/MessageEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAgents } from '@/hooks/useAgents';
-import { conversationService } from '@/services';
+import { useConversation } from '@/hooks/useConversation';
+import { useAutoScroll } from '@/hooks/useAutoScroll';
 import { ConversationMessage, ChatRequest } from '@/types';
 import { 
   MessageCircle, 
@@ -26,7 +27,6 @@ import {
   Sidebar,
   X
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 import cn from 'classnames';
 
 // 对话头部组件
@@ -174,7 +174,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={cn(
           'rounded-lg px-3 py-2',
           message.role === 'user' 
-            ? 'bg-theme-blue/80 text-white' 
+            ? 'bg-theme-blue text-white' 
             : 'bg-muted/50 text-foreground border border-border'
         )}>
           {message.role === 'assistant' ? (
@@ -272,6 +272,7 @@ interface MessageInputProps {
   onKeyPress: (e: React.KeyboardEvent) => void;
   disabled: boolean;
   isLoading: boolean;
+  isStreaming?: boolean;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -280,7 +281,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onSend,
   onKeyPress,
   disabled,
-  isLoading
+  isLoading,
+  isStreaming
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -324,12 +326,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   return (
     <div className="flex-shrink-0">
       <div className={cn(
-        'relative bg-card border border-border rounded-xl shadow-lg transition-all duration-200',
+        'relative bg-card border border-border rounded-2xl shadow-lg transition-all duration-200',
         isFocused ? 'ring-2 ring-theme-blue/70 shadow-xl' : 'hover:shadow-xl',
         disabled && 'opacity-50'
       )}>
         {/* 输入区域容器 */}
-        <div className="flex items-end p-4 pb-2 space-x-3">
+        <div className="flex items-end px-4 py-2 space-x-3">
           {/* 文本输入区域 */}
           <div className="flex-1 relative">
             <textarea
@@ -339,7 +341,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="输入消息... (Enter 发送，Shift+Enter 换行)"
+              placeholder="输入消息..."
               disabled={disabled || isOverLimit}
               maxLength={maxChars}
               className={cn(
@@ -367,7 +369,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         </div>
 
         {/* 底部工具栏 */}
-        <div className="flex items-center justify-between px-2 pb-3">
+        <div className="flex items-center justify-between px-2 pb-2">
           {/* 快捷键提示 */}
           <div className="flex items-center space-x-4 text-xs text-muted-foreground">
             <span className="flex items-center space-x-1">
@@ -382,10 +384,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
           {/* 状态指示器 */}
           <div className="flex items-center space-x-2">
-            {isLoading && (
+            {(isLoading || isStreaming) && (
               <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                 <div className="w-2 h-2 bg-theme-blue rounded-full animate-pulse"></div>
-                <span>正在发送...</span>
+                <span>{isStreaming ? "正在接收回复..." : "正在发送..."}</span>
               </div>
             )}
             {/* 发送按钮 */}
@@ -397,7 +399,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 size="icon"
                 className="rounded-xl"
               >
-                {isLoading ? (
+                {(isLoading || isStreaming) ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <Send className="h-5 w-5 " />
@@ -414,248 +416,43 @@ const MessageInput: React.FC<MessageInputProps> = ({
 // 主组件
 export function Conversation() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { agents, getAgent } = useAgents();
   
-  const [selectedAgent, setSelectedAgent] = useState<any>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ConversationMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingAgent, setIsLoadingAgent] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [editingMessage, setEditingMessage] = useState<ConversationMessage | null>(null);
-  const [editingMessageIndex, setEditingMessageIndex] = useState<number>(-1);
-  
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const agentId = searchParams.get('agent');
+  // 使用自定义hook管理聊天状态和逻辑
+  const {
+    selectedAgent,
+    conversationId,
+    messages,
+    inputMessage,
+    isLoading,
+    isLoadingAgent,
+    copiedIndex,
+    isSidebarOpen,
+    editingMessage,
+    editingMessageIndex,
+    currentAIResponse,
+    isStreaming,
+    agentId,
+    setInputMessage,
+    setIsSidebarOpen,
+    setEditingMessage,
+    setEditingMessageIndex,
+    copyMessage,
+    handleEditMessage,
+    handleSaveEditedMessage,
+    handleConversationSelect,
+    handleNewConversation,
+    handleSendMessage,
+    handleKeyPress,
+    handleSuggestedQuestion,
+    hasOnlyWelcome,
+    shouldShowSuggestedQuestions,
+  } = useConversation();
 
-  // 自动滚动到底部
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // 使用自动滚动hook
+  const { endRef } = useAutoScroll([messages, currentAIResponse]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
-  // 加载指定的Agent
-  useEffect(() => {
-    if (agentId && user) {
-      loadAgent(agentId);
-    }
-  }, [agentId, user]);
-
-  const loadAgent = async (agentId: string) => {
-    try {
-      setIsLoadingAgent(true);
-      const agent = await getAgent(agentId);
-      if (agent) {
-        setSelectedAgent(agent);
-        // 显示欢迎语
-        if (agent.app_preset?.greetings) {
-          setMessages([{
-            role: 'assistant',
-            content: agent.app_preset.greetings,
-            timestamp: new Date().toISOString()
-          }]);
-        }
-      } else {
-        toast({
-          title: "错误",
-          description: "找不到指定的Agent",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "错误",
-        description: "加载Agent失败",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingAgent(false);
-    }
-  };
-
-  // 复制消息内容
-  const copyMessage = async (content: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-      toast({
-        title: "复制成功",
-        description: "消息内容已复制到剪贴板",
-      });
-    } catch (error) {
-      toast({
-        title: "复制失败",
-        description: "无法复制消息内容",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // 编辑消息
-  const handleEditMessage = (message: ConversationMessage, index: number) => {
-    setEditingMessage(message);
-    setEditingMessageIndex(index);
-  };
-
-  // 保存编辑的消息
-  const handleSaveEditedMessage = async (messageIndex: number, newContent: string) => {
-    if (!conversationId) {
-      throw new Error('没有活动的对话');
-    }
-
-    // 更新本地消息
-    const updatedMessages = [...messages];
-    updatedMessages[messageIndex] = {
-      ...updatedMessages[messageIndex],
-      content: newContent
-    };
-    
-    try {
-      // 同步到后端
-      await conversationService.updateConversationContext(conversationId, updatedMessages);
-      setMessages(updatedMessages);
-    } catch (error) {
-      throw new Error('更新消息失败');
-    }
-  };
-
-  // 对话选择处理
-  const handleConversationSelect = async (selectedConversationId: string) => {
-    try {
-      setIsLoading(true);
-      const conversation = await conversationService.getConversation(selectedConversationId);
-      
-      setConversationId(selectedConversationId);
-      setMessages(conversation.messages || []);
-      
-      // 如果对话有关联的agent，加载agent信息
-      if (conversation.agent_id && conversation.agent_id !== selectedAgent?.agent_id) {
-        await loadAgent(conversation.agent_id);
-      }
-    } catch (error) {
-      toast({
-        title: "错误",
-        description: "加载对话失败",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 新建对话
-  const handleNewConversation = () => {
-    setConversationId(null);
-    setMessages([]);
-    if (selectedAgent?.app_preset?.greetings) {
-      setMessages([{
-        role: 'assistant',
-        content: selectedAgent.app_preset.greetings,
-        timestamp: new Date().toISOString()
-      }]);
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !selectedAgent) return;
-
-    const messageContent = inputMessage.trim();
-    setInputMessage('');
-    
-    // 立即显示用户消息
-    const userMessage: ConversationMessage = {
-      role: 'user',
-      content: messageContent,
-      timestamp: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-
-    try {
-      // 如果还没有对话ID，先创建对话
-      let currentConversationId = conversationId;
-      if (!currentConversationId) {
-        const conversation = await conversationService.createConversation({
-          agent_id: selectedAgent.agent_id,
-          title: `与 ${selectedAgent.app_preset.name} 的对话`,
-          message: messageContent
-        });
-        currentConversationId = conversation.id;
-        setConversationId(currentConversationId);
-        
-        // 使用后端返回的完整消息列表
-        if (conversation.messages && conversation.messages.length > 0) {
-          // 转换消息格式
-          const formattedMessages = conversation.messages.map(msg => ({
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content,
-            timestamp: msg.timestamp || new Date().toISOString()
-          }));
-          
-          // 如果当前只有欢迎语（且是第一条消息），则合并；否则直接替换
-          setMessages(prev => {
-            const hasOnlyWelcome = prev.length === 2 && prev[0].role === 'assistant' && 
-                                   selectedAgent.app_preset?.greetings === prev[0].content &&
-                                   prev[1].role === 'user';
-            return hasOnlyWelcome ? [prev[0], ...formattedMessages] : formattedMessages;
-          });
-        }
-      } else {
-        // 继续现有对话
-        const response = await conversationService.sendMessage(currentConversationId, {
-          message: messageContent
-        });
-        
-        // 添加AI回复到界面
-        const assistantMessage: ConversationMessage = {
-          role: 'assistant',
-          content: response.response,
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, assistantMessage]);
-      }
-    } catch (error: any) {
-      toast({
-        title: "发送失败",
-        description: error.message || "发送消息失败",
-        variant: "destructive",
-      });
-      
-      // 发送失败，移除预先添加的用户消息
-      setMessages(prev => prev.slice(0, -1));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleSuggestedQuestion = (question: string) => {
-    setInputMessage(question);
-  };
-
-  // 判断是否只有欢迎消息
-  const hasOnlyWelcome = messages.length === 1 && 
-                        messages[0]?.role === 'assistant' && 
-                        selectedAgent?.app_preset?.greetings === messages[0]?.content;
-
-  // 判断是否显示建议问题
-  const shouldShowSuggestedQuestions = selectedAgent?.app_preset?.suggested_questions && 
-                                      (messages.length === 0 || hasOnlyWelcome);
 
   if (!user) {
     return (
@@ -726,7 +523,7 @@ export function Conversation() {
         </div>
 
         {/* 对话区域 */}
-        <div className="flex-1 overflow-y-auto">
+        <ScrollArea className="flex-1">
           <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* 消息列表 */}
             <div className="h-full py-4 pb-32 mb-32">
@@ -750,15 +547,43 @@ export function Conversation() {
                   />
                 ))}
                 
-                {isLoading && (
+                {/* 显示当前流式AI响应 */}
+                {isStreaming && currentAIResponse && (
+                  <div className="flex justify-start">
+                    <div className="flex space-x-3 max-w-[80%]">
+                      <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <div className="mb-1">
+                          <span className="text-xs text-muted-foreground font-medium">
+                            {selectedAgent?.app_preset?.name || 'Assistant'}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            正在输入...
+                          </span>
+                        </div>
+                        <div className="bg-muted/50 text-foreground border border-border rounded-lg px-3 py-2">
+                          <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                            <MarkdownPreview content={currentAIResponse} />
+                          </div>
+                          {/* 打字机效果光标 */}
+                          <span className="inline-block w-2 h-4 bg-theme-blue ml-1 animate-pulse"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {isLoading && !isStreaming && (
                   <LoadingMessage agentName={selectedAgent?.app_preset?.name} />
                 )}
                 
-                <div ref={messagesEndRef} />
+                <div ref={endRef} />
               </div>
             </div>
           </div>
-        </div>
+        </ScrollArea>
 
         {/* 固定在屏幕底部的输入区域 */}
         <div className="flex-shrink-0">
@@ -779,8 +604,9 @@ export function Conversation() {
               onChange={setInputMessage}
               onSend={handleSendMessage}
               onKeyPress={handleKeyPress}
-              disabled={isLoading || !selectedAgent}
-              isLoading={isLoading}
+              disabled={isLoading || isStreaming || !selectedAgent}
+              isLoading={isLoading || isStreaming}
+              isStreaming={isStreaming}
             />
           </div>
         </div>

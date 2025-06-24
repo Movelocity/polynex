@@ -20,6 +20,22 @@ export interface IConversationService {
   createConversation(request: ConversationCreateRequest): Promise<Conversation>;
 
   /**
+   * 流式创建新的对话会话
+   * 当请求包含初始消息且启用流式响应时使用
+   * 需要用户权限
+   * @param request 对话创建请求
+   * @param onMessage 接收流式消息的回调函数
+   * @param onError 处理错误的回调函数
+   * @param onComplete 流式响应完成的回调函数
+   */
+  createConversationStream(
+    request: ConversationCreateRequest,
+    onMessage: (data: any) => void,
+    onError: (error: string) => void,
+    onComplete: () => void
+  ): Promise<void>;
+
+  /**
    * 获取当前用户的对话列表
    * 需要用户权限
    * @param params 分页参数
@@ -40,6 +56,23 @@ export interface IConversationService {
    * @param request 聊天请求
    */
   sendMessage(conversationId: string, request: ChatRequest): Promise<ChatResponse>;
+
+  /**
+   * 流式发送聊天消息
+   * 需要用户权限
+   * @param conversationId 对话ID
+   * @param request 聊天请求
+   * @param onMessage 接收流式消息的回调函数
+   * @param onError 处理错误的回调函数
+   * @param onComplete 流式响应完成的回调函数
+   */
+  sendMessageStream(
+    conversationId: string,
+    request: ChatRequest,
+    onMessage: (data: any) => void,
+    onError: (error: string) => void,
+    onComplete: () => void
+  ): Promise<void>;
 
   /**
    * 更新对话标题
