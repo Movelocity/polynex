@@ -488,7 +488,8 @@ export function AIProviderManagement() {
                     <Label className="text-sm font-medium">API密钥</Label>
                     <div className="flex items-center space-x-2">
                       <p className="text-sm text-muted-foreground font-mono">
-                        {showApiKey[provider.id] ? provider.api_key : maskApiKey(provider.api_key)}
+                        {/*showApiKey[provider.id] ? provider.api_key : maskApiKey(provider.api_key)*/}
+                        **********
                       </p>
                       <Button
                         size="sm"
