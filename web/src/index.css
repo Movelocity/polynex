@@ -69,6 +69,10 @@
     --cyan-foreground: 210 40% 98%;
     --indigo: 239.1 94.5% 64.3%;
     --indigo-foreground: 210 40% 98%;
+    --teal: 173 80% 40%;
+    --teal-foreground: 210 40% 98%;
+    --violet: 262.1 83.3% 57.8%;
+    --violet-foreground: 210 40% 98%;
     
     /* 灰度扩展 */
     --gray-50: 210 40% 98%;
@@ -163,6 +167,10 @@
     --cyan-foreground: 210 40% 98%;
     --indigo: 239.1 94.5% 64.3%;
     --indigo-foreground: 210 40% 98%;
+    --teal: 173 80% 50%;
+    --teal-foreground: 222.2 84% 4.9%;
+    --violet: 262.1 83.3% 57.8%;
+    --violet-foreground: 210 40% 98%;
     
     /* 灰度扩展 - 深色版本 */
     --gray-50: 222.2 84% 4.9%;
@@ -207,6 +215,8 @@
   .bg-theme-orange { @apply bg-[hsl(var(--orange))]; }
   .bg-theme-cyan { @apply bg-[hsl(var(--cyan))]; }
   .bg-theme-indigo { @apply bg-[hsl(var(--indigo))]; }
+  .bg-theme-teal { @apply bg-[hsl(var(--teal))]; }
+  .bg-theme-violet { @apply bg-[hsl(var(--violet))]; }
   
   /* 主题色彩文字类 */
   .text-theme-blue { @apply text-[hsl(var(--blue))]; }
@@ -218,6 +228,8 @@
   .text-theme-orange { @apply text-[hsl(var(--orange))]; }
   .text-theme-cyan { @apply text-[hsl(var(--cyan))]; }
   .text-theme-indigo { @apply text-[hsl(var(--indigo))]; }
+  .text-theme-teal { @apply text-[hsl(var(--teal))]; }
+  .text-theme-violet { @apply text-[hsl(var(--violet))]; }
   
   /* 主题色彩边框类 */
   .border-theme-blue { @apply border-[hsl(var(--blue))]; }
@@ -229,6 +241,33 @@
   .border-theme-orange { @apply border-[hsl(var(--orange))]; }
   .border-theme-cyan { @apply border-[hsl(var(--cyan))]; }
   .border-theme-indigo { @apply border-[hsl(var(--indigo))]; }
+  .border-theme-teal { @apply border-[hsl(var(--teal))]; }
+  .border-theme-violet { @apply border-[hsl(var(--violet))]; }
+
+  /* Tailwind 渐变起始和结束色彩类 */
+  .from-theme-blue { @apply from-[hsl(var(--blue))]; }
+  .from-theme-green { @apply from-[hsl(var(--green))]; }
+  .from-theme-yellow { @apply from-[hsl(var(--yellow))]; }
+  .from-theme-red { @apply from-[hsl(var(--red))]; }
+  .from-theme-purple { @apply from-[hsl(var(--purple))]; }
+  .from-theme-pink { @apply from-[hsl(var(--pink))]; }
+  .from-theme-orange { @apply from-[hsl(var(--orange))]; }
+  .from-theme-cyan { @apply from-[hsl(var(--cyan))]; }
+  .from-theme-indigo { @apply from-[hsl(var(--indigo))]; }
+  .from-theme-teal { @apply from-[hsl(var(--teal))]; }
+  .from-theme-violet { @apply from-[hsl(var(--violet))]; }
+
+  .to-theme-blue { @apply to-[hsl(var(--blue))]; }
+  .to-theme-green { @apply to-[hsl(var(--green))]; }
+  .to-theme-yellow { @apply to-[hsl(var(--yellow))]; }
+  .to-theme-red { @apply to-[hsl(var(--red))]; }
+  .to-theme-purple { @apply to-[hsl(var(--purple))]; }
+  .to-theme-pink { @apply to-[hsl(var(--pink))]; }
+  .to-theme-orange { @apply to-[hsl(var(--orange))]; }
+  .to-theme-cyan { @apply to-[hsl(var(--cyan))]; }
+  .to-theme-indigo { @apply to-[hsl(var(--indigo))]; }
+  .to-theme-teal { @apply to-[hsl(var(--teal))]; }
+  .to-theme-violet { @apply to-[hsl(var(--violet))]; }
 
   /* 状态色彩类 */
   .bg-success { @apply bg-[hsl(var(--success))]; }
@@ -273,6 +312,8 @@
   .bg-gradient-purple { @apply bg-gradient-to-r from-[hsl(var(--purple))] to-[hsl(var(--pink))]; }
   .bg-gradient-warm { @apply bg-gradient-to-r from-[hsl(var(--orange))] to-[hsl(var(--red))]; }
   .bg-gradient-cool { @apply bg-gradient-to-r from-[hsl(var(--blue))] to-[hsl(var(--indigo))]; }
+  .bg-gradient-teal { @apply bg-gradient-to-r from-[hsl(var(--teal))] to-[hsl(var(--cyan))]; }
+  .bg-gradient-violet { @apply bg-gradient-to-r from-[hsl(var(--violet))] to-[hsl(var(--purple))]; }
 
   /* 卡片样式扩展 */
   .card-elevated {

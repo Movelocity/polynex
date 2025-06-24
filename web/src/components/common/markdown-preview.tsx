@@ -95,7 +95,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             );
           },
           p: ({ children }) => (
-            <p className="text-foreground mb-4 leading-relaxed">
+            <p className="text-foreground leading-relaxed">
               {children}
             </p>
           ),

@@ -44,16 +44,14 @@ export function Tools() {
       description: '创建和管理智能AI Agent，配置个性化对话助手',
       icon: Bot,
       path: '/tools/agent-management',
-      // color: 'from-theme-teal to-theme-green'
-      color: 'from-theme-orange to-theme-red'
+      color: 'from-theme-teal to-theme-green'
     },
     {
       title: '对话管理',
       description: '管理AI对话历史，查看和整理您的聊天记录',
       icon: MessageCircle,
       path: '/tools/conversation-management',
-      // color: 'from-theme-violet to-theme-purple'
-      color: 'from-theme-orange to-theme-red'
+      color: 'from-theme-violet to-theme-purple'
     }
   ];
 
