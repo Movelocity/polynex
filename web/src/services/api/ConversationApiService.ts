@@ -5,7 +5,8 @@ import {
   ConversationCreateRequest,
   ChatRequest,
   ChatResponse,
-  PaginationParams
+  PaginationParams,
+  ConversationMessage
 } from '@/types';
 
 /**
@@ -93,6 +94,25 @@ export class ConversationApiService implements IConversationService {
       return true;
     } catch (error) {
       console.error(`Failed to update conversation ${conversationId} title:`, error);
+      if (error instanceof ApiError && error.status === 404) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 更新对话上下文
+   * 需要用户权限
+   * @param conversationId 对话ID
+   * @param messages 新的消息列表
+   */
+  async updateConversationContext(conversationId: string, messages: ConversationMessage[]): Promise<boolean> {
+    try {
+      await this.apiClient.put(`/conversations/${conversationId}/context`, { messages });
+      return true;
+    } catch (error) {
+      console.error(`Failed to update conversation ${conversationId} context:`, error);
       if (error instanceof ApiError && error.status === 404) {
         return false;
       }

@@ -3,7 +3,8 @@ import {
   ConversationCreateRequest,
   ChatRequest,
   ChatResponse,
-  PaginationParams
+  PaginationParams,
+  ConversationMessage
 } from '@/types';
 
 /**
@@ -47,6 +48,14 @@ export interface IConversationService {
    * @param title 新标题
    */
   updateConversationTitle(conversationId: string, title: string): Promise<boolean>;
+
+  /**
+   * 更新对话上下文
+   * 需要用户权限
+   * @param conversationId 对话ID
+   * @param messages 新的消息列表
+   */
+  updateConversationContext(conversationId: string, messages: ConversationMessage[]): Promise<boolean>;
 
   /**
    * 删除对话

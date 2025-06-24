@@ -7,8 +7,9 @@ import { Badge } from '@/components/x-ui/badge';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
+import { useConversationSSE } from '@/hooks/useSSE';
 import { conversationService } from '@/services';
-import { ConversationMessage, ChatRequest } from '@/types';
+import { ConversationMessage } from '@/types';
 import { 
   MessageCircle, 
   Send, 
@@ -16,25 +17,40 @@ import {
   User, 
   ArrowLeft, 
   AlertCircle,
-  Loader2
+  Loader2,
+  Wifi,
+  WifiOff,
+  Activity
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
-export function Conversation() {
+export function ConversationImproved() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  
+  // 获取token（假设从localStorage或其他地方获取）
+  const token = localStorage.getItem('token');
   const { agents, getAgent } = useAgents();
   
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
+  const [currentAIResponse, setCurrentAIResponse] = useState('');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const agentId = searchParams.get('agent');
+
+  // 使用改进的SSE钩子
+  const {
+    state: sseState,
+    messages: sseMessages,
+    connect: connectSSE,
+    disconnect: disconnectSSE,
+    clearMessages: clearSSEMessages,
+  } = useConversationSSE(conversationId, token);
 
   // 自动滚动到底部
   const scrollToBottom = () => {
@@ -43,7 +59,7 @@ export function Conversation() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, currentAIResponse]);
 
   // 加载指定的Agent
   useEffect(() => {
@@ -51,6 +67,54 @@ export function Conversation() {
       loadAgent(agentId);
     }
   }, [agentId, user]);
+
+  // 处理SSE消息
+  useEffect(() => {
+    const latestMessage = sseMessages[sseMessages.length - 1];
+    if (!latestMessage) return;
+
+    console.log('Processing SSE message:', latestMessage);
+
+    switch (latestMessage.type) {
+      case 'start':
+        setCurrentAIResponse('');
+        break;
+        
+      case 'content':
+        setCurrentAIResponse(prev => prev + latestMessage.data.content);
+        break;
+        
+      case 'done':
+        // 完成响应，将完整消息添加到消息列表
+        const fullResponse = latestMessage.data.full_response || currentAIResponse;
+        if (fullResponse) {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: fullResponse,
+            timestamp: latestMessage.data.timestamp || new Date().toISOString(),
+            tokens: latestMessage.data.token_count
+          }]);
+        }
+        setCurrentAIResponse('');
+        disconnectSSE();
+        break;
+        
+      case 'error':
+        toast({
+          title: "AI响应错误",
+          description: latestMessage.data.error,
+          variant: "destructive",
+        });
+        setCurrentAIResponse('');
+        disconnectSSE();
+        break;
+        
+      case 'heartbeat':
+        // 心跳消息，用于保持连接
+        console.log('SSE heartbeat received');
+        break;
+    }
+  }, [sseMessages, currentAIResponse, disconnectSSE]);
 
   const loadAgent = async (agentId: string) => {
     try {
@@ -85,71 +149,61 @@ export function Conversation() {
   };
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !selectedAgent) return;
+    if (!inputMessage.trim() || !selectedAgent || sseState.isConnecting) return;
 
     const messageContent = inputMessage.trim();
     setInputMessage('');
-    setIsLoading(true);
 
     try {
       // 如果还没有对话ID，先创建对话
       let currentConversationId = conversationId;
       if (!currentConversationId) {
-        const conversation = await conversationService.createConversation({
-          agent_id: selectedAgent.agent_id,
-          title: `与 ${selectedAgent.app_preset.name} 的对话`,
-          message: messageContent
-        });
+                 const conversation = await conversationService.createConversation({
+           agent_id: selectedAgent.agent_id,
+           title: `与 ${selectedAgent.app_preset.name} 的对话`,
+           message: messageContent,
+         });
         currentConversationId = conversation.id;
         setConversationId(currentConversationId);
-        
-        // 使用后端返回的完整消息列表
-        if (conversation.messages && conversation.messages.length > 0) {
-          // 转换消息格式
-          const formattedMessages = conversation.messages.map(msg => ({
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content,
-            timestamp: msg.timestamp || new Date().toISOString()
-          }));
-          
-          // 如果当前只有欢迎语（且是第一条消息），则合并；否则直接替换
-          setMessages(prev => {
-            const hasOnlyWelcome = prev.length === 1 && prev[0].role === 'assistant' && 
-                                   selectedAgent.app_preset?.greetings === prev[0].content;
-            return hasOnlyWelcome ? [prev[0], ...formattedMessages] : formattedMessages;
-          });
-        }
-      } else {
-        // 继续现有对话 - 不在前端预先添加用户消息，等后端处理完成后统一更新
-        const response = await conversationService.sendMessage(currentConversationId, {
-          message: messageContent
-        });
-        
-        // 添加用户消息和AI回复到界面
-        const userMessage: ConversationMessage = {
-          role: 'user',
-          content: messageContent,
-          timestamp: new Date().toISOString()
-        };
-        
-        const assistantMessage: ConversationMessage = {
-          role: 'assistant',
-          content: response.response,
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, userMessage, assistantMessage]);
       }
+
+      // 添加用户消息到界面
+      const userMessage: ConversationMessage = {
+        role: 'user',
+        content: messageContent,
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, userMessage]);
+
+      // 清空之前的SSE消息
+      clearSSEMessages();
+
+      // 发送流式请求
+      const response = await fetch(`/api/conversations/${currentConversationId}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          message: messageContent,
+          stream: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // 连接SSE流接收响应
+      connectSSE();
+
     } catch (error: any) {
       toast({
         title: "发送失败",
         description: error.message || "发送消息失败",
         variant: "destructive",
       });
-      
-      // 如果是继续对话失败，由于我们没有预先添加用户消息，所以不需要回滚
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -162,6 +216,38 @@ export function Conversation() {
 
   const handleSuggestedQuestion = (question: string) => {
     setInputMessage(question);
+  };
+
+  // 连接状态指示器
+  const renderConnectionStatus = () => {
+    if (sseState.isConnecting) {
+      return (
+        <div className="flex items-center space-x-2 text-blue-600">
+          <Activity className="h-4 w-4 animate-pulse" />
+          <span className="text-sm">连接中...</span>
+        </div>
+      );
+    }
+    
+    if (sseState.isConnected) {
+      return (
+        <div className="flex items-center space-x-2 text-green-600">
+          <Wifi className="h-4 w-4" />
+          <span className="text-sm">已连接</span>
+        </div>
+      );
+    }
+    
+    if (sseState.error) {
+      return (
+        <div className="flex items-center space-x-2 text-red-600">
+          <WifiOff className="h-4 w-4" />
+          <span className="text-sm">连接错误</span>
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   if (!user) {
@@ -205,33 +291,49 @@ export function Conversation() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 头部 */}
       <div className="mb-6">
-        <div className="flex items-center space-x-4 mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/tools/agent-management')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            返回Agent管理
-          </Button>
-          {selectedAgent && (
-            <div className="flex items-center space-x-3">
-              <Bot className="h-6 w-6 text-blue-600" />
-              <div>
-                <h1 className="text-xl font-bold">{selectedAgent.app_preset.name}</h1>
-                <p className="text-sm text-muted-foreground">
-                  {selectedAgent.provider} • {selectedAgent.model}
-                </p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/tools/agent-management')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              返回Agent管理
+            </Button>
+            {selectedAgent && (
+              <div className="flex items-center space-x-3">
+                <Bot className="h-6 w-6 text-blue-600" />
+                <div>
+                  <h1 className="text-xl font-bold">{selectedAgent.app_preset.name}</h1>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedAgent.provider} • {selectedAgent.model}
+                  </p>
+                </div>
+                <Badge variant={selectedAgent.is_public ? "default" : "secondary"}>
+                  {selectedAgent.is_public ? '公开' : '私有'}
+                </Badge>
               </div>
-              <Badge variant={selectedAgent.is_public ? "default" : "secondary"}>
-                {selectedAgent.is_public ? '公开' : '私有'}
-              </Badge>
-            </div>
-          )}
+            )}
+          </div>
+          
+          {/* 连接状态 */}
+          {renderConnectionStatus()}
         </div>
         
         {selectedAgent?.app_preset?.description && (
           <p className="text-muted-foreground">{selectedAgent.app_preset.description}</p>
+        )}
+
+        {/* SSE连接错误警告 */}
+        {sseState.error && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              连接错误: {sseState.error}
+              {sseState.retryCount > 0 && ` (重试 ${sseState.retryCount} 次)`}
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 
@@ -272,26 +374,37 @@ export function Conversation() {
                       : 'bg-gray-100 text-gray-900'
                   }`}>
                     <p className="whitespace-pre-wrap">{message.content}</p>
-                    {message.timestamp && (
-                      <p className={`text-xs mt-1 ${
-                        message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                      }`}>
-                        {new Date(message.timestamp).toLocaleTimeString()}
-                      </p>
-                    )}
+                    <div className="flex justify-between items-center mt-1">
+                      {message.timestamp && (
+                        <p className={`text-xs ${
+                          message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                        }`}>
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </p>
+                      )}
+                                             {(message as any).tokens && (
+                         <p className={`text-xs ${
+                           message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                         }`}>
+                           {(message as any).tokens} tokens
+                         </p>
+                       )}
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
             
-            {isLoading && (
+            {/* 当前AI响应 */}
+            {currentAIResponse && (
               <div className="flex justify-start">
                 <div className="flex space-x-2 max-w-[80%]">
                   <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
                     <Bot className="h-4 w-4 text-white" />
                   </div>
                   <div className="bg-gray-100 rounded-lg px-4 py-2">
-                    <div className="flex space-x-1">
+                    <p className="whitespace-pre-wrap">{currentAIResponse}</p>
+                    <div className="flex space-x-1 mt-2">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -305,7 +418,7 @@ export function Conversation() {
           </div>
 
           {/* 建议问题 */}
-          {selectedAgent?.app_preset?.suggested_questions && messages.length <= 1 && (
+          {selectedAgent?.app_preset?.suggested_questions && messages.length <= 1 && !currentAIResponse && (
             <div className="mb-4">
               <p className="text-sm text-muted-foreground mb-2">建议问题：</p>
               <div className="flex flex-wrap gap-2">
@@ -316,6 +429,7 @@ export function Conversation() {
                     size="sm"
                     onClick={() => handleSuggestedQuestion(question)}
                     className="text-xs"
+                    disabled={sseState.isConnecting || !!currentAIResponse}
                   >
                     {question}
                   </Button>
@@ -331,15 +445,15 @@ export function Conversation() {
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="输入消息..."
-              disabled={isLoading || !selectedAgent}
+              disabled={sseState.isConnecting || !!currentAIResponse || !selectedAgent}
               className="flex-1"
             />
             <Button 
               onClick={handleSendMessage}
-              disabled={isLoading || !inputMessage.trim() || !selectedAgent}
+              disabled={sseState.isConnecting || !!currentAIResponse || !inputMessage.trim() || !selectedAgent}
               size="icon"
             >
-              {isLoading ? (
+              {sseState.isConnecting || currentAIResponse ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />

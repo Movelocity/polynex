@@ -6,7 +6,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from models.database import Conversation, Agent, ConversationStatus, AIProviderType
+from models.database import Conversation, ConversationStatus, AIProviderType
+from models.database import Agent
 from fields.schemas import (
     Message, ConversationCreate, ConversationUpdate, 
     ConversationSummary, ChatRequest, MessageRole,
@@ -44,19 +45,23 @@ class ConversationService:
     async def create_conversation(
         self, 
         user_id: str, 
-        conversation_data: ConversationCreate,
-        db: Session
+        agent_id: Optional[str] = None,
+        title: Optional[str] = None,
+        initial_message: Optional[str] = None,
+        db: Session = None
     ) -> Dict[str, Any]:
         """
         创建新对话
         
         Args:
             user_id: 用户ID
-            conversation_data: 对话创建数据
+            agent_id: Agent ID
+            title: 对话标题
+            initial_message: 初始消息
             db: 数据库会话
             
         Returns:
-            Dict[str, Any]: 创建的对话信息
+            Dict[str, Any]: 创建的对话信息，包含AI回复（如果有初始消息）
         """
         try:
             # 生成会话ID
@@ -66,8 +71,8 @@ class ConversationService:
             conversation = Conversation(
                 session_id=session_id,
                 user_id=user_id,
-                agent_id=conversation_data.agent_id,
-                title=conversation_data.title or "新对话",
+                agent_id=agent_id,
+                title=title or "新对话",
                 messages=[],
                 status=ConversationStatus.ACTIVE
             )
@@ -78,30 +83,174 @@ class ConversationService:
             
             logger.info(f"Created conversation {conversation.id} for user {user_id}")
             
-            return {
-                "id": conversation.id,
-                "sessionId": conversation.session_id,
-                "userId": conversation.user_id,
-                "agentId": conversation.agent_id,
-                "title": conversation.title,
-                "messages": [],
-                "status": conversation.status.value,
-                "createTime": conversation.create_time.isoformat(),
-                "updateTime": conversation.update_time.isoformat()
-            }
+            # 如果有初始消息，处理AI回复
+            if initial_message:
+                try:
+                    # 生成AI回复（_generate_ai_response内部会处理消息历史）
+                    ai_response = await self._generate_ai_response(
+                        conversation, initial_message, db
+                    )
+                    
+                    # 准备消息列表
+                    user_message = {
+                        "role": "user",
+                        "content": initial_message,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                    messages = [user_message]
+                    
+                    if ai_response:
+                        assistant_message = {
+                            "role": "assistant",
+                            "content": ai_response,
+                            "timestamp": datetime.utcnow().isoformat()
+                        }
+                        messages.append(assistant_message)
+                    
+                    # 更新对话的消息记录
+                    conversation.messages = messages
+                    
+                    # 如果标题是默认的，用第一条消息生成标题
+                    if conversation.title == "新对话":
+                        conversation.title = initial_message[:50] + ("..." if len(initial_message) > 50 else "")
+                    
+                    conversation.update_time = datetime.utcnow()
+                    db.commit()
+                    db.refresh(conversation)
+                        
+                except Exception as e:
+                    logger.error(f"Error generating AI response: {str(e)}")
+                    # 即使AI回复失败，也要保存用户消息
+                    user_message = {
+                        "role": "user",
+                        "content": initial_message,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    conversation.messages = [user_message]
+                    conversation.update_time = datetime.utcnow()
+                    db.commit()
+                    db.refresh(conversation)
+            
+            return conversation
             
         except Exception as e:
             logger.error(f"Error creating conversation: {str(e)}")
             db.rollback()
             raise
     
-    async def get_conversations(
+    async def _generate_ai_response(
+        self,
+        conversation: Conversation,
+        user_message: str,
+        db: Session
+    ) -> Optional[str]:
+        """
+        生成AI回复
+        
+        Args:
+            conversation: 对话对象
+            user_message: 用户消息
+            db: 数据库会话
+            
+        Returns:
+            Optional[str]: AI回复内容
+        """
+        try:
+            # 准备消息历史，包含之前的对话
+            messages = conversation.messages.copy() if conversation.messages else []
+            
+            # 添加当前用户消息
+            current_user_message = {
+                "role": "user", 
+                "content": user_message,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            messages.append(current_user_message)
+            
+            # 获取 Agent 配置
+            openai_service = None
+            if conversation.agent_id:
+                agent = db.query(Agent).filter(Agent.id == conversation.agent_id).first()
+                if agent:
+                    # 使用新的供应商配置系统
+                    provider_service = AIProviderService(db)
+                    provider_config = provider_service.get_provider_config_by_name(agent.provider)
+                    
+                    if provider_config and provider_config.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
+                        # 创建OpenAI服务实例
+                        openai_service = OpenAIService(
+                            provider_config=provider_config,
+                            db=db
+                        )
+                        
+                        # 使用Agent的特定配置覆盖默认值
+                        model = agent.model or provider_config.default_model
+                        temperature = agent.temperature if agent.temperature is not None else provider_config.default_temperature
+                        max_tokens = agent.max_tokens if agent.max_tokens is not None else provider_config.default_max_tokens
+                        
+                        # 添加预设消息
+                        if agent.preset_messages:
+                            preset_msgs = [
+                                {"role": msg.get("role", "system"), "content": msg.get("content", "")}
+                                for msg in agent.preset_messages
+                            ]
+                            messages = preset_msgs + messages
+                    else:
+                        logger.warning(f"Agent {agent.id} uses provider '{agent.provider}' which is not found or not OpenAI-compatible")
+            
+            # 如果没有Agent配置或Agent配置无效，使用默认配置
+            if not openai_service:
+                provider_service = AIProviderService(db)
+                default_config = provider_service.get_default_provider_config()
+                if not default_config:
+                    default_config = provider_service.get_best_provider_config(AIProviderType.OPENAI)
+                
+                if default_config:
+                    openai_service = OpenAIService(
+                        provider_config=default_config,
+                        db=db
+                    )
+                    model = default_config.default_model
+                    temperature = default_config.default_temperature
+                    max_tokens = default_config.default_max_tokens
+                else:
+                    logger.error("No valid AI provider configuration found")
+                    return None
+            
+            # 限制并发请求
+            async with self.llm_semaphore:
+                # 准备OpenAI消息格式（只保留role和content）
+                openai_messages = [
+                    {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+                    for msg in messages
+                    if msg.get("role") and msg.get("content")
+                ]
+                
+                # 调用AI服务获取回复
+                response = await openai_service.chat_completion(
+                    openai_messages,
+                    model=model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    user_id=conversation.user_id,
+                    conversation_id=conversation.id,
+                    agent_id=conversation.agent_id
+                )
+                
+                return response.get("content")
+                
+        except Exception as e:
+            logger.error(f"Error generating AI response: {str(e)}")
+            return None
+    
+    async def get_user_conversations(
         self, 
         user_id: str, 
-        db: Session,
         limit: int = 50,
-        offset: int = 0
-    ) -> List[ConversationSummary]:
+        offset: int = 0,
+        db: Session = None
+    ) -> List[Conversation]:
         """
         获取用户的对话列表
         
@@ -122,22 +271,7 @@ class ConversationService:
                 )
             ).order_by(Conversation.update_time.desc()).offset(offset).limit(limit).all()
             
-            result = []
-            for conv in conversations:
-                messages = conv.messages if conv.messages else []
-                result.append(ConversationSummary(
-                    id=conv.id,
-                    session_id=conv.session_id,
-                    user_id=conv.user_id,
-                    agent_id=conv.agent_id,
-                    title=conv.title,
-                    status=conv.status,
-                    create_time=conv.create_time.isoformat(),
-                    update_time=conv.update_time.isoformat(),
-                    message_count=len(messages)
-                ))
-            
-            return result
+            return conversations
             
         except Exception as e:
             logger.error(f"Error getting conversations: {str(e)}")
@@ -148,7 +282,7 @@ class ConversationService:
         conversation_id: str, 
         user_id: str, 
         db: Session
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Conversation]:
         """
         获取特定对话详情
         
@@ -172,32 +306,196 @@ class ConversationService:
             if not conversation:
                 return None
             
-            # 转换消息格式
-            messages = []
-            if conversation.messages:
-                for msg in conversation.messages:
-                    messages.append(Message(
-                        role=MessageRole(msg.get('role', 'user')),
-                        content=msg.get('content', ''),
-                        timestamp=msg.get('timestamp'),
-                        tokens=msg.get('tokens')
-                    ))
-            
-            return {
-                "id": conversation.id,
-                "sessionId": conversation.session_id,
-                "userId": conversation.user_id,
-                "agentId": conversation.agent_id,
-                "title": conversation.title,
-                "messages": messages,
-                "status": conversation.status.value,
-                "createTime": conversation.create_time.isoformat(),
-                "updateTime": conversation.update_time.isoformat()
-            }
+            return conversation
             
         except Exception as e:
             logger.error(f"Error getting conversation: {str(e)}")
             raise
+    
+    async def update_conversation_title(
+        self,
+        conversation_id: str,
+        title: str,
+        user_id: str,
+        db: Session
+    ) -> bool:
+        """
+        更新对话标题
+        
+        Args:
+            conversation_id: 对话ID
+            title: 新标题
+            user_id: 用户ID
+            db: 数据库会话
+            
+        Returns:
+            bool: 是否更新成功
+        """
+        try:
+            conversation = db.query(Conversation).filter(
+                and_(
+                    Conversation.id == conversation_id,
+                    Conversation.user_id == user_id
+                )
+            ).first()
+            
+            if not conversation:
+                return False
+            
+            conversation.title = title
+            conversation.update_time = datetime.utcnow()
+            
+            db.commit()
+            
+            logger.info(f"Updated title for conversation {conversation_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error updating conversation title: {str(e)}")
+            db.rollback()
+            raise
+    
+    async def delete_conversation(
+        self,
+        conversation_id: str,
+        user_id: str,
+        db: Session
+    ) -> bool:
+        """
+        删除对话（软删除）
+        
+        Args:
+            conversation_id: 对话ID
+            user_id: 用户ID
+            db: 数据库会话
+            
+        Returns:
+            bool: 是否成功删除
+        """
+        try:
+            conversation = db.query(Conversation).filter(
+                and_(
+                    Conversation.id == conversation_id,
+                    Conversation.user_id == user_id
+                )
+            ).first()
+            
+            if not conversation:
+                return False
+            
+            conversation.status = ConversationStatus.DELETED
+            conversation.update_time = datetime.utcnow()
+            
+            db.commit()
+            
+            logger.info(f"Deleted conversation {conversation_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error deleting conversation: {str(e)}")
+            db.rollback()
+            raise
+    
+    async def chat(
+        self,
+        conversation_id: str,
+        user_message: str,
+        user_id: str,
+        db: Session
+    ) -> Dict[str, Any]:
+        """
+        发送聊天消息并获取回复
+        
+        Args:
+            conversation_id: 对话ID
+            user_message: 用户消息
+            user_id: 用户ID
+            db: 数据库会话
+            
+        Returns:
+            Dict[str, Any]: 聊天响应
+        """
+        try:
+            # 获取对话
+            conversation = await self.get_conversation(conversation_id, user_id, db)
+            if not conversation:
+                raise Exception("Conversation not found")
+            
+            # 获取会话锁，防止并发修改
+            session_lock = self._get_session_lock(conversation.session_id)
+            
+            async with session_lock:
+                # 重新获取最新的对话状态
+                fresh_conversation = db.query(Conversation).filter(
+                    Conversation.id == conversation_id
+                ).first()
+                
+                if not fresh_conversation:
+                    raise Exception("Conversation not found")
+                
+                # 生成AI回复
+                ai_response = await self._generate_ai_response(
+                    fresh_conversation, user_message, db
+                )
+                
+                if not ai_response:
+                    raise Exception("Failed to generate AI response")
+                
+                # 更新对话消息（_generate_ai_response已经包含了历史消息+用户消息，我们只需要添加AI回复）
+                updated_messages = fresh_conversation.messages.copy() if fresh_conversation.messages else []
+                
+                # 添加用户消息
+                user_msg = {
+                    "role": "user",
+                    "content": user_message,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                updated_messages.append(user_msg)
+                
+                # 添加AI回复
+                assistant_msg = {
+                    "role": "assistant",
+                    "content": ai_response,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                updated_messages.append(assistant_msg)
+                
+                fresh_conversation.messages = updated_messages
+                fresh_conversation.update_time = datetime.utcnow()
+                
+                # 自动更新标题（如果是第一次对话）
+                if fresh_conversation.title == "新对话" and len(updated_messages) <= 2:
+                    fresh_conversation.title = user_message[:50] + ("..." if len(user_message) > 50 else "")
+                
+                db.commit()
+                
+                logger.info(f"Updated conversation {conversation_id} with new messages")
+                
+                return {
+                    "response": ai_response,
+                    "conversation_id": conversation_id
+                }
+            
+        except Exception as e:
+            logger.error(f"Error in chat: {str(e)}")
+            db.rollback()
+            raise
+    
+    async def sendMessage(
+        self,
+        conversation_id: str,
+        request: Dict[str, str]
+    ) -> Dict[str, str]:
+        """
+        发送消息的别名方法，为了兼容前端调用
+        """
+        # 这个方法应该委托给chat方法
+        return await self.chat(
+            conversation_id=conversation_id,
+            user_message=request["message"],
+            user_id="",  # 需要从上下文获取
+            db=None  # 需要从上下文获取
+        )
     
     async def update_conversation(
         self,
@@ -249,50 +547,9 @@ class ConversationService:
             db.rollback()
             raise
     
-    async def delete_conversation(
-        self,
-        conversation_id: str,
-        user_id: str,
-        db: Session
-    ) -> bool:
-        """
-        删除对话（软删除）
-        
-        Args:
-            conversation_id: 对话ID
-            user_id: 用户ID
-            db: 数据库会话
-            
-        Returns:
-            bool: 是否成功删除
-        """
-        try:
-            conversation = db.query(Conversation).filter(
-                and_(
-                    Conversation.id == conversation_id,
-                    Conversation.user_id == user_id
-                )
-            ).first()
-            
-            if not conversation:
-                return False
-            
-            conversation.status = ConversationStatus.DELETED
-            conversation.update_time = datetime.utcnow()
-            
-            db.commit()
-            
-            logger.info(f"Deleted conversation {conversation_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error deleting conversation: {str(e)}")
-            db.rollback()
-            raise
-    
     async def stream_chat(
         self,
-        session_id: str,
+        conversation_id: str,
         user_id: str,
         message: str,
         db: Session
@@ -301,7 +558,7 @@ class ConversationService:
         流式聊天
         
         Args:
-            session_id: 会话ID
+            conversation_id: 对话ID
             user_id: 用户ID
             message: 用户消息
             db: 数据库会话
@@ -309,13 +566,11 @@ class ConversationService:
         Yields:
             Dict[str, Any]: 流式响应数据
         """
-        session_lock = self._get_session_lock(session_id)
-        
         try:
             # 获取对话记录
             conversation = db.query(Conversation).filter(
                 and_(
-                    Conversation.session_id == session_id,
+                    Conversation.id == conversation_id,
                     Conversation.user_id == user_id,
                     Conversation.status == ConversationStatus.ACTIVE
                 )
@@ -328,8 +583,10 @@ class ConversationService:
                 }
                 return
             
+            session_lock = self._get_session_lock(conversation.session_id)
+            
             # 检查是否已有活跃的流
-            if session_id in self.active_streams:
+            if conversation.session_id in self.active_streams:
                 yield {
                     "type": "error",
                     "data": {"error": "Another stream is active for this session"}
@@ -337,7 +594,7 @@ class ConversationService:
                 return
             
             # 标记流为活跃状态
-            self.active_streams[session_id] = True
+            self.active_streams[conversation.session_id] = True
             
             try:
                 # 准备消息历史
@@ -420,7 +677,10 @@ class ConversationService:
                         openai_messages,
                         model=model,
                         temperature=temperature,
-                        max_tokens=max_tokens
+                        max_tokens=max_tokens,
+                        user_id=user_id,
+                        conversation_id=conversation_id,
+                        agent_id=conversation.agent_id
                     ):
                         yield chunk
                         
@@ -435,7 +695,7 @@ class ConversationService:
                                 try:
                                     # 重新获取最新的对话记录
                                     fresh_conversation = db.query(Conversation).filter(
-                                        Conversation.session_id == session_id
+                                        Conversation.id == conversation_id
                                     ).first()
                                     
                                     if fresh_conversation:
@@ -468,16 +728,21 @@ class ConversationService:
                         
                         # 处理错误
                         elif chunk.get("type") == "error":
-                            logger.error(f"Stream error for session {session_id}: {chunk['data']['error']}")
+                            logger.error(f"Stream error for conversation {conversation_id}: {chunk['data']['error']}")
                             
             finally:
                 # 清理活跃流标记
-                self.active_streams.pop(session_id, None)
+                self.active_streams.pop(conversation.session_id, None)
                 
         except Exception as e:
             logger.error(f"Error in stream_chat: {str(e)}")
-            # 清理活跃流标记
-            self.active_streams.pop(session_id, None)
+            # 清理活跃流标记（需要先获取conversation来得到session_id）
+            try:
+                conv = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+                if conv:
+                    self.active_streams.pop(conv.session_id, None)
+            except:
+                pass
             
             yield {
                 "type": "error",

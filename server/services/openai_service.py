@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from models.database import AIProviderConfig, AIProvider
 from services.ai_provider_service import AIProviderService
+from services.llm_request_log_service import get_llm_log_service
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,9 @@ class OpenAIService:
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        user_id: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
         **kwargs
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
@@ -88,31 +92,59 @@ class OpenAIService:
             model: 使用的模型，默认使用配置中的模型
             temperature: 温度参数，默认使用配置中的温度
             max_tokens: 最大token数，默认使用配置中的最大tokens
+            user_id: 用户ID，用于日志记录
+            conversation_id: 对话ID，用于日志记录
+            agent_id: Agent ID，用于日志记录
             **kwargs: 其他参数
             
         Yields:
             Dict[str, Any]: 流式响应数据
         """
+        log_id = None
+        log_service = get_llm_log_service()
+        
         try:
             # 准备请求参数
+            effective_model = self.get_effective_model(model)
+            effective_temperature = self.get_effective_temperature(temperature)
+            effective_max_tokens = self.get_effective_max_tokens(max_tokens)
+            
             request_params = {
-                "model": self.get_effective_model(model),
+                "model": effective_model,
                 "messages": messages,
-                "temperature": self.get_effective_temperature(temperature),
-                "max_tokens": self.get_effective_max_tokens(max_tokens),
+                "temperature": effective_temperature,
+                "max_tokens": effective_max_tokens,
                 "stream": True,
                 **kwargs
             }
             
-            logger.info(f"Starting stream chat with model: {request_params['model']} (config: {self.config.name})")
+            # 创建日志记录
+            if user_id and self.db:
+                log_id = log_service.create_log_async(
+                    user_id=user_id,
+                    provider_config_id=self.config.id,
+                    model=effective_model,
+                    request_messages=messages,
+                    db=self.db,
+                    conversation_id=conversation_id,
+                    agent_id=agent_id,
+                    temperature=effective_temperature,
+                    max_tokens=effective_max_tokens,
+                    stream=True,
+                    request_params=request_params,
+                    extra_metadata={"provider_config_name": self.config.name}
+                )
+            
+            logger.info(f"Starting stream chat with model: {effective_model} (config: {self.config.name}) [log_id: {log_id}]")
             
             # 发送初始事件
             yield {
                 "type": "start",
                 "data": {
-                    "model": request_params['model'],
+                    "model": effective_model,
                     "provider_config": self.config.name,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "log_id": log_id
                 }
             }
             
@@ -120,6 +152,9 @@ class OpenAIService:
             stream = await self.client.chat.completions.create(**request_params)
             
             full_response = ""
+            total_tokens = 0
+            prompt_tokens = 0
+            completion_tokens = 0
             
             # 处理流式响应
             async for chunk in stream:
@@ -140,6 +175,30 @@ class OpenAIService:
                 if chunk.choices and chunk.choices[0].finish_reason:
                     finish_reason = chunk.choices[0].finish_reason
                     
+                    # 提取token使用情况（如果可用）
+                    if hasattr(chunk, 'usage') and chunk.usage:
+                        prompt_tokens = chunk.usage.prompt_tokens
+                        completion_tokens = chunk.usage.completion_tokens
+                        total_tokens = chunk.usage.total_tokens
+                    else:
+                        # 粗略估算token数量
+                        completion_tokens = len(full_response.split())
+                        prompt_tokens = sum(len(msg['content'].split()) for msg in messages)
+                        total_tokens = prompt_tokens + completion_tokens
+                    
+                    # 更新日志记录
+                    if log_id and self.db:
+                        log_service.update_log_async(
+                            log_id=log_id,
+                            db=self.db,
+                            response_content=full_response,
+                            finish_reason=finish_reason,
+                            prompt_tokens=prompt_tokens,
+                            completion_tokens=completion_tokens,
+                            total_tokens=total_tokens,
+                            status="success"
+                        )
+                    
                     # 发送完成事件
                     yield {
                         "type": "done",
@@ -147,20 +206,35 @@ class OpenAIService:
                             "finish_reason": finish_reason,
                             "full_response": full_response,
                             "timestamp": datetime.utcnow().isoformat(),
-                            "token_count": len(full_response.split()),  # 粗略估算
-                            "provider_config": self.config.name
+                            "token_count": total_tokens,
+                            "prompt_tokens": prompt_tokens,
+                            "completion_tokens": completion_tokens,
+                            "provider_config": self.config.name,
+                            "log_id": log_id
                         }
                     }
                     break
                     
         except Exception as e:
-            logger.error(f"Error in stream_chat: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"Error in stream_chat: {error_msg}")
+            
+            # 更新日志记录为错误状态
+            if log_id and self.db:
+                log_service.update_log_async(
+                    log_id=log_id,
+                    db=self.db,
+                    status="error",
+                    error_message=error_msg
+                )
+            
             yield {
                 "type": "error",
                 "data": {
-                    "error": str(e),
+                    "error": error_msg,
                     "timestamp": datetime.utcnow().isoformat(),
-                    "provider_config": self.config.name
+                    "provider_config": self.config.name,
+                    "log_id": log_id
                 }
             }
     
@@ -170,6 +244,9 @@ class OpenAIService:
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        user_id: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -180,38 +257,95 @@ class OpenAIService:
             model: 使用的模型
             temperature: 温度参数
             max_tokens: 最大token数
+            user_id: 用户ID，用于日志记录
+            conversation_id: 对话ID，用于日志记录
+            agent_id: Agent ID，用于日志记录
             **kwargs: 其他参数
             
         Returns:
             Dict[str, Any]: 响应数据
         """
+        log_id = None
+        log_service = get_llm_log_service()
+        
         try:
+            # 准备请求参数
+            effective_model = self.get_effective_model(model)
+            effective_temperature = self.get_effective_temperature(temperature)
+            effective_max_tokens = self.get_effective_max_tokens(max_tokens)
+            
             request_params = {
-                "model": self.get_effective_model(model),
+                "model": effective_model,
                 "messages": messages,
-                "temperature": self.get_effective_temperature(temperature),
-                "max_tokens": self.get_effective_max_tokens(max_tokens),
+                "temperature": effective_temperature,
+                "max_tokens": effective_max_tokens,
                 "stream": False,
                 **kwargs
             }
             
+            # 创建日志记录
+            if user_id and self.db:
+                log_id = log_service.create_log_async(
+                    user_id=user_id,
+                    provider_config_id=self.config.id,
+                    model=effective_model,
+                    request_messages=messages,
+                    db=self.db,
+                    conversation_id=conversation_id,
+                    agent_id=agent_id,
+                    temperature=effective_temperature,
+                    max_tokens=effective_max_tokens,
+                    stream=False,
+                    request_params=request_params,
+                    extra_metadata={"provider_config_name": self.config.name}
+                )
+            
             response = await self.client.chat.completions.create(**request_params)
             
+            response_content = response.choices[0].message.content
+            finish_reason = response.choices[0].finish_reason
+            usage = response.usage
+            
+            # 更新日志记录
+            if log_id and self.db and usage:
+                log_service.update_log_async(
+                    log_id=log_id,
+                    db=self.db,
+                    response_content=response_content,
+                    finish_reason=finish_reason,
+                    prompt_tokens=usage.prompt_tokens,
+                    completion_tokens=usage.completion_tokens,
+                    total_tokens=usage.total_tokens,
+                    status="success"
+                )
+            
             return {
-                "content": response.choices[0].message.content,
+                "content": response_content,
                 "model": response.model,
-                "finish_reason": response.choices[0].finish_reason,
+                "finish_reason": finish_reason,
                 "usage": {
-                    "prompt_tokens": response.usage.prompt_tokens,
-                    "completion_tokens": response.usage.completion_tokens,
-                    "total_tokens": response.usage.total_tokens
-                } if response.usage else None,
+                    "prompt_tokens": usage.prompt_tokens,
+                    "completion_tokens": usage.completion_tokens,
+                    "total_tokens": usage.total_tokens
+                } if usage else None,
                 "timestamp": datetime.utcnow().isoformat(),
-                "provider_config": self.config.name
+                "provider_config": self.config.name,
+                "log_id": log_id
             }
             
         except Exception as e:
-            logger.error(f"Error in chat_completion: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"Error in chat_completion: {error_msg}")
+            
+            # 更新日志记录为错误状态
+            if log_id and self.db:
+                log_service.update_log_async(
+                    log_id=log_id,
+                    db=self.db,
+                    status="error",
+                    error_message=error_msg
+                )
+            
             raise
     
     async def validate_api_key(self) -> bool:

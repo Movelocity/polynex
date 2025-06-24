@@ -2,11 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from contextlib import asynccontextmanager
 import uvicorn
 import sys
 
 # 导入配置和日志
 from constants import get_settings, configure_logging, print_config_status
+
+# 导入服务
+from services.llm_request_log_service import start_llm_log_service, stop_llm_log_service
 
 # 导入路由模块
 from controllers import auth, users, blogs, categories, files, admin, dev, conversations, agents, ai_providers, docs
@@ -15,7 +19,21 @@ from controllers import auth, users, blogs, categories, files, admin, dev, conve
 settings = get_settings()
 configure_logging()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时执行
+    print("🔧 启动LLM请求日志服务...")
+    await start_llm_log_service()
+    
+    yield
+    
+    # 关闭时执行
+    print("🔧 停止LLM请求日志服务...")
+    await stop_llm_log_service()
+
 app = FastAPI(
+    lifespan=lifespan,
     title="博客平台 API",
     description="""
     ## 功能强大的博客平台后端 API
