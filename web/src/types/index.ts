@@ -128,7 +128,6 @@ export interface ProxyConfig {
 export interface AIProviderConfig {
   id: string;
   name: string;
-  provider: string; // 用户自定义的供应商名称
   provider_type: AIProviderType;
   base_url: string;
   proxy?: ProxyConfig;
@@ -149,7 +148,6 @@ export interface AIProviderConfig {
 // AI供应商配置创建类型
 export interface AIProviderConfigCreate {
   name: string;
-  provider: string;
   provider_type: AIProviderType;
   base_url: string;
   api_key: string;
@@ -169,7 +167,6 @@ export interface AIProviderConfigCreate {
 // AI供应商配置更新类型
 export interface AIProviderConfigUpdate {
   name?: string;
-  provider?: string;
   provider_type?: AIProviderType;
   base_url?: string;
   api_key?: string;

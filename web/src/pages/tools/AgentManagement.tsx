@@ -262,7 +262,7 @@ export function AgentManagement() {
   };
 
   const getSelectedProvider = () => {
-    return activeProviders.find(p => p.provider === formData.provider);
+    return activeProviders.find(p => p.name === formData.provider);
   };
 
   if (!user) {
@@ -359,8 +359,8 @@ export function AgentManagement() {
                         </SelectTrigger>
                         <SelectContent>
                           {activeProviders.map(provider => (
-                            <SelectItem key={provider.id} value={provider.provider}>
-                              {provider.name} ({provider.provider})
+                            <SelectItem key={provider.id} value={provider.name}>
+                              {provider.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -664,8 +664,8 @@ export function AgentManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     {activeProviders.map(provider => (
-                      <SelectItem key={provider.id} value={provider.provider}>
-                        {provider.name} ({provider.provider})
+                      <SelectItem key={provider.id} value={provider.name}>
+                        {provider.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

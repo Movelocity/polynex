@@ -28,7 +28,6 @@ class ProxyConfig(BaseModel):
 
 class AIProviderConfigCreate(BaseModel):
     name: str
-    provider: str  # 用户自定义的供应商名称，如 "my-openai", "company-claude"
     provider_type: AIProviderType  # 技术类型
     base_url: str
     api_key: str
@@ -47,7 +46,6 @@ class AIProviderConfigCreate(BaseModel):
 
 class AIProviderConfigUpdate(BaseModel):
     name: Optional[str] = None
-    provider: Optional[str] = None  # 用户自定义的供应商名称
     provider_type: Optional[AIProviderType] = None  # 技术类型
     base_url: Optional[str] = None
     api_key: Optional[str] = None
@@ -67,7 +65,6 @@ class AIProviderConfigUpdate(BaseModel):
 class AIProviderConfigResponse(BaseModel):
     id: str
     name: str
-    provider: str  # 用户自定义的供应商名称
     provider_type: AIProviderType  # 技术类型
     base_url: str
     proxy: Optional[Dict[str, Any]] = None  # 代理配置
@@ -108,7 +105,6 @@ async def get_all_providers(
             AIProviderConfigResponse(
                 id=provider.id,
                 name=provider.name,
-                provider=provider.provider,
                 provider_type=provider.provider_type,
                 base_url=provider.base_url,
                 proxy=provider.proxy,
@@ -151,7 +147,6 @@ async def create_provider(
         
         provider = ai_provider_service.create_provider_config(
             name=provider_data.name,
-            provider=provider_data.provider,
             provider_type=provider_data.provider_type,
             base_url=provider_data.base_url,
             api_key=provider_data.api_key,
@@ -171,7 +166,6 @@ async def create_provider(
         return AIProviderConfigResponse(
             id=provider.id,
             name=provider.name,
-            provider=provider.provider,
             provider_type=provider.provider_type,
             base_url=provider.base_url,
             proxy=provider.proxy,
@@ -225,7 +219,6 @@ async def get_provider(
         return AIProviderConfigResponse(
             id=provider.id,
             name=provider.name,
-            provider=provider.provider,
             provider_type=provider.provider_type,
             base_url=provider.base_url,
             proxy=provider.proxy,
@@ -281,7 +274,6 @@ async def update_provider(
         return AIProviderConfigResponse(
             id=provider.id,
             name=provider.name,
-            provider=provider.provider,
             provider_type=provider.provider_type,
             base_url=provider.base_url,
             proxy=provider.proxy,

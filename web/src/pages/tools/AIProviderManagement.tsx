@@ -40,7 +40,6 @@ import { toast } from '@/hooks/use-toast';
 
 interface ProviderFormData {
   name: string;
-  provider: string;
   provider_type: AIProviderType;
   base_url: string;
   api_key: string;
@@ -73,7 +72,6 @@ export function AIProviderManagement() {
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
   const [formData, setFormData] = useState<ProviderFormData>({
     name: '',
-    provider: '',
     provider_type: AIProviderType.OPENAI,
     base_url: '',
     api_key: '',
@@ -100,7 +98,6 @@ export function AIProviderManagement() {
   const resetForm = () => {
     setFormData({
       name: '',
-      provider: '',
       provider_type: AIProviderType.OPENAI,
       base_url: '',
       api_key: '',
@@ -213,7 +210,6 @@ export function AIProviderManagement() {
   const startEdit = (provider: any) => {
     setFormData({
       name: provider.name,
-      provider: provider.provider,
       provider_type: provider.provider_type,
       base_url: provider.base_url,
       api_key: provider.api_key,
@@ -333,15 +329,7 @@ export function AIProviderManagement() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="provider">供应商标识</Label>
-                    <Input
-                      id="provider"
-                      value={formData.provider}
-                      onChange={(e) => setFormData(prev => ({ ...prev, provider: e.target.value }))}
-                      placeholder="例如：openai-main"
-                    />
-                  </div>
+
 
                   <div className="space-y-2">
                     <Label htmlFor="provider_type">供应商类型</Label>
@@ -467,7 +455,7 @@ export function AIProviderManagement() {
                         )}
                       </CardTitle>
                       <CardDescription>
-                        {getProviderTypeDisplayName(provider.provider_type)} • {provider.provider}
+                        {getProviderTypeDisplayName(provider.provider_type)}
                       </CardDescription>
                     </div>
                   </div>
@@ -602,15 +590,7 @@ export function AIProviderManagement() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-provider">供应商标识</Label>
-                <Input
-                  id="edit-provider"
-                  value={formData.provider}
-                  onChange={(e) => setFormData(prev => ({ ...prev, provider: e.target.value }))}
-                  placeholder="例如：openai-main"
-                />
-              </div>
+
 
               <div className="space-y-2">
                 <Label htmlFor="edit-provider_type">供应商类型</Label>

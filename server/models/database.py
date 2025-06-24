@@ -147,8 +147,7 @@ class AIProviderConfig(Base):
     __tablename__ = "ai_provider_configs"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(100), nullable=False)  # 配置显示名称，如 "OpenAI主账户"
-    provider = Column(String(100), nullable=False, unique=True)  # 供应商自定义名称，如 "my-openai", "company-claude"，必须唯一
+    name = Column(String(100), nullable=False, unique=True)  # 配置显示名称，如 "OpenAI主账户"，同时作为唯一标识符
     provider_type = Column(SQLEnum(AIProviderType), nullable=False)  # 供应商技术类型
     base_url = Column(String(500), nullable=False)  # API基础URL
     api_key = Column(String(500), nullable=False)  # API密钥（应该加密存储）
@@ -174,7 +173,7 @@ class Agent(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     agent_id = Column(String(100), nullable=False, unique=True)  # agent唯一标识
     user_id = Column(String, nullable=False)  # 创建者ID
-    provider = Column(String(100), nullable=False)  # 关联的供应商名称（对应AIProviderConfig.provider）
+    provider = Column(String(100), nullable=False)  # 关联的供应商名称（对应AIProviderConfig.name）
     model = Column(String(100), nullable=False)  # 使用的模型名称
     top_p = Column(Float, nullable=True)  # top_p参数
     temperature = Column(Float, nullable=True)  # 温度参数

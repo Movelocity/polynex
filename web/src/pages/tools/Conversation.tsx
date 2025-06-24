@@ -34,14 +34,14 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({ selectedAgent, 
   <div className="flex-shrink-0 bg-background border-b border-border">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="flex items-center space-x-4 mb-2">
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={onBack}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           返回
-        </Button>
+        </Button> */}
         {selectedAgent && (
           <div className="flex items-center space-x-3">
             <Bot className="h-6 w-6 text-theme-blue" />

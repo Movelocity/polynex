@@ -69,9 +69,7 @@ export const validateProviderConfig = (provider: Partial<AIProviderConfig>): str
     errors.push('供应商名称不能为空');
   }
 
-  if (!provider.provider?.trim()) {
-    errors.push('供应商标识不能为空');
-  }
+
 
   if (!provider.provider_type) {
     errors.push('请选择供应商类型');
