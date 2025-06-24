@@ -296,7 +296,7 @@ export function ConversationImproved() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/tools/agent-management')}
+              onClick={() => navigate('/chat/agents')}
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
               返回Agent管理

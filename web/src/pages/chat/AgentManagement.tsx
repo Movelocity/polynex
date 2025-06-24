@@ -102,12 +102,10 @@ export function AgentManagement() {
   };
 
   const handleCreateAgent = () => {
-    // TODO: 跳转到创建页面
     navigate('/chat/agent/create');
   };
 
   const handleEditAgent = (agentId: string) => {
-    // TODO: 跳转到编辑页面
     navigate(`/chat/agent/edit/${agentId}`);
   };
 
@@ -129,7 +127,7 @@ export function AgentManagement() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 页面标题 */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -163,7 +161,7 @@ export function AgentManagement() {
 
       {/* Agent列表 */}
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-row gap-4">
           <Card>
             <CardContent className="flex flex-col gap-4 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
@@ -250,7 +248,8 @@ export function AgentManagement() {
                         <Edit className="h-3 w-3" />
                       </Button>
                     )}
-                    {isAgentOwner(agent, user.id) && (
+                    {/* 到详情页面删除 */}
+                    {/* {isAgentOwner(agent, user.id) && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -259,7 +258,7 @@ export function AgentManagement() {
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </CardContent>

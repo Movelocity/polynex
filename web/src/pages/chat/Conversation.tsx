@@ -149,7 +149,7 @@ export function Conversation() {
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={setIsSidebarOpen}
                 selectedAgent={selectedAgent}
-                onBack={() => navigate('/chat/agent-management')}
+                onBack={() => navigate('/chat/agents')}
               />
             </div>
           </div>

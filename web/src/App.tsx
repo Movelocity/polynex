@@ -23,6 +23,7 @@ import { ImageOCR } from '@/pages/tools/ImageOCR';
 import { JsonFormatter } from '@/pages/tools/JsonFormatter';
 import { AIProviderManagement } from '@/pages/chat/AIProviderManagement';
 import { AgentManagement } from '@/pages/chat/AgentManagement';
+import { AgentEditor } from '@/pages/chat/AgentEditor';
 import { ConversationManagement } from '@/pages/chat/ConversationManagement';
 import { Conversation } from '@/pages/chat/Conversation';
 import { NotFound } from '@/pages/NotFound';
@@ -125,9 +126,19 @@ function App() {
                 <AIProviderManagement />
               </ProtectedRoute>
             } />
-            <Route path="agent-management" element={
-              <ProtectedRoute requireAdmin>
+            <Route path="agents" element={
+              <ProtectedRoute>
                 <AgentManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="agent/create" element={
+              <ProtectedRoute>
+                <AgentEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="agent/edit/:agentId" element={
+              <ProtectedRoute>
+                <AgentEditor />
               </ProtectedRoute>
             } />
             <Route path="conversation-management" element={
