@@ -24,6 +24,7 @@ import { JsonFormatter } from '@/pages/tools/JsonFormatter';
 import { AIProviderManagement } from '@/pages/tools/AIProviderManagement';
 import { AgentManagement } from '@/pages/tools/AgentManagement';
 import { ConversationManagement } from '@/pages/tools/ConversationManagement';
+import { Conversation } from '@/pages/tools/Conversation';
 import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
 import { ThemeDemo } from '@/components/ThemeDemo';
@@ -71,6 +72,7 @@ function App() {
             <Route path="tools/ai-provider-management" element={<AIProviderManagement />} />
             <Route path="tools/agent-management" element={<AgentManagement />} />
             <Route path="tools/conversation-management" element={<ConversationManagement />} />
+            <Route path="tools/conversation" element={<Conversation />} />
 
             {/* Protected routes */}
             <Route 

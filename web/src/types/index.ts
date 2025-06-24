@@ -252,6 +252,7 @@ export interface AgentDetail {
 
 // AI代理创建类型
 export interface AgentCreate {
+  agent_id: string;
   provider: string;
   model: string;
   top_p?: number;
