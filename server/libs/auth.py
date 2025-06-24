@@ -1,3 +1,9 @@
+"""
+认证和授权工具库
+
+包含密码加密、JWT令牌处理、登录限制等认证相关的工具函数。
+"""
+
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List
 from jose import JWTError, jwt
@@ -192,4 +198,4 @@ def get_current_user_id_optional(credentials: Optional[HTTPAuthorizationCredenti
     try:
         return get_current_user_id(credentials)
     except HTTPException:
-        return None
+        return None 

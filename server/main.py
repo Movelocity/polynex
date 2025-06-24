@@ -5,8 +5,15 @@ from pathlib import Path
 import uvicorn
 import sys
 
+# 导入配置和日志
+from constants import get_settings, configure_logging, print_config_status
+
 # 导入路由模块
-from routers import auth, users, blogs, categories, files, admin, dev
+from controllers import auth, users, blogs, categories, files, admin, dev, conversations, agents, ai_providers
+
+# 初始化配置和日志
+settings = get_settings()
+configure_logging()
 
 app = FastAPI(
     title="博客平台 API",
@@ -17,7 +24,7 @@ app = FastAPI(
 # 配置 CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # 前端开发服务器地址
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,6 +42,9 @@ app.include_router(categories.router)
 app.include_router(files.router)
 app.include_router(admin.router)
 app.include_router(dev.router)
+app.include_router(conversations.router)
+app.include_router(agents.router)
+app.include_router(ai_providers.router, prefix="/api")
 
 # 根路径欢迎信息
 @app.get("/")
@@ -61,19 +71,20 @@ async def health_check():
 def main():
     """启动 FastAPI 服务"""
     print("🚀 启动博客平台后端服务...")
-    print("📍 服务地址: http://localhost:8765")
-    print("📖 API 文档: http://localhost:8765/docs")
-    print("🔧 交互式文档: http://localhost:8765/redoc")
-    print("=" * 50)
-
+    print(f"📍 服务地址: http://{settings.host}:{settings.port}")
+    print(f"📖 API 文档: http://{settings.host}:{settings.port}/docs")
+    print(f"🔧 交互式文档: http://{settings.host}:{settings.port}/redoc")
+    
+    # 显示配置状态
+    print_config_status()
 
     try:
         uvicorn.run(
             "main:app",
-            host="0.0.0.0",
-            port=8765,
-            reload=False,  # 开发模式下自动重载
-            log_level="info"
+            host=settings.host,
+            port=settings.port,
+            reload=settings.debug,
+            log_level=settings.log_level.lower()
         )
     except KeyboardInterrupt:
         print("\n👋 服务已停止")

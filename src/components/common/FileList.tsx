@@ -27,11 +27,22 @@ interface FileItem {
  * 分页信息接口
  */
 interface PaginationInfo {
-  page: number;
+  current_page: number;
   page_size: number;
-  total: number;
+  total_items: number;
   total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
 }
+/**
+ * 
+ * "current_page": 1,
+        "page_size": 10,
+        "total_items": 5,
+        "total_pages": 1,
+        "has_next": false,
+        "has_prev": false
+ */
 
 interface FileListProps {
   files: FileItem[];
@@ -104,12 +115,12 @@ export function FileList({
       return null;
     }
 
-    const { page, total_pages } = pagination;
+    const { current_page, total_pages } = pagination;
     const pages = [];
     
     // 计算显示的页码范围
-    const startPage = Math.max(1, page - 2);
-    const endPage = Math.min(total_pages, page + 2);
+    const startPage = Math.max(1, current_page - 2);
+    const endPage = Math.min(total_pages, current_page + 2);
 
     return (
       <Pagination className="mt-4">
@@ -117,8 +128,8 @@ export function FileList({
           {/* 上一页 */}
           <PaginationItem>
             <PaginationPrevious 
-              onClick={page > 1 ? () => onPageChange(page - 1) : undefined}
-              className={page <= 1 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              onClick={current_page > 1 ? () => onPageChange(current_page - 1) : undefined}
+              className={current_page <= 1 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             />
           </PaginationItem>
 
@@ -147,7 +158,7 @@ export function FileList({
             return (
               <PaginationItem key={pageNum}>
                 <PaginationLink
-                  isActive={pageNum === page}
+                  isActive={pageNum === current_page}
                   onClick={() => onPageChange(pageNum)}
                   className="cursor-pointer"
                 >
@@ -179,8 +190,8 @@ export function FileList({
           {/* 下一页 */}
           <PaginationItem>
             <PaginationNext 
-              onClick={page < total_pages ? () => onPageChange(page + 1) : undefined}
-              className={page >= total_pages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              onClick={current_page < total_pages ? () => onPageChange(current_page + 1) : undefined}
+              className={current_page >= total_pages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             />
           </PaginationItem>
         </PaginationContent>
@@ -206,7 +217,7 @@ export function FileList({
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-muted-foreground">
           {pagination ? (
-            `第 ${pagination.page} 页，共 ${pagination.total_pages} 页，总计 ${pagination.total} 个文件`
+            `第 ${pagination.current_page} 页，共 ${pagination.total_pages} 页，总计 ${pagination.total_items} 个文件`
           ) : (
             `您上传的文件列表 (${files.length} 个文件)`
           )}
