@@ -177,7 +177,7 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
 
     const bgColor = currentAvatar.bg_color || 'bg-blue-500';
 
-    const displayLink = fileService.resolveFileUrl(currentAvatar.link)
+    const displayLink = currentAvatar.variant === 'link' ? fileService.resolveFileUrl(currentAvatar.link) : '';
 
     // 当头像链接变化时重置错误状态
     React.useEffect(() => {

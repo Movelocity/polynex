@@ -180,6 +180,7 @@ class Agent(Base):
     max_tokens = Column(Integer, nullable=True)  # 最大tokens
     preset_messages = Column(UnicodeJSON, nullable=False, default=list)  # 预设消息（prompt）
     app_preset = Column(UnicodeJSON, nullable=False, default=dict)  # 应用配置：{name, description, greetings, suggested_questions, creation_date, ...}
+    avatar = Column(UnicodeJSON, nullable=True)  # 头像配置：{variant, emoji, bg_color, link}
     is_public = Column(Boolean, nullable=False, default=False)  # 是否公开
     is_default = Column(Boolean, nullable=False, default=False)  # 是否为默认agent
     create_time = Column(DateTime, nullable=False, default=datetime.utcnow)

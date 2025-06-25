@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Button } from '@/components/x-ui/button';
 import { Badge } from '@/components/x-ui/badge';
@@ -11,66 +11,10 @@ import {
   canEditAgent,
   isAgentOwner
 } from '@/utils/agentUtils';
-import { AvatarConfig } from '@/types';
-import { Plus, Edit, Trash2, Star, Bot, AlertCircle, Users, Lock, MessageCircle } from 'lucide-react';
+import { Plus, Edit,  Star, AlertCircle, Users, Lock, MessageCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-
-// Agent头像组件
-const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' | 'md' | 'lg' }> = ({ 
-  avatar, 
-  name, 
-  size = 'md' 
-}) => {
-  const [imageError, setImageError] = useState(false);
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-sm',
-    md: 'w-12 h-12 text-lg',
-    lg: 'w-16 h-16 text-xl'
-  };
-
-  const defaultBgColor = 'bg-blue-500';
-  const bgColor = avatar?.bg_color || defaultBgColor;
-
-  // 当头像链接变化时重置错误状态
-  useEffect(() => {
-    setImageError(false);
-  }, [avatar?.link]);
-
-  if (avatar?.variant === 'link' && avatar.link && !imageError) {
-    return (
-      <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
-        <img 
-          src={avatar.link} 
-          alt={name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            console.warn('Agent头像图片加载失败:', avatar.link);
-            setImageError(true);
-          }}
-          onLoad={() => {
-            console.log('Agent头像图片加载成功:', avatar.link);
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (avatar?.variant === 'emoji' && avatar.emoji) {
-    return (
-      <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center`}>
-        <span className="text-white">{avatar.emoji}</span>
-      </div>
-    );
-  }
-
-  // 默认头像：显示名称首字母
-  return (
-    <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center text-white font-medium`}>
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-};
+import { AgentAvatar } from '@/components/chat/AgentAvatar'
 
 export function AgentManagement() {
   const navigate = useNavigate();
@@ -191,6 +135,7 @@ export function AgentManagement() {
                     avatar={agent.avatar} 
                     name={formatAgentDisplayName(agent)}
                     size="md"
+                    variant="rounded-square"
                   />
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-lg flex items-center space-x-2">

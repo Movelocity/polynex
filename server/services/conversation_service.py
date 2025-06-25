@@ -863,6 +863,7 @@ class ConversationService:
                 max_tokens=agent_data.max_tokens,
                 preset_messages=agent_data.preset_messages,
                 app_preset=agent_data.app_preset,
+                avatar=agent_data.avatar,
                 is_public=agent_data.is_public,
                 is_default=agent_data.is_default
             )

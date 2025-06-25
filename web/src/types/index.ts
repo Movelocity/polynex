@@ -216,7 +216,6 @@ export interface AvatarConfig {
 export interface AppPreset {
   name: string;
   description: string;
-  avatar?: AvatarConfig;
   greetings?: string;
   suggested_questions?: string[];
   creation_date?: string;
@@ -232,7 +231,7 @@ export interface AgentSummary {
   model: string;
   name: string;
   description: string;
-  avatar?: AvatarConfig;
+  avatar: AvatarConfig;
   is_public: boolean;
   is_default: boolean;
   create_time: string;
@@ -251,6 +250,7 @@ export interface AgentDetail {
   max_tokens?: number;
   preset_messages: AgentMessage[];
   app_preset: AppPreset;
+  avatar: AvatarConfig;
   is_public: boolean;
   is_default: boolean;
   create_time: string;
@@ -267,6 +267,7 @@ export interface AgentCreate {
   max_tokens?: number;
   preset_messages?: AgentMessage[];
   app_preset: AppPreset;
+  avatar: AvatarConfig;
   is_public?: boolean;
   is_default?: boolean;
 }
@@ -280,6 +281,7 @@ export interface AgentUpdate {
   max_tokens?: number;
   preset_messages?: AgentMessage[];
   app_preset?: AppPreset;
+  avatar?: AvatarConfig;
   is_public?: boolean;
   is_default?: boolean;
 }

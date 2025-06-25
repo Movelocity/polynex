@@ -339,6 +339,7 @@ class AgentSummary(BaseModel):
     model: str  # 模型名称
     name: str
     description: str
+    avatar: Optional[Dict[str, Any]] = None  # 头像配置
     is_public: bool
     is_default: bool
     create_time: str
@@ -357,6 +358,7 @@ class AgentDetail(BaseModel):
     max_tokens: Optional[int] = None
     preset_messages: List[Dict[str, Any]] = []
     app_preset: Dict[str, Any] = {}
+    avatar: Optional[Dict[str, Any]] = None  # 头像配置
     is_public: bool
     is_default: bool
     create_time: str
@@ -373,6 +375,7 @@ class AgentCreate(BaseModel):
     max_tokens: Optional[int] = None
     preset_messages: List[Dict[str, Any]] = []
     app_preset: Dict[str, Any] = {}
+    avatar: Optional[Dict[str, Any]] = None  # 头像配置
     is_public: bool = False
     is_default: bool = False
 
@@ -386,6 +389,7 @@ class AgentUpdate(BaseModel):
     max_tokens: Optional[int] = None
     preset_messages: Optional[List[Dict[str, Any]]] = None
     app_preset: Optional[Dict[str, Any]] = None
+    avatar: Optional[Dict[str, Any]] = None  # 头像配置
     is_public: Optional[bool] = None
     is_default: Optional[bool] = None
 

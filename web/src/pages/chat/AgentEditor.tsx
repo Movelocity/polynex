@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Textarea } from '@/components/x-ui/textarea';
-import { Badge } from '@/components/x-ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/x-ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
 import { Slider } from '@/components/x-ui/slider';
@@ -14,7 +13,7 @@ import { AgentAvatarEditor } from '@/components/common/AgentAvatarEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useAIProviders } from '@/hooks/useAIProviders';
-import { AgentDetail, AgentCreate, AgentUpdate, AgentMessage, AppPreset, AvatarConfig } from '@/types';
+import { AgentCreate, AgentUpdate, AgentMessage, AppPreset, AvatarConfig } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { 
   Save, 
@@ -25,70 +24,11 @@ import {
   Trash2, 
   Bot,
   ArrowLeft,
-  Sparkles,
   Globe,
-  Lock,
   Star,
   Lightbulb
 } from 'lucide-react';
-import { fileService } from '@/services';
-
-// Agent头像组件
-const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' | 'md' | 'lg' }> = ({ 
-  avatar, 
-  name, 
-  size = 'md' 
-}) => {
-  const [imageError, setImageError] = useState(false);
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-sm',
-    md: 'w-12 h-12 text-lg', 
-    lg: 'w-16 h-16 text-xl'
-  };
-
-  const defaultBgColor = 'bg-blue-500';
-  const bgColor = avatar?.bg_color || defaultBgColor;
-
-  const displayLink = fileService.resolveFileUrl(avatar.link)
-
-  // 当头像链接变化时重置错误状态
-  useEffect(() => {
-    setImageError(false);
-  }, [avatar?.link]);
-
-  if (avatar?.variant === 'link' && avatar.link && !imageError) {
-    return (
-      <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
-        <img 
-          src={displayLink} 
-          alt={name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            console.warn('Agent头像图片加载失败:', avatar.link);
-            setImageError(true);
-          }}
-          onLoad={() => {
-            console.log('Agent头像图片加载成功:', avatar.link);
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (avatar?.variant === 'emoji' && avatar.emoji) {
-    return (
-      <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center`}>
-        <span className="text-white">{avatar.emoji}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center text-white font-medium`}>
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-};
+import { AgentAvatar } from '@/components/chat/AgentAvatar'
 
 export function AgentEditor() {
   const { agentId } = useParams<{ agentId?: string }>();
@@ -105,6 +45,7 @@ export function AgentEditor() {
   const [formData, setFormData] = useState<{
     agent_id: string;
     app_preset: AppPreset;
+    avatar: AvatarConfig;
     provider: string;
     model: string;
     temperature: number;
@@ -118,13 +59,13 @@ export function AgentEditor() {
     app_preset: {
       name: '',
       description: '',
-      avatar: {
-        variant: 'emoji',
-        emoji: '🤖',
-        bg_color: 'bg-blue-500'
-      },
       greetings: '你好! 我是你的AI助手，有什么可以帮助你的吗？',
       suggested_questions: ['如何使用这个功能？', '告诉我一些有趣的事情', '帮我制定一个学习计划']
+    },
+    avatar: {
+      variant: 'emoji',
+      emoji: '🤖',
+      bg_color: 'bg-blue-500'
     },
     provider: '',
     model: '',
@@ -157,6 +98,7 @@ export function AgentEditor() {
         setFormData({
           agent_id: agent.agent_id,
           app_preset: agent.app_preset,
+          avatar: agent.avatar,
           provider: agent.provider,
           model: agent.model,
           temperature: agent.temperature || 0.7,
@@ -231,6 +173,7 @@ export function AgentEditor() {
           max_tokens: formData.max_tokens,
           preset_messages: formData.preset_messages,
           app_preset: formData.app_preset,
+          avatar: formData.avatar,
           is_public: formData.is_public,
           is_default: formData.is_default
         };
@@ -252,6 +195,7 @@ export function AgentEditor() {
           max_tokens: formData.max_tokens,
           preset_messages: formData.preset_messages,
           app_preset: formData.app_preset,
+          avatar: formData.avatar,
           is_public: formData.is_public,
           is_default: formData.is_default
         };
@@ -368,7 +312,7 @@ export function AgentEditor() {
             </Button>
             <div className="flex items-center space-x-3">
               <AgentAvatar
-                avatar={formData.app_preset.avatar}
+                avatar={formData.avatar}
                 name={formData.app_preset.name || 'New Agent'}
                 size="sm"
               />
@@ -421,7 +365,7 @@ export function AgentEditor() {
                   <div className="space-y-2">
                     <Label>头像</Label>
                     <AgentAvatarEditor
-                      avatar={formData.app_preset.avatar}
+                      avatar={formData.avatar}
                       name={formData.app_preset.name || 'Agent'}
                       onChange={(avatar) => updateAppPreset('avatar', avatar)}
                     />
