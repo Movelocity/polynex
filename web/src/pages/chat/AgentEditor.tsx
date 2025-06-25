@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/x-ui/slider';
 import { Switch } from '@/components/x-ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/x-ui/alert-dialog';
+import { AgentAvatarEditor } from '@/components/common/AgentAvatarEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useAIProviders } from '@/hooks/useAIProviders';
@@ -38,6 +39,7 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
   name, 
   size = 'md' 
 }) => {
+  const [imageError, setImageError] = useState(false);
   const sizeClasses = {
     sm: 'w-8 h-8 text-sm',
     md: 'w-12 h-12 text-lg', 
@@ -47,7 +49,12 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
   const defaultBgColor = 'bg-blue-500';
   const bgColor = avatar?.bg_color || defaultBgColor;
 
-  if (avatar?.variant === 'link' && avatar.link) {
+  // 当头像链接变化时重置错误状态
+  useEffect(() => {
+    setImageError(false);
+  }, [avatar?.link]);
+
+  if (avatar?.variant === 'link' && avatar.link && !imageError) {
     return (
       <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
         <img 
@@ -55,9 +62,11 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
           alt={name}
           className="w-full h-full object-cover"
           onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            target.parentElement!.innerHTML = `<div class="w-full h-full ${bgColor} flex items-center justify-center text-white font-medium">${name.charAt(0).toUpperCase()}</div>`;
+            console.warn('Agent头像图片加载失败:', avatar.link);
+            setImageError(true);
+          }}
+          onLoad={() => {
+            console.log('Agent头像图片加载成功:', avatar.link);
           }}
         />
       </div>
@@ -409,50 +418,11 @@ export function AgentEditor() {
 
                   <div className="space-y-2">
                     <Label>头像</Label>
-                    <div className="flex items-center space-x-4">
-                      <AgentAvatar
-                        avatar={formData.app_preset.avatar}
-                        name={formData.app_preset.name || 'Agent'}
-                        size="lg"
-                      />
-                      <div className="flex-1 space-y-2">
-                        <Select
-                          value={formData.app_preset.avatar?.variant || 'emoji'}
-                          onValueChange={(value) => updateAppPreset('avatar', {
-                            ...formData.app_preset.avatar,
-                            variant: value as 'emoji' | 'link'
-                          })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="emoji">表情符号</SelectItem>
-                            <SelectItem value="link">图片链接</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        {formData.app_preset.avatar?.variant === 'emoji' ? (
-                          <Input
-                            placeholder="输入表情符号 (如: 🤖)"
-                            value={formData.app_preset.avatar?.emoji || ''}
-                            onChange={(e) => updateAppPreset('avatar', {
-                              ...formData.app_preset.avatar,
-                              emoji: e.target.value
-                            })}
-                          />
-                        ) : (
-                          <Input
-                            placeholder="输入图片URL..."
-                            value={formData.app_preset.avatar?.link || ''}
-                            onChange={(e) => updateAppPreset('avatar', {
-                              ...formData.app_preset.avatar,
-                              link: e.target.value
-                            })}
-                          />
-                        )}
-                      </div>
-                    </div>
+                    <AgentAvatarEditor
+                      avatar={formData.app_preset.avatar}
+                      name={formData.app_preset.name || 'Agent'}
+                      onChange={(avatar) => updateAppPreset('avatar', avatar)}
+                    />
                   </div>
                 </div>
               </DialogContent>

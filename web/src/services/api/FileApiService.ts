@@ -105,6 +105,62 @@ export class FileApiService {
   }
 
   /**
+   * 上传Agent头像
+   */
+  async uploadAgentAvatar(file: File | Blob): Promise<{ success: boolean; message: string; avatarUrl: string }> {
+    try {
+      // 创建FormData对象
+      const formData = new FormData();
+      // FormData可以接受Blob或File
+      formData.append('file', file, 'agent-avatar.jpg');
+
+      // 使用fetch直接发送，因为ApiClient可能不支持FormData
+      const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
+      const token = this.apiClient.getToken();
+      
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${baseURL}/resources/upload`, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Agent avatar upload failed' }));
+        throw new ApiError(response.status, errorData.message || 'Agent avatar upload failed');
+      }
+
+      const result = await response.json();
+      console.log('服务器返回的文件信息:', result);
+
+      // 服务器返回的是FileInfo对象，格式为: { uniqueId, originalName, extension, size, uploadTime, uploaderId }
+      // 需要根据uniqueId和extension构造完整的文件URL
+      const avatarUrl = `/api/resources/${result.uniqueId}${result.extension}`;
+
+      return {
+        success: true,
+        message: 'Agent头像上传成功',
+        avatarUrl: avatarUrl
+      };
+    } catch (error) {
+      let message = 'Agent头像上传失败';
+      if (error instanceof ApiError) {
+        message = error.message;
+      }
+      console.error('Agent头像上传失败:', error);
+      return {
+        success: false,
+        message,
+        avatarUrl: ''
+      };
+    }
+  }
+
+  /**
    * 上传文件
    */
   async uploadFile(file: File): Promise<UploadResponse> {
@@ -162,14 +218,33 @@ export class FileApiService {
    * 转换相对URL为完整URL（如果需要）
    */
   resolveFileUrl(url: string): string {
-    if (url.startsWith('http')) {
-      return url; // 已经是完整URL
+    // 处理空字符串或无效URL
+    if (!url || typeof url !== 'string') {
+      console.warn('resolveFileUrl: 接收到无效的URL:', url);
+      return '';
     }
+
+    // 如果已经是完整URL，直接返回
+    if (url.startsWith('http')) {
+      return url;
+    }
+
     const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
+    
+    // 处理相对于API的路径 /api/resources/xxx
     if (url.startsWith('/api/')) {
+      // 移除baseURL中的 /api 部分，然后拼接完整URL
+      const serverBase = baseURL.replace('/api', '');
+      return `${serverBase}${url}`;
+    }
+    
+    // 处理其他相对路径
+    if (url.startsWith('/')) {
       return `${baseURL.replace('/api', '')}${url}`;
     }
-    return `${baseURL}${url}`;
+    
+    // 处理没有前缀的路径
+    return `${baseURL}/${url}`;
   }
 
   /**

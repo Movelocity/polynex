@@ -22,6 +22,7 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
   name, 
   size = 'md' 
 }) => {
+  const [imageError, setImageError] = useState(false);
   const sizeClasses = {
     sm: 'w-8 h-8 text-sm',
     md: 'w-12 h-12 text-lg',
@@ -31,7 +32,12 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
   const defaultBgColor = 'bg-blue-500';
   const bgColor = avatar?.bg_color || defaultBgColor;
 
-  if (avatar?.variant === 'link' && avatar.link) {
+  // 当头像链接变化时重置错误状态
+  useEffect(() => {
+    setImageError(false);
+  }, [avatar?.link]);
+
+  if (avatar?.variant === 'link' && avatar.link && !imageError) {
     return (
       <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
         <img 
@@ -39,10 +45,11 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
           alt={name}
           className="w-full h-full object-cover"
           onError={(e) => {
-            // 如果图片加载失败，显示默认头像
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            target.parentElement!.innerHTML = `<div class="w-full h-full ${bgColor} flex items-center justify-center text-white font-medium">${name.charAt(0).toUpperCase()}</div>`;
+            console.warn('Agent头像图片加载失败:', avatar.link);
+            setImageError(true);
+          }}
+          onLoad={() => {
+            console.log('Agent头像图片加载成功:', avatar.link);
           }}
         />
       </div>
