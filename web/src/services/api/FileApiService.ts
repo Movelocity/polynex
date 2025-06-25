@@ -1,4 +1,4 @@
-import { ApiClient, ApiError, defaultBaseURL } from './ApiClient';
+import { ApiClient, ApiError, apiBaseUrl } from './ApiClient';
 
 /**
  * 分页信息接口
@@ -77,8 +77,7 @@ export class FileApiService {
       const formData = new FormData();
       formData.append('file', file);
 
-      // 使用fetch直接发送，因为ApiClient可能不支持FormData
-      const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
+      // 使用fetch直接发送，因为ApiClient暂时不支持FormData
       const token = this.apiClient.getToken();
       
       const headers: HeadersInit = {};
@@ -86,7 +85,7 @@ export class FileApiService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${baseURL}/users/avatar/upload`, {
+      const response = await fetch(`${apiBaseUrl}/users/avatar/upload`, {
         method: 'POST',
         headers,
         body: formData
@@ -116,8 +115,7 @@ export class FileApiService {
       // FormData可以接受Blob或File
       formData.append('file', file, 'agent-avatar.jpg');
 
-      // 使用fetch直接发送，因为ApiClient可能不支持FormData
-      const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
+      // 使用fetch直接发送，因为ApiClient暂时不支持FormData;
       const token = this.apiClient.getToken();
       
       const headers: HeadersInit = {};
@@ -125,7 +123,7 @@ export class FileApiService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${baseURL}/resources/upload`, {
+      const response = await fetch(`${apiBaseUrl}/resources/upload`, {
         method: 'POST',
         headers,
         body: formData
@@ -171,8 +169,7 @@ export class FileApiService {
       const formData = new FormData();
       formData.append('file', file);
 
-      // 使用fetch直接发送，因为ApiClient可能不支持FormData
-      const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
+      // 使用fetch直接发送，因为ApiClient暂时不支持FormData
       const token = this.apiClient.getToken();
       
       const headers: HeadersInit = {};
@@ -180,7 +177,7 @@ export class FileApiService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${baseURL}/resources/upload`, {
+      const response = await fetch(`${apiBaseUrl}/resources/upload`, {
         method: 'POST',
         headers,
         body: formData
@@ -204,16 +201,14 @@ export class FileApiService {
    * 获取文件URL（用于显示）
    */
   getFileUrl(uniqueId: string, extension: string): string {
-    const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
-    return `${baseURL}/resources/${uniqueId}.${extension}`;
+    return `${apiBaseUrl}/resources/${uniqueId}.${extension}`;
   }
 
   /**
    * 获取缩略图URL
    */
   getThumbnailUrl(uniqueId: string): string {
-    const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
-    return `${baseURL}/resources/thumbnail/${uniqueId}.jpg`;
+    return `${apiBaseUrl}/resources/thumbnail/${uniqueId}.jpg`;
   }
 
   /**
@@ -231,22 +226,21 @@ export class FileApiService {
       return url;
     }
 
-    const baseURL = (this.apiClient as any).baseURL || defaultBaseURL;
     
     // 处理相对于API的路径 /api/resources/xxx
     if (url.startsWith('/api/')) {
       // 移除baseURL中的 /api 部分，然后拼接完整URL
-      const serverBase = baseURL.replace('/api', '');
+      const serverBase = apiBaseUrl.replace('/api', '');
       return `${serverBase}${url}`;
     }
     
     // 处理其他相对路径
     if (url.startsWith('/')) {
-      return `${baseURL.replace('/api', '')}${url}`;
+      return `${apiBaseUrl.replace('/api', '')}${url}`;
     }
     
     // 处理没有前缀的路径
-    return `${baseURL}/${url}`;
+    return `${apiBaseUrl}/${url}`;
   }
 
   /**

@@ -137,10 +137,9 @@ export function AgentManagement() {
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 页面标题 */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">AI Agent管理</h1>
-            <p className="text-muted-foreground">管理和配置AI Agent</p>
           </div>
           {/* 统计信息 */}
           <div className="flex items-center gap-4 mb-4">
@@ -168,7 +167,7 @@ export function AgentManagement() {
 
       {/* Agent列表 */}
       <div className="space-y-4">
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row gap-4 flex-wrap">
           <Card className="w-[300px]">
             <CardContent className="flex flex-col gap-4 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}

@@ -136,13 +136,9 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
       console.log('上传结果:', result);
       
       if (result.success) {
-        // 解析完整的头像URL
-        const avatarUrl = fileService.resolveFileUrl(result.avatarUrl);
-        console.log('原始URL:', result.avatarUrl, '解析后URL:', avatarUrl);
-        
         updateAvatar({
           variant: 'link',
-          link: avatarUrl
+          link: result.avatarUrl
         });
         
         toast({
@@ -181,16 +177,19 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
 
     const bgColor = currentAvatar.bg_color || 'bg-blue-500';
 
+    const displayLink = fileService.resolveFileUrl(currentAvatar.link)
+
     // 当头像链接变化时重置错误状态
     React.useEffect(() => {
       setImageError(false);
+      
     }, [currentAvatar.link]);
 
-    if (currentAvatar.variant === 'link' && currentAvatar.link && !imageError) {
+    if (currentAvatar.variant === 'link' && displayLink && !imageError) {
       return (
         <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
           <img 
-            src={currentAvatar.link} 
+            src={displayLink} 
             alt={name}
             className="w-full h-full object-cover"
             onError={(e) => {

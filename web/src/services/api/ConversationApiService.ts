@@ -1,4 +1,4 @@
-import { ApiClient, ApiError } from './ApiClient';
+import { ApiClient, ApiError, apiBaseUrl } from './ApiClient';
 import { IConversationService } from '../interfaces/IConversationService';
 import {
   Conversation,
@@ -49,7 +49,7 @@ export class ConversationApiService implements IConversationService {
         throw new Error('Authentication required');
       }
 
-      const response = await fetch(`${this.apiClient.getBaseURL()}/conversations`, {
+      const response = await fetch(`${apiBaseUrl}/conversations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,7 +184,7 @@ export class ConversationApiService implements IConversationService {
         throw new Error('Authentication required');
       }
 
-      const response = await fetch(`${this.apiClient.getBaseURL()}/conversations/${conversationId}/chat`, {
+      const response = await fetch(`${apiBaseUrl}/conversations/${conversationId}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

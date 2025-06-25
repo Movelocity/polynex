@@ -1,4 +1,6 @@
-export const defaultBaseURL = 'http://localhost:8765/api';
+/** 基础后端api路径 */
+export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8765/api';
+
 /**
  * API客户端基类
  * 处理HTTP请求、错误处理、认证等通用功能
@@ -8,8 +10,8 @@ export class ApiClient {
   private token: string | null = null;
   private onUnauthorized?: () => void;
 
-  constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || defaultBaseURL) {
-    this.baseURL = baseURL;
+  constructor() {
+    this.baseURL = apiBaseUrl;
     console.log("baseURL:",this.baseURL);
     this.loadToken();
   }

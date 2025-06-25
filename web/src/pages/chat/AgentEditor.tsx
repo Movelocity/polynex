@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
 import { Slider } from '@/components/x-ui/slider';
 import { Switch } from '@/components/x-ui/switch';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/x-ui/alert-dialog';
 import { AgentAvatarEditor } from '@/components/common/AgentAvatarEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
@@ -32,6 +31,7 @@ import {
   Star,
   Lightbulb
 } from 'lucide-react';
+import { fileService } from '@/services';
 
 // Agent头像组件
 const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' | 'md' | 'lg' }> = ({ 
@@ -49,6 +49,8 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
   const defaultBgColor = 'bg-blue-500';
   const bgColor = avatar?.bg_color || defaultBgColor;
 
+  const displayLink = fileService.resolveFileUrl(avatar.link)
+
   // 当头像链接变化时重置错误状态
   useEffect(() => {
     setImageError(false);
@@ -58,7 +60,7 @@ const AgentAvatar: React.FC<{ avatar?: AvatarConfig; name: string; size?: 'sm' |
     return (
       <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
         <img 
-          src={avatar.link} 
+          src={displayLink} 
           alt={name}
           className="w-full h-full object-cover"
           onError={(e) => {
@@ -139,7 +141,7 @@ export function AgentEditor() {
   // 模态框状态
   const [showModelConfig, setShowModelConfig] = useState(false);
   const [showAppConfig, setShowAppConfig] = useState(false);
-  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  // const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
   const generateAgentId = useCallback(() => {
     return `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
