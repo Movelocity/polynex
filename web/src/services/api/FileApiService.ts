@@ -4,10 +4,12 @@ import { ApiClient, ApiError, defaultBaseURL } from './ApiClient';
  * 分页信息接口
  */
 export interface PaginationInfo {
-  page: number;
+  current_page: number;
   page_size: number;
-  total: number;
+  total_items: number;
   total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
 }
 
 /**

@@ -169,7 +169,7 @@ export function AgentManagement() {
       {/* Agent列表 */}
       <div className="space-y-4">
         <div className="flex flex-row gap-4">
-          <Card>
+          <Card className="w-[300px]">
             <CardContent className="flex flex-col gap-4 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
               <h3 className="text-lg font-medium text-foreground mb-2">创建应用</h3>

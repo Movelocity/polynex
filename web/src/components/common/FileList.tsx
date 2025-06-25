@@ -12,6 +12,7 @@ import {
 } from '@/components/x-ui/pagination';
 import { File, Image as ImageIcon, Eye, Download, Trash2, RefreshCw } from 'lucide-react';
 import { fileService } from '@/services';
+import { PaginationInfo } from '@/services/api/FileApiService';
 
 interface FileItem {
   unique_id: string;
@@ -22,27 +23,6 @@ interface FileItem {
   url: string;
   thumbnail?: string; // 缩略图URL（如果是图片且存在缩略图）
 }
-
-/**
- * 分页信息接口
- */
-interface PaginationInfo {
-  current_page: number;
-  page_size: number;
-  total_items: number;
-  total_pages: number;
-  has_next: boolean;
-  has_prev: boolean;
-}
-/**
- * 
- * "current_page": 1,
-        "page_size": 10,
-        "total_items": 5,
-        "total_pages": 1,
-        "has_next": false,
-        "has_prev": false
- */
 
 interface FileListProps {
   files: FileItem[];

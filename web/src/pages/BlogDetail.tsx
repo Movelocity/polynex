@@ -1,27 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogService } from '@/services';
 import { Blog } from '@/types';
 import { MarkdownPreview } from '@/components/common/markdown-preview';
 import { Button } from '@/components/x-ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Badge } from '@/components/x-ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/x-ui/avatar';
-import { Separator } from '@/components/x-ui/separator';
+
 import { useTitle } from '@/hooks/usePageTitle';
 import { 
   ArrowLeft, 
   Calendar, 
   Eye, 
   Clock, 
-  User,
   Tag,
   BookOpen,
   Share2
 } from 'lucide-react';
-import { UserAvatar } from '@/components/common/user/UserAvatar';
 import { TOC } from '@/components/common/TOC';
-// Note: Highlight.js styles are included via CDN in index.html for better compatibility
 
 // Temporary formatDate function until we move it to a proper utils file
 const formatDate = (dateString: string): string => {
@@ -183,33 +178,27 @@ export function BlogDetail() {
         {/* 中间主内容区 */}
         <main className="flex-1 min-w-0">
           {/* 文章头部信息 */}
-          <header className="mb-8">
+          <header className="mb-4">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6 leading-tight">
               {blog.title}
             </h1>
             
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div className="flex items-center space-x-4">
-                {/* <UserAvatar 
-                  username={blog.authorName}
-                  size="lg"
-                /> */}
-                <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+              <div className="flex items-center ">
+                <div className="flex items-center text-sm text-muted-foreground">
                   <p className="font-medium text-foreground">{blog.authorName}</p>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {formatDate(blog.createTime)}
-                    {blog.updateTime !== blog.createTime && (
-                      <>
-                        <span className="mx-2">·</span>
-                        <Clock className="w-4 h-4 mr-1" />
-                        更新于 {formatDate(blog.updateTime)}
-                      </>
-                    )}
-                  </div>
+                  <span className="mx-2">·</span>
+                  <Calendar className="w-4 h-4 mr-1" />
+                  {formatDate(blog.createTime)}
+                  {blog.updateTime !== blog.createTime && (
+                    <>
+                      <span className="mx-2">·</span>
+                      <Clock className="w-4 h-4 mr-1" />
+                      更新于 {formatDate(blog.updateTime)}
+                    </>
+                  )}
                 </div>
               </div>
-              
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" onClick={handleShare}>
                   <Share2 className="w-4 h-4 mr-2" />
@@ -231,7 +220,7 @@ export function BlogDetail() {
           </header>
           
           {/* 文章内容 */}
-          <article className="prose prose-slate max-w-none">
+          <article className="prose prose-slate max-w-none mb-16">
             <MarkdownPreview content={blog.content} />
           </article>
         </main>

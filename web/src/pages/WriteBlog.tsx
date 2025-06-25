@@ -282,11 +282,11 @@ export function WriteBlog() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
         {/* Editor */}
         <div className="col-span-1 lg:col-span-3">
-          <Card className="border-0  backdrop-blur-sm shadow-xl">
+          <Card className="">
             <CardHeader>
               <input
                 id="title"

@@ -12,18 +12,11 @@ export function Tools() {
       color: 'from-theme-blue to-theme-cyan'
     },
     {
-      title: '图片裁剪 ver.2',
-      description: '上传图片并裁剪成所需尺寸，支持预设宽高比和自定义尺寸。换一种排版方式',
-      icon: Sparkles,
-      path: '/tools/advanced-image-cropper',
-      color: 'from-theme-indigo to-theme-purple'
-    },
-    {
       title: '图片OCR',
       description: '上传或粘贴图片进行文字识别，提取图片中的文本内容',
       icon: ScanText,
       path: '/tools/image-ocr',
-      color: 'from-theme-green to-theme-cyan'
+      color: 'from-theme-indigo to-theme-purple'
     },
     {
       title: 'JSON 格式化',
@@ -46,13 +39,13 @@ export function Tools() {
               path: '/chat/agents',
       color: 'from-theme-teal to-theme-green'
     },
-    {
-      title: '对话管理',
-      description: '管理AI对话历史，查看和整理您的聊天记录',
-      icon: MessageCircle,
-      path: '/chat/conversation-management',
-      color: 'from-theme-violet to-theme-purple'
-    }
+    // {
+    //   title: '对话管理',
+    //   description: '管理AI对话历史，查看和整理您的聊天记录',
+    //   icon: MessageCircle,
+    //   path: '/chat/conversation-management',
+    //   color: 'from-theme-violet to-theme-purple'
+    // }
   ];
 
   return (

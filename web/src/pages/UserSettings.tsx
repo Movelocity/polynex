@@ -26,10 +26,12 @@ export function UserSettings() {
   const [userFiles, setUserFiles] = useState<any[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [filePagination, setFilePagination] = useState({
-    page: 1,
+    current_page: 1,
     page_size: 10,
-    total: 0,
-    total_pages: 0
+    total_items: 0,
+    total_pages: 0,
+    has_next: false,
+    has_prev: false
   });
   
   // File upload state
@@ -86,7 +88,7 @@ export function UserSettings() {
   // 加载用户文件列表
   const loadUserFiles = async (page: number = 1, pageSize: number = 10) => {
     // 确保传递的是数字，防止对象传递
-    const validPage = typeof page === 'number' ? page : (filePagination.page || 1);
+    const validPage = typeof page === 'number' ? page : (filePagination.current_page || 1);
     const validPageSize = typeof pageSize === 'number' ? pageSize : (filePagination.page_size || 10);
     
     setLoadingFiles(true);
@@ -120,11 +122,11 @@ export function UserSettings() {
         
         // 计算删除后是否需要调整页面
         const remainingFilesOnCurrentPage = userFiles.length - 1;
-        let targetPage = filePagination.page;
+        let targetPage = filePagination.current_page;
         
         // 如果当前页没有文件了且不是第一页，跳转到上一页
-        if (remainingFilesOnCurrentPage === 0 && filePagination.page > 1) {
-          targetPage = filePagination.page - 1;
+        if (remainingFilesOnCurrentPage === 0 && filePagination.current_page > 1) {
+          targetPage = filePagination.current_page - 1;
         }
         
         // 刷新文件列表以确保分页信息正确
