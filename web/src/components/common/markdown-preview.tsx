@@ -138,17 +138,17 @@ export function MarkdownPreview({ content }: { content: string }) {
             );
           },
           ul: ({ children }) => (
-            <ul className="list-disc list-inside mb-4 space-y-2 text-muted-foreground">
+            <ul className="list-disc list-outside mb-4 ml-6 text-foreground">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside mb-4 space-y-2 text-muted-foreground">
+            <ol className="list-decimal list-outside mb-4 ml-6 text-foreground">
               {children}
             </ol>
           ),
           li: ({ children }) => (
-            <li className="text-foreground leading-relaxed">
+            <li className="mb-2 leading-relaxed">
               {children}
             </li>
           ),
