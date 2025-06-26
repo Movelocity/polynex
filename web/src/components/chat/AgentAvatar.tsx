@@ -5,14 +5,14 @@ import { fileService } from '@/services';
 interface AgentAvatarProps {
   avatar?: AvatarConfig;
   name: string;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'circle' | 'rounded-square';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'default' | 'circle' | 'square';
 }
 
 const variantClasses = {
   default: 'rounded-full',
   circle: 'rounded-full',
-  'rounded-square': 'rounded-lg'
+  square: 'rounded-lg'
 };
 
 // Agent头像组件
@@ -24,9 +24,10 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
   const sizeClasses = {
-    sm: 'w-8 h-8 text-sm',
-    md: 'w-12 h-12 text-lg', 
-    lg: 'w-16 h-16 text-xl'
+    sm: 'w-8 h-8 min-w-8 min-h-8 text-sm',
+    md: 'w-10 h-10 min-w-10 min-h-10 text-base', 
+    lg: 'w-12 h-12 min-w-12 min-h-12 text-lg',
+    xl: 'w-16 h-16 min-w-16 min-h-16 text-xl'
   };
 
   const defaultBgColor = 'bg-blue-500';

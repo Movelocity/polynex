@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
 import { Button } from '@/components/x-ui/button';
-import { MarkdownPreview } from '@/components/common/markdown-preview';
+import { MarkdownPreview } from '@/components/common/MarkdownPreview';
 import { ConversationHistorySidebar } from '@/components/chat/ConversationHistorySidebar';
 import { MessageEditDialog } from '@/components/chat/MessageEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversation } from '@/hooks/useConversation';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   Bot, 
   AlertCircle,
@@ -52,6 +53,7 @@ const LoadingMessage: React.FC<LoadingMessageProps> = ({ agentName }) => (
 export function Conversation() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   
   // 使用自定义hook管理聊天状态和逻辑
   const {
@@ -86,6 +88,55 @@ export function Conversation() {
 
   // 使用自动滚动hook
   const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse]);
+
+  // 处理侧边栏关闭（移动端点击遮罩关闭）
+  const handleSidebarClose = () => {
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  // 处理对话选择（移动端选择后自动关闭侧边栏）
+  const handleMobileConversationSelect = (conversationId: string) => {
+    handleConversationSelect(conversationId);
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  // 处理新建对话（移动端创建后自动关闭侧边栏）
+  const handleMobileNewConversation = () => {
+    handleNewConversation();
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  // 键盘事件处理（ESC键关闭侧边栏）
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isSidebarOpen, setIsSidebarOpen]);
+
+  // 防止移动端侧边栏打开时背景滚动
+  useEffect(() => {
+    if (isMobile && isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // 清理函数
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobile, isSidebarOpen]);
 
   if (!user) {
     return (
@@ -125,20 +176,36 @@ export function Conversation() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-65px)]">
+    <div className="flex h-[calc(100vh-65px)] relative">
+      {/* 移动端背景遮罩 */}
+      {isMobile && isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+          onClick={handleSidebarClose}
+        />
+      )}
+
       {/* 侧边栏 */}
-      {isSidebarOpen && (
-        <div className="w-80 flex-shrink-0">
+      {(isSidebarOpen || isMobile) && (
+        <div className={`
+          ${isMobile 
+            ? 'fixed top-[65px] left-0 bottom-0 z-50 w-[280px] sm:w-[320px] transform transition-transform duration-300 ease-in-out' 
+            : 'w-80 flex-shrink-0 relative'
+          }
+          ${isMobile && !isSidebarOpen ? '-translate-x-full' : 'translate-x-0'}
+          ${!isMobile && !isSidebarOpen ? 'hidden' : ''}
+        `}>
           <ConversationHistorySidebar
             currentConversationId={conversationId}
-            onConversationSelect={handleConversationSelect}
-            onNewConversation={handleNewConversation}
+            onConversationSelect={handleMobileConversationSelect}
+            onNewConversation={handleMobileNewConversation}
+            className={isMobile ? 'shadow-lg' : ''}
           />
         </div>
       )}
 
       {/* 主要内容区域 */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         {/* 头部 */}
         <div className="flex-shrink-0">
           <div className="flex items-center">
@@ -173,8 +240,8 @@ export function Conversation() {
             )}
             
             {/* 消息列表 */}
-            <div className="h-full py-4 pb-16">
-              <div className="space-y-4">
+            <div className="h-full py-16">
+              <div className="">
                 {messages.length === 0 && selectedAgent && !selectedAgent.app_preset?.greetings && (
                   <div className="text-center text-muted-foreground py-16">
                     <Bot className="h-16 w-16 mx-auto mb-4 opacity-50" />
@@ -188,6 +255,7 @@ export function Conversation() {
                     message={message}
                     index={index}
                     agentName={selectedAgent?.app_preset?.name}
+                    avatar={message.role === 'user' ? undefined : selectedAgent?.avatar}
                     onCopy={copyMessage}
                     onEdit={handleEditMessage}
                     copiedIndex={copiedIndex}

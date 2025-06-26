@@ -11,7 +11,7 @@ import {
   canEditAgent,
   isAgentOwner
 } from '@/utils/agentUtils';
-import { Plus, Edit,  Star, AlertCircle, Users, Lock, MessageCircle } from 'lucide-react';
+import { Plus, Edit,  Star, AlertCircle, Users, Lock, MessageCircle, FileUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
@@ -113,15 +113,15 @@ export function AgentManagement() {
       <div className="space-y-4">
         <div className="flex flex-row gap-4 flex-wrap">
           <Card className="w-[300px]">
-            <CardContent className="flex flex-col gap-4 py-4">
+            <CardContent className="flex flex-col justify-start gap-2 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
               <h3 className="text-lg font-medium text-foreground mb-2">创建应用</h3>
-              <Button onClick={handleCreateAgent} variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={handleCreateAgent} variant="outline" className="flex justify-start">
+                <Plus className="h-4 w-4 mr-1" />
                 创建 Agent
               </Button>
-              <Button onClick={()=>{}} variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={()=>{}} variant="outline" className="flex justify-start">
+                <FileUp className="h-4 w-4 mr-1" />
                 导入 Agent
               </Button>
             </CardContent>
@@ -135,7 +135,7 @@ export function AgentManagement() {
                     avatar={agent.avatar} 
                     name={formatAgentDisplayName(agent)}
                     size="md"
-                    variant="rounded-square"
+                    variant="square"
                   />
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-lg flex items-center space-x-2">

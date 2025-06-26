@@ -30,7 +30,7 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({ selected
         </Button>
         {selectedAgent && (
           <div className="flex items-center space-x-3">
-            <Bot className="h-6 w-6 text-theme-blue" />
+            {/* <Bot className="h-6 w-6 text-theme-blue" /> */}
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold text-foreground">{selectedAgent.app_preset.name}</span>
               <span className="text-sm text-muted-foreground">

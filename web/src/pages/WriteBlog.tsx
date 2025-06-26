@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TextareaAutosize from 'react-textarea-autosize';
-import { MarkdownPreview } from '@/components/common/markdown-preview';
+import { MarkdownPreview } from '@/components/common/MarkdownPreview';
 import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';

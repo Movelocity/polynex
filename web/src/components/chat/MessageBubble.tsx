@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/x-ui/button';
-import { MarkdownPreview } from '@/components/common/markdown-preview';
+import { MarkdownPreview } from '@/components/common/MarkdownPreview';
 import { ConversationMessage } from '@/types';
 import { 
   Bot, 
@@ -11,6 +11,8 @@ import {
 
 } from 'lucide-react';
 import cn from 'classnames';
+import { AvatarConfig } from '@/types';
+import { AgentAvatar } from './AgentAvatar';
 
 
 // 消息操作栏组件
@@ -63,6 +65,7 @@ interface MessageBubbleProps {
   message: ConversationMessage;
   index: number;
   agentName?: string;
+  avatar?: AvatarConfig;
   onCopy: (content: string, index: number) => void;
   onEdit: (message: ConversationMessage, index: number) => void;
   copiedIndex: number | null;
@@ -72,6 +75,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message, 
   index, 
   agentName, 
+  avatar,
   onCopy, 
   onEdit,
   copiedIndex 
@@ -82,29 +86,36 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       message.role === 'user' && 'flex-row-reverse space-x-reverse'
     )}>
       {/* 头像 */}
-      <div className={cn(
-        'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-        message.role === 'user' ? 'bg-theme-blue' : 'bg-gray-600'
-      )}>
-        {message.role === 'user' ? (
-          <User className="h-5 w-5 text-white" />
-        ) : (
-          <Bot className="h-5 w-5 text-white" />
-        )}
-      </div>
+      {avatar ? (
+        <AgentAvatar avatar={avatar} name={agentName} size="md" />
+      ) : (
+        <div className={cn(
+          'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+          message.role === 'user' ? 'bg-theme-blue' : 'bg-gray-600'
+        )}>
+          {message.role === 'user' ? (
+            <User className="h-5 w-5 text-white" />
+          ) : (
+            <Bot className="h-5 w-5 text-white" />
+          )}
+        </div>
+      )}
       
       {/* 消息内容 */}
       <div className={cn(
-        'flex flex-col group',
+        'flex flex-col group justify-start',
         message.role === 'user' ? 'items-end' : 'items-start'
       )}>
         {/* 名字和时间 */}
-        <div className={cn('mb-1', message.role === 'user' ? 'text-right' : 'text-left')}>
-          <span className="text-xs text-muted-foreground font-medium">
+        <div className={cn(
+          'mb-1 text-xs text-muted-foreground flex gap-2', 
+          message.role === 'user' ? 'text-right' : 'text-left'
+        )}>
+          <span>
             {message.role === 'user' ? '你' : agentName || 'Assistant'}
           </span>
           {message.timestamp && (
-            <span className="text-xs text-muted-foreground ml-2">
+            <span>
               {new Date(message.timestamp).toLocaleTimeString()}
             </span>
           )}
@@ -116,6 +127,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           message.role === 'user' 
             ? 'bg-theme-blue text-white' 
             : 'bg-muted/50 text-foreground border border-border'
+            // 'bg-[#f0f0f0] dark:bg-[#3a3f3f] text-[#212529] dark:text-[#dfe6e9] border border-border'
         )}>
           {message.role === 'assistant' ? (
             <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">

@@ -33,7 +33,7 @@ export function Tools() {
       color: 'from-theme-orange to-theme-red'
     },
     {
-      title: 'AI Agent管理',
+      title: 'AI Agent',
       description: '创建和管理智能AI Agent，配置个性化对话助手',
       icon: Bot,
               path: '/chat/agents',

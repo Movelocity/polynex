@@ -78,14 +78,11 @@ export const MessageEditDialog: React.FC<MessageEditDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>编辑消息</DialogTitle>
-          <DialogDescription>
-            修改{message?.role === 'user' ? '用户' : 'AI助手'}的消息内容
-          </DialogDescription>
+          <DialogTitle>修改{message?.role === 'user' ? '用户' : 'AI助手'}的消息内容</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4">
-          <div className="grid gap-2">
+          <div className="grid gap-2 relative">
             <Textarea
               id="message-content"
               value={content}
@@ -94,7 +91,7 @@ export const MessageEditDialog: React.FC<MessageEditDialogProps> = ({
               className="min-h-[250px] resize-none"
               maxLength={12800}
             />
-            <div className="text-xs text-muted-foreground text-right">
+            <div className="text-sm text-muted-foreground text-right absolute bottom-2 right-4">
               {content.length}/12800
             </div>
           </div>

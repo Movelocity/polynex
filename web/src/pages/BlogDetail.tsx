@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogService } from '@/services';
 import { Blog } from '@/types';
-import { MarkdownPreview } from '@/components/common/markdown-preview';
+import { MarkdownPreview } from '@/components/common/MarkdownPreview';
 import { Button } from '@/components/x-ui/button';
 import { Badge } from '@/components/x-ui/badge';
 

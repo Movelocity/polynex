@@ -1,8 +1,11 @@
 import React, { createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css'; // KaTeX CSS
 
 // 创建Context来跟踪是否在代码块内部
 const CodeBlockContext = createContext(false);
@@ -33,12 +36,39 @@ const extractText = (children: React.ReactNode): string => {
   return '';
 };
 
+// 预处理数学公式，支持更多LaTeX语法
+const preprocessMathContent = (content: string): string => {
+  if (!content) return content;
+  
+  // 将 \( ... \) 转换为 $ ... $
+  let processed = content.replace(/\\\((.*?)\\\)/gs, '$$$1$$');
+  
+  // 将 \[ ... \] 转换为 $$ ... $$
+  processed = processed.replace(/\\\[(.*?)\\\]/gs, '$$$1$$');
+  
+  return processed;
+};
+
 export function MarkdownPreview({ content }: { content: string }) {
+  // 预处理内容以支持更多数学语法
+  const processedContent = preprocessMathContent(content || '');
+  
   return (
     <div className="prose prose-slate max-w-none">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight, rehypeRaw]}
+        remarkPlugins={[
+          remarkGfm, 
+          remarkMath
+        ]}
+        rehypePlugins={[
+          rehypeHighlight, 
+          rehypeRaw, 
+          [rehypeKatex, {
+            strict: false,
+            throwOnError: false,
+            trust: true
+          }]
+        ]}
         components={{
           h1: ({ children }) => {
             const text = extractText(children);
@@ -121,7 +151,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             if (!isInCodeBlock) {
               // 内联代码样式 - 使用主题色
               return (
-                <code className="bg-gray-300/40 dark:bg-gray-400/40 text-foreground p-0.5 rounded font-mono">
+                <code className="bg-muted text-theme-blue font-semibold p-0.5 rounded font-mono">
                   {children}
                 </code>
               );
@@ -213,9 +243,13 @@ export function MarkdownPreview({ content }: { content: string }) {
               {children}
             </strong>
           ),
+          // 处理水平线
+          hr: () => (
+            <hr className="my-8 border-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+          ),
         }}
       >
-        {content || '文章内容将在这里显示...'}
+        {processedContent || '文章内容将在这里显示...'}
       </ReactMarkdown>
     </div>
   )
