@@ -61,7 +61,7 @@ export function AgentManagement() {
   };
 
   const handleStartConversation = (agent: any) => {
-    navigate(`/chat/conversation?agent=${agent.agent_id}`);
+    navigate(`/chat/conversation#agent=${agent.agent_id}`);
   };
 
   if (!user) {

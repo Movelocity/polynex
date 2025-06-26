@@ -86,6 +86,7 @@ export function Conversation() {
     handleSuggestedQuestion,
     hasOnlyWelcome,
     shouldShowSuggestedQuestions,
+    setAgentHash,
   } = useConversation();
 
   // 使用Agent管理hook
@@ -94,6 +95,18 @@ export function Conversation() {
   // 使用自动滚动hook
   const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse]);
 
+  // 自动选择可用的agent（当hash中没有agent参数时）
+  useEffect(() => {
+    if (!agentId && !isLoadingAgents && agents.length > 0 && !selectedAgent) {
+      // 优先选择默认agent，否则选择第一个可用的agent
+      const targetAgent = agents.find(agent => agent.is_default) || agents[0];
+      if (targetAgent) {
+        // 使用hash设置agent参数
+        setAgentHash(targetAgent.agent_id);
+      }
+    }
+  }, [agentId, isLoadingAgents, agents, selectedAgent, setAgentHash]);
+
   // Agent切换处理函数
   const handleAgentSwitch = async (newAgentId: string) => {
     if (newAgentId === selectedAgent?.agent_id) {
@@ -101,13 +114,8 @@ export function Conversation() {
     }
 
     try {
-      // 更新URL参数
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('agent', newAgentId);
-      window.history.pushState({}, '', newUrl);
-
-      // 加载新的Agent
-      await loadAgent(newAgentId);
+      // 使用hash设置agent参数
+      setAgentHash(newAgentId);
       
       // 重置对话状态
       handleNewConversation();
@@ -236,8 +244,6 @@ export function Conversation() {
         {/* 头部 */}
         <div className="flex-shrink-0">
           <div className="flex items-center">
-            
-            
             <div className="flex-1">
               <ConversationHeader 
                 isSidebarOpen={isSidebarOpen}

@@ -1,10 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { conversationService } from '@/services';
 import { ConversationMessage } from '@/types';
 import { toast } from '@/hooks/use-toast';
+
+// Hash参数工具函数
+const getHashParams = () => {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  return params;
+};
+
+const setHashParams = (params: Record<string, string>) => {
+  const hashParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      hashParams.set(key, value);
+    }
+  });
+  window.location.hash = hashParams.toString();
+};
+
+// 导出hash操作函数供外部使用
+export { setHashParams };
 
 export interface UseConversationReturn {
   // 状态
@@ -36,6 +55,7 @@ export interface UseConversationReturn {
   handleSendMessage: () => Promise<void>;
   handleKeyPress: (e: React.KeyboardEvent) => void;
   handleSuggestedQuestion: (question: string) => void;
+  setAgentHash: (agentId: string) => void;
   
   // 计算属性
   hasOnlyWelcome: boolean;
@@ -43,7 +63,6 @@ export interface UseConversationReturn {
 }
 
 export function useConversation(): UseConversationReturn {
-  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { agents, getAgent } = useAgents();
   
@@ -60,9 +79,29 @@ export function useConversation(): UseConversationReturn {
   const [editingMessageIndex, setEditingMessageIndex] = useState<number>(-1);
   const [currentAIResponse, setCurrentAIResponse] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [agentId, setAgentId] = useState<string | null>(null);
   
   const currentAIResponseRef = useRef('');
-  const agentId = searchParams.get('agent');
+
+  // 从hash中读取agent参数
+  useEffect(() => {
+    const updateAgentFromHash = () => {
+      const hashParams = getHashParams();
+      const hashAgentId = hashParams.get('agent');
+      setAgentId(hashAgentId);
+    };
+
+    // 初始化时读取hash
+    updateAgentFromHash();
+
+    // 监听hash变化
+    const handleHashChange = () => {
+      updateAgentFromHash();
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // 同步当前AI响应到ref
   useEffect(() => {
@@ -391,6 +430,10 @@ export function useConversation(): UseConversationReturn {
   const shouldShowSuggestedQuestions = selectedAgent?.app_preset?.suggested_questions && 
                                       (messages.length === 0 || hasOnlyWelcome);
 
+  const setAgentHash = (agentId: string) => {
+    setHashParams({ agent: agentId });
+  };
+
   return {
     // 状态
     selectedAgent,
@@ -421,6 +464,7 @@ export function useConversation(): UseConversationReturn {
     handleSendMessage,
     handleKeyPress,
     handleSuggestedQuestion,
+    setAgentHash,
     
     // 计算属性
     hasOnlyWelcome,
