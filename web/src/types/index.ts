@@ -118,8 +118,7 @@ export enum AIProviderType {
 
 // 代理配置
 export interface ProxyConfig {
-  host?: string;
-  port?: number;
+  url?: string;  // 代理URL，包含协议+IP/域名+端口，如: http://127.0.0.1:7890
   username?: string;
   password?: string;
 }

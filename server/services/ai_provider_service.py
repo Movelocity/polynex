@@ -145,9 +145,7 @@ class AIProviderService:
         Returns:
             List[AIProviderConfig]: 配置列表
         """
-        return self.db.query(AIProviderConfig).filter(
-            AIProviderConfig.is_active == True
-        ).order_by(
+        return self.db.query(AIProviderConfig).order_by(
             AIProviderConfig.is_default.desc(),
             AIProviderConfig.priority.desc(),
             AIProviderConfig.create_time.asc()

@@ -20,8 +20,7 @@ router = APIRouter(prefix="/api/ai", tags=["AI供应商管理"])
 # Pydantic 模型
 class ProxyConfig(BaseModel):
     """代理配置模型"""
-    host: Optional[str] = None
-    port: Optional[int] = None
+    url: Optional[str] = None  # 代理URL，包含协议+IP/域名+端口，如: http://127.0.0.1:7890
     username: Optional[str] = None
     password: Optional[str] = None
 

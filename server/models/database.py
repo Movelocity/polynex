@@ -151,7 +151,7 @@ class AIProviderConfig(Base):
     provider_type = Column(SQLEnum(AIProviderType), nullable=False)  # 供应商技术类型
     base_url = Column(String(500), nullable=False)  # API基础URL
     api_key = Column(String(500), nullable=False)  # API密钥（应该加密存储）
-    proxy = Column(UnicodeJSON, nullable=True)  # 代理配置 {"host": "127.0.0.1", "port": 7890, "username": "", "password": ""}
+    proxy = Column(UnicodeJSON, nullable=True)  # 代理配置 {"url": "http://127.0.0.1:7890", "username": "", "password": ""}
     models = Column(UnicodeJSON, nullable=False, default=list)  # 支持的模型列表
     default_model = Column(String(100), nullable=True)  # 默认模型
     default_temperature = Column(Float, nullable=True, default=0.7)  # 默认温度
