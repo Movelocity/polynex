@@ -160,17 +160,17 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
                   {/* 主要内容 */}
                   <div className="flex items-start space-x-3">
                     {/* 图标 */}
-                    <div className="flex-shrink-0 mt-0.5">
+                    {/* <div className="flex-shrink-0 mt-0.5">
                       <div className="w-8 h-8 rounded-lg bg-theme-blue/10 flex items-center justify-center">
                         <Bot className="h-4 w-4 text-theme-blue" />
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* 内容 */}
                     <div className="flex-1 min-w-0">
                       {/* 标题 */}
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-foreground truncate pr-2 max-w-[200px]" title={conversation.title || '未命名对话'}>
+                        <span className="text-sm font-medium text-foreground truncate pr-2 max-w-[240px]" title={conversation.title || '未命名对话'}>
                           {conversation.title || '未命名对话'}
                         </span>
                         {currentConversationId === conversation.id && (

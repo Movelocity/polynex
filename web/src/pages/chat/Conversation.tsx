@@ -8,6 +8,7 @@ import { ConversationHistorySidebar } from '@/components/chat/ConversationHistor
 import { MessageEditDialog } from '@/components/chat/MessageEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversation } from '@/hooks/useConversation';
+import { useAgents } from '@/hooks/useAgents';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { 
@@ -74,6 +75,7 @@ export function Conversation() {
     setIsSidebarOpen,
     setEditingMessage,
     setEditingMessageIndex,
+    loadAgent,
     copyMessage,
     handleEditMessage,
     handleSaveEditedMessage,
@@ -86,8 +88,33 @@ export function Conversation() {
     shouldShowSuggestedQuestions,
   } = useConversation();
 
+  // 使用Agent管理hook
+  const { agents, loading: isLoadingAgents } = useAgents();
+
   // 使用自动滚动hook
   const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse]);
+
+  // Agent切换处理函数
+  const handleAgentSwitch = async (newAgentId: string) => {
+    if (newAgentId === selectedAgent?.agent_id) {
+      return; // 如果选择的是当前Agent，不做任何操作
+    }
+
+    try {
+      // 更新URL参数
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('agent', newAgentId);
+      window.history.pushState({}, '', newUrl);
+
+      // 加载新的Agent
+      await loadAgent(newAgentId);
+      
+      // 重置对话状态
+      handleNewConversation();
+    } catch (error) {
+      console.error('切换Agent失败:', error);
+    }
+  };
 
   // 处理侧边栏关闭（移动端点击遮罩关闭）
   const handleSidebarClose = () => {
@@ -217,6 +244,9 @@ export function Conversation() {
                 setIsSidebarOpen={setIsSidebarOpen}
                 selectedAgent={selectedAgent}
                 onBack={() => navigate('/chat/agents')}
+                availableAgents={agents}
+                onAgentSwitch={handleAgentSwitch}
+                isLoadingAgents={isLoadingAgents}
               />
             </div>
           </div>
