@@ -449,3 +449,30 @@ class PaginatedResponse(BaseModel):
     items: List[Any]
     pagination: PaginationInfo
 
+
+# ===== 搜索相关模型 =====
+
+class SearchRequest(BaseModel):
+    """搜索请求模型"""
+    query: str
+    limit: int = 20
+    offset: int = 0
+
+
+class ConversationSearchResult(BaseModel):
+    """对话搜索结果模型"""
+    id: str
+    session_id: str
+    title: str
+    match_count: int  # 匹配次数
+    context: str  # 首次匹配附近的120个字符
+    create_time: str
+    update_time: str
+
+
+class SearchResponse(BaseModel):
+    """搜索响应模型"""
+    results: List[ConversationSearchResult]
+    total_count: int
+    query: str
+

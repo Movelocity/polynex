@@ -337,6 +337,33 @@ export interface ChatResponse {
   message_id?: string;
 }
 
+// ===== 搜索相关类型 =====
+
+// 搜索请求参数
+export interface SearchRequest {
+  query: string;
+  limit?: number;
+  offset?: number;
+}
+
+// 对话搜索结果
+export interface ConversationSearchResult {
+  id: string;
+  session_id: string;
+  title: string;
+  match_count: number;
+  context: string;
+  create_time: string;
+  update_time: string;
+}
+
+// 搜索响应
+export interface SearchResponse {
+  results: ConversationSearchResult[];
+  total_count: number;
+  query: string;
+}
+
 // ===== API响应通用类型 =====
 
 // 通用API响应

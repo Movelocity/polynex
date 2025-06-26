@@ -6,7 +6,9 @@ import {
   ChatRequest,
   ChatResponse,
   PaginationParams,
-  ConversationMessage
+  ConversationMessage,
+  SearchRequest,
+  SearchResponse
 } from '@/types';
 
 /**
@@ -293,6 +295,31 @@ export class ConversationApiService implements IConversationService {
       if (error instanceof ApiError && error.status === 404) {
         return false;
       }
+      throw error;
+    }
+  }
+
+  /**
+   * 搜索用户的对话
+   * 需要用户权限
+   * @param request 搜索请求参数
+   */
+  async searchConversations(request: SearchRequest): Promise<SearchResponse> {
+    try {
+      const queryParams: Record<string, string> = {
+        query: request.query
+      };
+      
+      if (request.limit !== undefined) {
+        queryParams.limit = request.limit.toString();
+      }
+      if (request.offset !== undefined) {
+        queryParams.offset = request.offset.toString();
+      }
+
+      return await this.apiClient.get<SearchResponse>('/conversations/search/conversations', queryParams);
+    } catch (error) {
+      console.error('Failed to search conversations:', error);
       throw error;
     }
   }

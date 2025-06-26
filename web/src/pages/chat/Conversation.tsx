@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
 import { Button } from '@/components/x-ui/button';
 import { MarkdownPreview } from '@/components/common/MarkdownPreview';
-import { ConversationHistorySidebar } from '@/components/chat/ConversationHistorySidebar';
+import { ChatHistoryPanel } from '@/components/chat/ChatHistoryPanel';
 import { MessageEditDialog } from '@/components/chat/MessageEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversation } from '@/hooks/useConversation';
@@ -222,7 +222,7 @@ export function Conversation() {
           ${isMobile && !isSidebarOpen ? '-translate-x-full' : 'translate-x-0'}
           ${!isMobile && !isSidebarOpen ? 'hidden' : ''}
         `}>
-          <ConversationHistorySidebar
+          <ChatHistoryPanel
             currentConversationId={conversationId}
             onConversationSelect={handleMobileConversationSelect}
             onNewConversation={handleMobileNewConversation}

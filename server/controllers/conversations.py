@@ -7,7 +7,10 @@ import json
 import logging
 
 from models.database import get_db
-from fields.schemas import ConversationSummary, ConversationDetail, ChatRequest, Message, ConversationContextUpdate
+from fields.schemas import (
+    ConversationSummary, ConversationDetail, ChatRequest, Message, 
+    ConversationContextUpdate, SearchRequest, SearchResponse, ConversationSearchResult
+)
 from services.conversation_service import ConversationService
 from libs.auth import get_current_user_id
 
@@ -129,6 +132,57 @@ async def get_conversations(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get conversations: {str(e)}"
+        )
+
+
+@router.get("/search/conversations", response_model=SearchResponse)
+async def search_conversations(
+    query: str,
+    limit: int = 20,
+    offset: int = 0,
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """搜索用户的对话"""
+    try:
+        if not query or not query.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Search query cannot be empty"
+            )
+        
+        # 限制查询长度，防止过长的搜索词
+        if len(query) > 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Search query too long (max 100 characters)"
+            )
+        
+        result = await conversation_service.search_conversations(
+            user_id=current_user_id,
+            query=query.strip(),
+            db=db,
+            limit=limit,
+            offset=offset
+        )
+        
+        search_results = [
+            ConversationSearchResult(**item) for item in result['results']
+        ]
+        
+        return SearchResponse(
+            results=search_results,
+            total_count=result['total_count'],
+            query=result['query']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching conversations: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to search conversations: {str(e)}"
         )
 
 

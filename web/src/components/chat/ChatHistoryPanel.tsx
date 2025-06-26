@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Button } from '@/components/x-ui/button';
-import { Badge } from '@/components/x-ui/badge';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
-import { Separator } from '@/components/x-ui/separator';
 import { conversationService } from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { Conversation } from '@/types';
+import { ChatSearchDialog } from './ChatSearchDialog';
 import { 
   MessageCircle, 
   Trash2, 
@@ -15,19 +13,20 @@ import {
   MessageSquare,
   Bot,
   ChevronRight,
-  Plus
+  Plus,
+  Search
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import cn from 'classnames';
 
-interface ConversationHistorySidebarProps {
+interface ChatHistoryPanelProps {
   currentConversationId?: string | null;
   onConversationSelect?: (conversationId: string) => void;
   onNewConversation?: () => void;
   className?: string;
 }
 
-export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProps> = ({
+export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
   currentConversationId,
   onConversationSelect,
   onNewConversation,
@@ -37,6 +36,7 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
   const { agents } = useAgents();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
   // 加载对话列表
   const loadConversations = async () => {
@@ -61,6 +61,21 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
   useEffect(() => {
     loadConversations();
   }, [user]);
+
+  // 添加快捷键支持 (Ctrl+F 打开搜索)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'f') {
+        event.preventDefault();
+        setSearchDialogOpen(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   // 删除对话
   const handleDeleteConversation = async (conversationId: string, event: React.MouseEvent) => {
@@ -120,16 +135,31 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
             </span>
           </div>
 
-          {onNewConversation && (
+          <div className="flex items-center space-x-2">
+            {/* 搜索按钮 */}
             <Button
               variant="outline"
               size="sm"
-              onClick={onNewConversation}
+              onClick={() => setSearchDialogOpen(true)}
               className="h-8 w-8 p-0"
+              title="搜索对话历史"
             >
-              <Plus className="h-4 w-4" />
+              <Search className="h-4 w-4" />
             </Button>
-          )}
+
+            {/* 新建对话按钮 */}
+            {onNewConversation && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onNewConversation}
+                className="h-8 w-8 p-0"
+                title="新建对话"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         
       </div>
@@ -213,6 +243,13 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
           )}
         </div>
       </ScrollArea>
+
+      {/* 搜索对话框 */}
+      <ChatSearchDialog
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+        onConversationSelect={onConversationSelect}
+      />
     </div>
   );
 }; 

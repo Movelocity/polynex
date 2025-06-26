@@ -4,7 +4,9 @@ import {
   ChatRequest,
   ChatResponse,
   PaginationParams,
-  ConversationMessage
+  ConversationMessage,
+  SearchRequest,
+  SearchResponse
 } from '@/types';
 
 /**
@@ -96,4 +98,11 @@ export interface IConversationService {
    * @param conversationId 对话ID
    */
   deleteConversation(conversationId: string): Promise<boolean>;
+
+  /**
+   * 搜索用户的对话
+   * 需要用户权限
+   * @param request 搜索请求参数
+   */
+  searchConversations(request: SearchRequest): Promise<SearchResponse>;
 } 
