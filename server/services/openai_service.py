@@ -2,6 +2,7 @@ import os
 import asyncio
 from typing import AsyncGenerator, List, Dict, Any, Optional
 from openai import AsyncOpenAI
+import httpx
 import json
 import logging
 from datetime import datetime
@@ -53,13 +54,87 @@ class OpenAIService:
         if not self.config.api_key:
             raise ValueError(f"OpenAI API key is required in configuration: {self.config.name}")
         
+        # 处理代理配置
+        http_client = None
+        if self.config.proxy:
+            try:
+                http_client = self._create_proxy_client(self.config.proxy)
+                logger.info(f"Using proxy configuration for {self.config.name}: {self.config.proxy.get('url', 'Unknown')}")
+                
+                # 测试代理连接（可选，在初始化时进行简单测试）
+                # 注意：这里不进行实际测试，因为会阻塞初始化过程
+                # 代理的有效性会在实际使用时检测
+                
+            except Exception as e:
+                error_msg = f"Failed to configure proxy for {self.config.name}: {str(e)}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+        
         # 初始化OpenAI客户端
         self.client = AsyncOpenAI(
             api_key=self.config.api_key,
-            base_url=self.config.base_url
+            base_url=self.config.base_url,
+            http_client=http_client
         )
         
         logger.info(f"Initialized OpenAI service with config: {self.config.name}")
+    
+    def _create_proxy_client(self, proxy_config: Dict[str, Any]) -> httpx.AsyncClient:
+        """
+        创建带有代理配置的httpx客户端
+        
+        Args:
+            proxy_config: 代理配置字典，包含url, username, password
+            
+        Returns:
+            httpx.AsyncClient: 配置了代理的httpx客户端
+            
+        Raises:
+            ValueError: 代理配置无效时抛出
+        """
+        try:
+            proxy_url = proxy_config.get('url')
+            if not proxy_url:
+                raise ValueError("Proxy URL is required")
+            
+            username = proxy_config.get('username')
+            password = proxy_config.get('password')
+            
+            # 构建代理配置
+            if username and password:
+                # 如果有用户名和密码，需要在URL中包含认证信息
+                from urllib.parse import urlparse, urlunparse
+                parsed = urlparse(proxy_url)
+                
+                # 重构URL以包含认证信息
+                netloc = f"{username}:{password}@{parsed.hostname}"
+                if parsed.port:
+                    netloc += f":{parsed.port}"
+                
+                proxy_url_with_auth = urlunparse((
+                    parsed.scheme,
+                    netloc,
+                    parsed.path,
+                    parsed.params,
+                    parsed.query,
+                    parsed.fragment
+                ))
+                proxies = proxy_url_with_auth
+            else:
+                proxies = proxy_url
+            
+            # 创建httpx客户端
+            client = httpx.AsyncClient(
+                proxies=proxies,
+                timeout=httpx.Timeout(30.0),  # 30秒超时
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            )
+            
+            logger.debug(f"Created proxy client with URL: {proxy_url}")
+            return client
+            
+        except Exception as e:
+            raise ValueError(f"Invalid proxy configuration: {str(e)}")
     
     def get_effective_model(self, model: str = None) -> str:
         """获取有效的模型名称"""
@@ -379,6 +454,56 @@ class OpenAIService:
             "is_default": self.config.is_default,
             "priority": self.config.priority
         }
+    
+    async def test_proxy_connection(self) -> bool:
+        """
+        测试代理连接是否有效
+        
+        Returns:
+            bool: 代理连接是否有效
+        """
+        if not self.config.proxy:
+            return True  # 没有配置代理，认为是有效的
+        
+        try:
+            # 创建测试客户端
+            test_client = self._create_proxy_client(self.config.proxy)
+            
+            # 尝试通过代理进行一个简单的HTTP请求
+            # 这里测试连接到一个公共的测试URL
+            test_url = "https://httpbin.org/ip"
+            
+            async with test_client:
+                response = await test_client.get(test_url, timeout=10.0)
+                if response.status_code == 200:
+                    logger.info(f"Proxy connection test successful for {self.config.name}")
+                    return True
+                else:
+                    logger.warning(f"Proxy connection test failed for {self.config.name}: HTTP {response.status_code}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Proxy connection test failed for {self.config.name}: {str(e)}")
+            return False
+    
+    async def close(self):
+        """
+        关闭OpenAI客户端和相关资源
+        """
+        try:
+            if hasattr(self.client, '_client') and self.client._client:
+                await self.client._client.aclose()
+                logger.debug(f"Closed OpenAI client for {self.config.name}")
+        except Exception as e:
+            logger.warning(f"Error closing OpenAI client for {self.config.name}: {str(e)}")
+    
+    async def __aenter__(self):
+        """异步上下文管理器入口"""
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """异步上下文管理器出口"""
+        await self.close()
 
 
 # 服务工厂函数

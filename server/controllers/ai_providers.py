@@ -363,27 +363,50 @@ async def test_provider(
         
         # 目前只支持OpenAI兼容的API测试
         if provider.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
-            openai_service = OpenAIService(provider_config=provider, db=db)
-            
-            # 使用指定的模型或默认模型
-            model = test_request.model or provider.default_model
-            if not model:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No model specified and no default model configured"
-                )
-            
-            response = await openai_service.chat_completion(
-                messages=[{"role": "user", "content": test_request.message}],
-                model=model,
-                stream=False
-            )
-            
-            return {
-                "success": True,
-                "message": "Provider test successful",
-                "response": response
-            }
+            try:
+                async with OpenAIService(provider_config=provider, db=db) as openai_service:
+                    # 首先测试代理连接（如果配置了代理）
+                    if provider.proxy:
+                        logger.info(f"Testing proxy connection for provider {provider.name}")
+                        proxy_test_success = await openai_service.test_proxy_connection()
+                        if not proxy_test_success:
+                            return {
+                                "success": False,
+                                "message": "Proxy connection test failed. Please check your proxy configuration.",
+                                "response": None
+                            }
+                        logger.info(f"Proxy connection test passed for provider {provider.name}")
+                    
+                    # 使用指定的模型或默认模型
+                    model = test_request.model or provider.default_model
+                    if not model:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="No model specified and no default model configured"
+                        )
+                    
+                    response = await openai_service.chat_completion(
+                        messages=[{"role": "user", "content": test_request.message}],
+                        model=model,
+                        stream=False
+                    )
+                    
+                    return {
+                        "success": True,
+                        "message": "Provider test successful" + (" (with proxy)" if provider.proxy else ""),
+                        "response": response
+                    }
+            except Exception as e:
+                # 检查是否是代理相关的错误
+                error_message = str(e).lower()
+                if any(keyword in error_message for keyword in ['proxy', 'connection', 'tunnel', 'socks']):
+                    return {
+                        "success": False,
+                        "message": f"Proxy connection failed: {str(e)}",
+                        "response": None
+                    }
+                else:
+                    raise
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
