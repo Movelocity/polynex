@@ -5,13 +5,13 @@ from datetime import datetime
 import os
 import uuid
 import shutil
-import asyncio
-from typing import Optional, List, Dict, Any
+from typing import List
 from sqlalchemy.orm import Session
 import mimetypes
 
 from fields.schemas import UserResponse, FileInfo, PaginatedResponse
-from core import FileService, UserService
+from core import UserService
+from services import FileService
 from models.database import get_db
 from libs.auth import get_current_user_id
 

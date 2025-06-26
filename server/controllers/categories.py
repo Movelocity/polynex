@@ -7,7 +7,7 @@ from fields import (
     BatchCategoriesRequest
 )
 from models.database import get_db
-from core import CategoryService
+from services import CategoryService
 from libs.auth import get_current_user_id
 
 router = APIRouter(prefix="/api/categories", tags=["分类管理"])

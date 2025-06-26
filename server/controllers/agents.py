@@ -1,11 +1,9 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from typing import List
 from sqlalchemy.orm import Session
 import logging
 
 from models.database import get_db
-from core import UserService
 from fields.schemas import AgentSummary, AgentDetail, AgentCreate, AgentUpdate
 from services.conversation_service import ConversationService
 from libs.auth import get_current_user_id

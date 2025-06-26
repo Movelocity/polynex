@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import Optional
 from datetime import timedelta
 from sqlalchemy.orm import Session
 

@@ -1,13 +1,12 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import StreamingResponse
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import json
 import logging
 
 from models.database import get_db
-from core import UserService
 from fields.schemas import ConversationSummary, ConversationDetail, ChatRequest, Message, ConversationContextUpdate
 from services.conversation_service import ConversationService
 from libs.auth import get_current_user_id

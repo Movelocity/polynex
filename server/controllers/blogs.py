@@ -7,7 +7,7 @@ from fields import (
     BatchBlogsRequest
 )
 from models.database import get_db
-from core import BlogService
+from services import BlogService
 from libs.auth import get_current_user_id
 
 router = APIRouter(prefix="/api/blogs", tags=["博客管理"])
