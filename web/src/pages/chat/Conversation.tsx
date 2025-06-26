@@ -36,7 +36,7 @@ const LoadingMessage: React.FC<LoadingMessageProps> = ({ agentName }) => (
             {agentName || 'Assistant'}
           </span>
         </div>
-        <div className="bg-gray-100 border rounded-lg px-4 py-3">
+        <div className="bg-muted rounded-lg px-4 py-3">
           <div className="flex space-x-1">
             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -222,9 +222,9 @@ export function Conversation() {
                   </div>
                 )}
                 
-                {isLoading && !isStreaming && (
+                {/* {isLoading && !isStreaming && (
                   <LoadingMessage agentName={selectedAgent?.app_preset?.name} />
-                )}
+                )} */}
                 
                 <div ref={endRef} />
               </div>

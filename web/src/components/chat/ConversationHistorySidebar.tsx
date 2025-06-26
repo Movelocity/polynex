@@ -170,9 +170,9 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
                     <div className="flex-1 min-w-0">
                       {/* 标题 */}
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-sm font-medium text-foreground truncate pr-2">
+                        <span className="text-sm font-medium text-foreground truncate pr-2 max-w-[200px]" title={conversation.title || '未命名对话'}>
                           {conversation.title || '未命名对话'}
-                        </h3>
+                        </span>
                         {currentConversationId === conversation.id && (
                           <ChevronRight className="h-3 w-3 text-theme-blue flex-shrink-0" />
                         )}
@@ -186,7 +186,7 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
                           </span>
                           <span className="flex items-center space-x-1 flex-shrink-0">
                             <MessageSquare className="h-3 w-3" />
-                            <span>{conversation.messages?.length || 0}</span>
+                            <span>{conversation.message_count || 0}</span>
                           </span>
                         </span>
                         {/* 时间 */}

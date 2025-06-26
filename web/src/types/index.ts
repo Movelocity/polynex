@@ -309,7 +309,8 @@ export interface Conversation {
   user_id: string;
   agent_id?: string;
   title: string;
-  messages: ConversationMessage[];
+  messages?: ConversationMessage[];  // for /api/conversations/[id]
+  message_count?: number;  // for /api/conversations
   status: ConversationStatus;
   create_time: string;
   update_time: string;
