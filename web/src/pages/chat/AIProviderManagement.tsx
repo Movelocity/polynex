@@ -1,27 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Button } from '@/components/x-ui/button';
-import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Badge } from '@/components/x-ui/badge';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/x-ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
-import { Textarea } from '@/components/x-ui/textarea';
+
 import { useAIProviders } from '@/hooks/useAIProviders';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  AIProviderType, 
   AIProviderConfigCreate, 
   AIProviderConfigUpdate,
-  TestProviderRequest 
+  TestProviderRequest
 } from '@/types';
 import { 
   getProviderTypeDisplayName,
   getProviderTypeIcon,
   formatProviderDisplayName,
-  getProviderStatusText,
-  validateProviderConfig 
+  getProviderStatusText
 } from '@/utils/aiProviderUtils';
 import { 
   Plus, 
@@ -34,20 +29,11 @@ import {
   Settings,
   AlertCircle,
   CheckCircle,
-  XCircle 
+  XCircle,
+  Globe
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-
-interface ProviderFormData {
-  name: string;
-  provider_type: AIProviderType;
-  base_url: string;
-  api_key: string;
-  models: string[];
-  default_model: string;
-  proxy_config?: any;
-  is_active: boolean;
-}
+import { AIProviderDialog } from '@/components/chat/AIProviderDialog';
 
 export function AIProviderManagement() {
   const { user } = useAuth();
@@ -67,20 +53,9 @@ export function AIProviderManagement() {
   } = useAIProviders();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<string | null>(null);
+  const [editingProvider, setEditingProvider] = useState<any>(null);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
-  const [formData, setFormData] = useState<ProviderFormData>({
-    name: '',
-    provider_type: AIProviderType.OPENAI,
-    base_url: '',
-    api_key: '',
-    models: [],
-    default_model: '',
-    is_active: true
-  });
-  const [formErrors, setFormErrors] = useState<string[]>([]);
-  const [modelsInput, setModelsInput] = useState('');
 
   // 检查用户权限
   const isAdmin = user?.role === 'admin';
@@ -95,69 +70,29 @@ export function AIProviderManagement() {
     }
   }, [error]);
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      provider_type: AIProviderType.OPENAI,
-      base_url: '',
-      api_key: '',
-      models: [],
-      default_model: '',
-      is_active: true
-    });
-    setModelsInput('');
-    setFormErrors([]);
-  };
-
-  const handleCreateProvider = async () => {
-    // 处理模型列表
-    const models = modelsInput.split(',').map(m => m.trim()).filter(m => m);
-    const providerData: AIProviderConfigCreate = {
-      ...formData,
-      models
-    };
-
-    // 验证数据
-    const errors = validateProviderConfig(providerData);
-    if (errors.length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    const success = await createProvider(providerData);
+  const handleCreateProvider = async (data: AIProviderConfigCreate) => {
+    const success = await createProvider(data);
     if (success) {
-      setShowCreateDialog(false);
-      resetForm();
       toast({
         title: "成功",
         description: "AI供应商创建成功",
       });
     }
+    return success;
   };
 
-  const handleUpdateProvider = async (providerId: string) => {
-    const models = modelsInput.split(',').map(m => m.trim()).filter(m => m);
-    const updateData: AIProviderConfigUpdate = {
-      ...formData,
-      models
-    };
-
-    // 验证数据
-    const errors = validateProviderConfig(updateData);
-    if (errors.length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    const success = await updateProvider(providerId, updateData);
+  const handleUpdateProvider = async (data: AIProviderConfigUpdate) => {
+    if (!editingProvider?.id) return false;
+    
+    const success = await updateProvider(editingProvider.id, data);
     if (success) {
       setEditingProvider(null);
-      resetForm();
       toast({
         title: "成功",
         description: "AI供应商更新成功",
       });
     }
+    return success;
   };
 
   const handleDeleteProvider = async (providerId: string) => {
@@ -208,17 +143,7 @@ export function AIProviderManagement() {
   };
 
   const startEdit = (provider: any) => {
-    setFormData({
-      name: provider.name,
-      provider_type: provider.provider_type,
-      base_url: provider.base_url,
-      api_key: provider.api_key,
-      models: provider.models,
-      default_model: provider.default_model,
-      is_active: provider.is_active
-    });
-    setModelsInput(provider.models.join(', '));
-    setEditingProvider(provider.id);
+    setEditingProvider(provider);
   };
 
   const toggleApiKeyVisibility = (providerId: string) => {
@@ -291,134 +216,10 @@ export function AIProviderManagement() {
             <CardTitle className="text-sm font-medium">操作</CardTitle>
           </CardHeader>
           <CardContent>
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button onClick={resetForm}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  新增供应商
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>创建AI供应商</DialogTitle>
-                  <DialogDescription>
-                    添加新的AI服务供应商配置
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {formErrors.length > 0 && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        <ul className="list-disc list-inside">
-                          {formErrors.map((error, index) => (
-                            <li key={index}>{error}</li>
-                          ))}
-                        </ul>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="name">供应商名称</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="例如：OpenAI主配置"
-                    />
-                  </div>
-
-
-
-                  <div className="space-y-2">
-                    <Label htmlFor="provider_type">供应商类型</Label>
-                    <Select
-                      value={formData.provider_type}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, provider_type: value as AIProviderType }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.values(AIProviderType).map(type => (
-                          <SelectItem key={type} value={type}>
-                            {getProviderTypeDisplayName(type)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="base_url">API基础URL</Label>
-                    <Input
-                      id="base_url"
-                      value={formData.base_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, base_url: e.target.value }))}
-                      placeholder="例如：https://api.openai.com/v1"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="api_key">API密钥</Label>
-                    <Input
-                      id="api_key"
-                      type="password"
-                      value={formData.api_key}
-                      onChange={(e) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
-                      placeholder="输入API密钥"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="models">支持的模型</Label>
-                    <Textarea
-                      id="models"
-                      value={modelsInput}
-                      onChange={(e) => setModelsInput(e.target.value)}
-                      placeholder="输入模型名称，用逗号分隔。例如：gpt-4, gpt-3.5-turbo"
-                      className="min-h-[80px]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="default_model">默认模型</Label>
-                    <Input
-                      id="default_model"
-                      value={formData.default_model}
-                      onChange={(e) => setFormData(prev => ({ ...prev, default_model: e.target.value }))}
-                      placeholder="例如：gpt-4"
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="is_active"
-                      checked={formData.is_active}
-                      onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                    />
-                    <Label htmlFor="is_active">启用供应商</Label>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowCreateDialog(false);
-                      resetForm();
-                    }}
-                  >
-                    取消
-                  </Button>
-                  <Button onClick={handleCreateProvider} disabled={loading}>
-                    {loading ? '创建中...' : '创建'}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              新增供应商
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -444,9 +245,9 @@ export function AIProviderManagement() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="text-2xl">
-                      {getProviderTypeIcon(provider.provider_type)}
-                    </div>
+                    {/* <div className="text-2xl"> */}
+                      {/* {getProviderTypeIcon(provider.provider_type)} */}
+                    {/* </div> */}
                     <div>
                       <CardTitle className="flex items-center space-x-2">
                         <span>{formatProviderDisplayName(provider)}</span>
@@ -507,6 +308,21 @@ export function AIProviderManagement() {
                       )}
                     </div>
                   </div>
+                  {/* 显示代理配置信息 */}
+                  {provider.proxy && (
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-medium flex items-center space-x-1">
+                        <Globe className="h-3 w-3" />
+                        <span>代理配置</span>
+                      </Label>
+                      <div className="text-sm text-muted-foreground">
+                        <p>URL: {provider.proxy.url}</p>
+                        {provider.proxy.username && (
+                          <p>用户名: {provider.proxy.username}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-between items-center">
@@ -556,131 +372,23 @@ export function AIProviderManagement() {
         )}
       </div>
 
-      {/* 编辑对话框 */}
-      {editingProvider && (
-        <Dialog open={!!editingProvider} onOpenChange={() => setEditingProvider(null)}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>编辑AI供应商</DialogTitle>
-              <DialogDescription>
-                修改AI供应商配置信息
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              {formErrors.length > 0 && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <ul className="list-disc list-inside">
-                      {formErrors.map((error, index) => (
-                        <li key={index}>{error}</li>
-                      ))}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">供应商名称</Label>
-                <Input
-                  id="edit-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="例如：OpenAI主配置"
-                />
-              </div>
-
-
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-provider_type">供应商类型</Label>
-                <Select
-                  value={formData.provider_type}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, provider_type: value as AIProviderType }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(AIProviderType).map(type => (
-                      <SelectItem key={type} value={type}>
-                        {getProviderTypeDisplayName(type)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-base_url">API基础URL</Label>
-                <Input
-                  id="edit-base_url"
-                  value={formData.base_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, base_url: e.target.value }))}
-                  placeholder="例如：https://api.openai.com/v1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-api_key">API密钥</Label>
-                <Input
-                  id="edit-api_key"
-                  type="password"
-                  value={formData.api_key}
-                  onChange={(e) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
-                  placeholder="输入API密钥"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-models">支持的模型</Label>
-                <Textarea
-                  id="edit-models"
-                  value={modelsInput}
-                  onChange={(e) => setModelsInput(e.target.value)}
-                  placeholder="输入模型名称，用逗号分隔。例如：gpt-4, gpt-3.5-turbo"
-                  className="min-h-[80px]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-default_model">默认模型</Label>
-                <Input
-                  id="edit-default_model"
-                  value={formData.default_model}
-                  onChange={(e) => setFormData(prev => ({ ...prev, default_model: e.target.value }))}
-                  placeholder="例如：gpt-4"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit-is_active"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                />
-                <Label htmlFor="edit-is_active">启用供应商</Label>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setEditingProvider(null);
-                  resetForm();
-                }}
-              >
-                取消
-              </Button>
-              <Button onClick={() => handleUpdateProvider(editingProvider)} disabled={loading}>
-                {loading ? '更新中...' : '更新'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* AI供应商对话框 */}
+      <AIProviderDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        mode="create"
+        loading={loading}
+        onSubmit={handleCreateProvider}
+      />
+      
+      <AIProviderDialog
+        open={!!editingProvider}
+        onOpenChange={(open) => !open && setEditingProvider(null)}
+        mode="edit"
+        initialData={editingProvider}
+        loading={loading}
+        onSubmit={handleUpdateProvider}
+      />
     </div>
   );
 } 
