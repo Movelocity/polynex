@@ -123,6 +123,20 @@ class AIProviderService:
             AIProviderConfig.is_active == True
         ).first()
     
+    def get_provider_config_for_update(self, config_id: str) -> Optional[AIProviderConfig]:
+        """
+        获取指定的供应商配置（用于更新操作，不过滤激活状态）
+        
+        Args:
+            config_id: 配置ID
+            
+        Returns:
+            Optional[AIProviderConfig]: 配置对象或None
+        """
+        return self.db.query(AIProviderConfig).filter(
+            AIProviderConfig.id == config_id
+        ).first()
+    
     def get_provider_config_by_name(self, name: str) -> Optional[AIProviderConfig]:
         """
         根据供应商名称获取配置
@@ -246,7 +260,8 @@ class AIProviderService:
             ValueError: 当provider名称已存在时
         """
         try:
-            config = self.get_provider_config(config_id)
+            # 使用 get_provider_config_for_update 以便能够更新非激活的供应商
+            config = self.get_provider_config_for_update(config_id)
             if not config:
                 return None
             
@@ -294,7 +309,8 @@ class AIProviderService:
             bool: 是否删除成功
         """
         try:
-            config = self.get_provider_config(config_id)
+            # 使用 get_provider_config_for_update 以便能够删除非激活的供应商
+            config = self.get_provider_config_for_update(config_id)
             if not config:
                 return False
             

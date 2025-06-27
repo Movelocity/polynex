@@ -225,7 +225,7 @@ export function AIProviderManagement() {
       </div>
 
       {/* 供应商列表 */}
-      <div className="space-y-4">
+      <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading && providers.length === 0 ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
@@ -241,7 +241,7 @@ export function AIProviderManagement() {
           </Card>
         ) : (
           providers.map((provider) => (
-            <Card key={provider.id} className="relative">
+            <Card key={provider.id} className="relative bg-muted/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -255,9 +255,9 @@ export function AIProviderManagement() {
                           <Star className="h-4 w-4 text-yellow-500 fill-current" />
                         )}
                       </CardTitle>
-                      <CardDescription>
+                      {/* <CardDescription>
                         {getProviderTypeDisplayName(provider.provider_type)}
-                      </CardDescription>
+                      </CardDescription> */}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -272,26 +272,6 @@ export function AIProviderManagement() {
                   <div>
                     <Label className="text-sm font-medium">API地址</Label>
                     <p className="text-sm text-muted-foreground break-all">{provider.base_url}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">API密钥</Label>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm text-muted-foreground font-mono">
-                        {/*showApiKey[provider.id] ? provider.api_key : maskApiKey(provider.api_key)*/}
-                        **********
-                      </p>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => toggleApiKeyVisibility(provider.id)}
-                      >
-                        {showApiKey[provider.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">默认模型</Label>
-                    <p className="text-sm text-muted-foreground">{provider.default_model}</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">支持模型</Label>

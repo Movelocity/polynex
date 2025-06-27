@@ -290,15 +290,17 @@ async def update_provider(
             update_time=provider.update_time.isoformat() + 'Z'
         )
     except ValueError as e:
+        logger.error(f"ValueError updating provider {provider_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except Exception as e:
-        logger.error(f"Error updating provider {provider_id}: {str(e)}")
+        error_msg = str(e) if str(e) else f"Unknown error of type: {type(e).__name__}"
+        logger.error(f"Error updating provider {provider_id}: {error_msg}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update provider: {str(e)}"
+            detail=f"Failed to update provider: {error_msg}"
         )
 
 

@@ -183,6 +183,7 @@ export function AIProviderDialog({
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="例如：OpenAI主配置"
+              autoComplete="off"
             />
           </div>
 
@@ -212,6 +213,7 @@ export function AIProviderDialog({
               value={formData.base_url}
               onChange={(e) => setFormData(prev => ({ ...prev, base_url: e.target.value }))}
               placeholder="例如：https://api.openai.com/v1"
+              autoComplete="off"
             />
           </div>
 
@@ -223,6 +225,7 @@ export function AIProviderDialog({
               value={formData.api_key}
               onChange={(e) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
               placeholder="输入API密钥"
+              autoComplete="off"
             />
           </div>
 
@@ -243,6 +246,7 @@ export function AIProviderDialog({
                   proxy: { ...prev.proxy, url: e.target.value }
                 }))}
                 placeholder="例如：http://127.0.0.1:7890"
+                autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
                 支持 HTTP/HTTPS/SOCKS5 代理，格式：协议://地址:端口
@@ -260,6 +264,7 @@ export function AIProviderDialog({
                     proxy: { ...prev.proxy, username: e.target.value }
                   }))}
                   placeholder="可选"
+                  autoComplete="off"
                 />
               </div>
               <div className="space-y-2">
@@ -273,6 +278,7 @@ export function AIProviderDialog({
                     proxy: { ...prev.proxy, password: e.target.value }
                   }))}
                   placeholder="可选"
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -286,6 +292,7 @@ export function AIProviderDialog({
               onChange={(e) => setModelsInput(e.target.value)}
               placeholder="输入模型名称，用逗号分隔。例如：gpt-4, gpt-3.5-turbo"
               className="min-h-[80px]"
+              autoComplete="off"
             />
           </div>
 
@@ -296,6 +303,7 @@ export function AIProviderDialog({
               value={formData.default_model}
               onChange={(e) => setFormData(prev => ({ ...prev, default_model: e.target.value }))}
               placeholder="例如：gpt-4"
+              autoComplete="off"
             />
           </div>
 
@@ -305,6 +313,7 @@ export function AIProviderDialog({
               id="is_active"
               checked={formData.is_active}
               onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+              autoComplete="off"
             />
             <Label htmlFor="is_active">启用供应商</Label>
           </div>
