@@ -25,7 +25,7 @@ async def api_docs_home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Blog Platform API 文档</title>
+        <title>Polynex API 文档</title>
         <style>
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -170,7 +170,7 @@ async def api_docs_home():
     <body>
         <div class="container">
             <div class="header">
-                <h1>Blog Platform API 文档</h1>
+                <h1>Polynex API 文档</h1>
                 <p>博客平台后端API接口文档 - 版本 1.0</p>
             </div>
 
@@ -513,7 +513,7 @@ async def api_status():
     return {
         "status": "running",
         "version": "1.0.0",
-        "description": "Blog Platform API",
+        "description": "Polynex API",
         "features": {
             "authentication": "JWT Bearer Token",
             "permissions": ["public", "user", "admin"],

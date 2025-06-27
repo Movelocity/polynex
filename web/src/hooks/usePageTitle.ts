@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 /**
  * 自定义hook，用于设置页面标题
  * @param title - 页面标题
- * @param baseTitle - 基础标题，默认为 "FastDraft"
+ * @param baseTitle - 基础标题，默认为 "Polynex"
  */
-export function usePageTitle(title: string, baseTitle: string = 'FastDraft') {
+export function usePageTitle(title: string, baseTitle: string = 'Polynex') {
   useEffect(() => {
     // 设置完整的页面标题
     const fullTitle = title ? `${title} - ${baseTitle}` : baseTitle;
