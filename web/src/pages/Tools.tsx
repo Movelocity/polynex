@@ -26,10 +26,10 @@ export function Tools() {
       color: 'from-theme-purple to-theme-pink'
     },
     {
-      title: 'AI供应商管理',
-      description: '管理和配置AI服务供应商，设置API密钥和模型参数',
+      title: 'Chat',
+      description: '开始和 Agent 聊天',
       icon: Settings,
-      path: '/chat/ai-provider-management',
+      path: '/chat/conversation',
       color: 'from-theme-orange to-theme-red'
     },
     {
@@ -38,6 +38,13 @@ export function Tools() {
       icon: Bot,
               path: '/chat/agents',
       color: 'from-theme-teal to-theme-green'
+    },
+    {
+      title: 'AI供应商管理',
+      description: '管理和配置AI服务供应商，设置API密钥和模型参数',
+      icon: Settings,
+      path: '/chat/ai-provider-management',
+      color: 'from-theme-orange to-theme-red'
     },
     // {
     //   title: '对话管理',

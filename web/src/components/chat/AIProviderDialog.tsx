@@ -149,7 +149,7 @@ export function AIProviderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[80vh] text-foreground flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? '创建AI供应商' : '编辑AI供应商'}
@@ -162,7 +162,7 @@ export function AIProviderDialog({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="w-[105%] pl-0.5 pr-2 space-y-4 flex-1 overflow-y-auto">
           {formErrors.length > 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -179,7 +179,7 @@ export function AIProviderDialog({
           <div className="space-y-2">
             <Label htmlFor="name">供应商名称</Label>
             <Input
-              id="name"
+              id="mingzi"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="例如：OpenAI主配置"
@@ -207,9 +207,9 @@ export function AIProviderDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="base_url">API基础URL</Label>
+            <Label htmlFor="jiben_url">API基础URL</Label>
             <Input
-              id="base_url"
+              id="jiben_url"
               value={formData.base_url}
               onChange={(e) => setFormData(prev => ({ ...prev, base_url: e.target.value }))}
               placeholder="例如：https://api.openai.com/v1"
@@ -218,9 +218,9 @@ export function AIProviderDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="api_key">API密钥</Label>
+            <Label htmlFor="api_miyao">API密钥</Label>
             <Input
-              id="api_key"
+              id="api_miyao"
               type="password"
               value={formData.api_key}
               onChange={(e) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
@@ -255,9 +255,9 @@ export function AIProviderDialog({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-2">
-                <Label htmlFor="proxy_username">代理用户名</Label>
+                <Label htmlFor="daili_yonghuming">代理用户名</Label>
                 <Input
-                  id="proxy_username"
+                  id="daili_yonghuming"  // 使用拼音名，避免被检测为用户名输入框
                   value={formData.proxy?.username || ''}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
@@ -268,9 +268,9 @@ export function AIProviderDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="proxy_password">代理密码</Label>
+                <Label htmlFor="daili_miyao">代理密码</Label>
                 <Input
-                  id="proxy_password"
+                  id="daili_miyao"
                   type="password"
                   value={formData.proxy?.password || ''}
                   onChange={(e) => setFormData(prev => ({

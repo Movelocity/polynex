@@ -151,7 +151,7 @@ export function MarkdownPreview({ content }: { content: string }) {
             if (!isInCodeBlock) {
               // 内联代码样式 - 使用主题色
               return (
-                <code className="bg-muted text-theme-blue font-semibold p-0.5 rounded font-mono">
+                <code className="bg-gray-200 dark:bg-gray-700 text-foreground font-semibold px-1 rounded font-mono">
                   {children}
                 </code>
               );
@@ -245,7 +245,7 @@ export function MarkdownPreview({ content }: { content: string }) {
           ),
           // 处理水平线
           hr: () => (
-            <hr className="my-8 border-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <hr className="my-4 border-0 h-px bg-gray-200 dark:bg-gray-400 via-border" />
           ),
         }}
       >

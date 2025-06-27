@@ -186,16 +186,16 @@ export function Conversation() {
     );
   }
 
-  if (isLoadingAgent) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">加载Agent中...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoadingAgent) {
+  //   return (
+  //     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  //       <div className="text-center">
+  //         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+  //         <p className="text-muted-foreground">加载Agent中...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (!selectedAgent && agentId) {
     return (
