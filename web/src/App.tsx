@@ -28,6 +28,7 @@ import { Conversation } from '@/pages/chat/Conversation';
 import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
 import { ThemeDemo } from '@/components/ThemeDemo';
+import { FileManage } from '@/pages/FileManage';
 
 function App() {
 
@@ -104,12 +105,12 @@ function App() {
               } 
             />
 
-            {/* Admin routes */}
+            {/* File manage routes */}
             <Route 
-              path="admin/users" 
+              path="file-manage" 
               element={
-                <ProtectedRoute requireAdmin>
-                  <UserManagement />
+                <ProtectedRoute>
+                  <FileManage />
                 </ProtectedRoute>
               } 
             />

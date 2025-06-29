@@ -8,36 +8,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/x-ui/table';
 import { Badge } from '@/components/x-ui/badge';
 import { Input } from '@/components/x-ui/input';
-import { Label } from '@/components/x-ui/label';
 import { Switch } from '@/components/x-ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/x-ui/alert-dialog';
-import { useTitle } from '@/hooks/usePageTitle';
 import { 
   Users, 
-  Shield, 
   User,
   Search,
-  Edit,
   Trash2,
-  RotateCcw,
-  UserCheck,
-  UserX,
   Key,
-  Settings,
   Save
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export function UserManagement() {
   // 设置页面标题
-  useTitle('用户管理');
+  // useTitle('用户管理');
   
   const [users, setUsers] = useState<ClientUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [stats, setStats] = useState({ total: 0, admins: 0, users: 0 });
+  // const [stats, setStats] = useState({ total: 0, admins: 0, users: 0 });
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<ClientUser | null>(null);
   
   // 邀请码配置相关状态
@@ -69,7 +61,7 @@ export function UserManagement() {
         return;
       }
       loadUsers();
-      loadStats();
+      // loadStats();
       loadInviteCodeConfig();
     }
   }, [currentUser, authLoading, navigate]);
@@ -88,14 +80,14 @@ export function UserManagement() {
     }
   };
 
-  const loadStats = async () => {
-    try {
-      const statsData = await adminService.getUserStats();
-      setStats(statsData);
-    } catch (err) {
-      console.error('加载统计数据失败:', err);
-    }
-  };
+  // const loadStats = async () => {
+  //   try {
+  //     const statsData = await adminService.getUserStats();
+  //     setStats(statsData);
+  //   } catch (err) {
+  //     console.error('加载统计数据失败:', err);
+  //   }
+  // };
 
   const loadInviteCodeConfig = async () => {
     setInviteCodeLoading(true);
@@ -179,27 +171,27 @@ export function UserManagement() {
       const success = await adminService.deleteUser(userId);
       if (success) {
         setUsers(prev => prev.filter(user => user.id !== userId));
-        loadStats(); // 重新加载统计数据
+        // loadStats(); // 重新加载统计数据
       }
     } catch (error) {
       console.error('删除用户失败:', error);
     }
   };
 
-  const handleToggleRole = async (userId: string, currentRole: 'admin' | 'user') => {
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    try {
-      const success = await adminService.updateUserRole(userId, newRole);
-      if (success) {
-        setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, role: newRole } : user
-        ));
-        loadStats(); // 重新加载统计数据
-      }
-    } catch (error) {
-      console.error('更新用户角色失败:', error);
-    }
-  };
+  // const handleToggleRole = async (userId: string, currentRole: 'admin' | 'user') => {
+  //   const newRole = currentRole === 'admin' ? 'user' : 'admin';
+  //   try {
+  //     const success = await adminService.updateUserRole(userId, newRole);
+  //     if (success) {
+  //       setUsers(prev => prev.map(user => 
+  //         user.id === userId ? { ...user, role: newRole } : user
+  //       ));
+  //       loadStats(); // 重新加载统计数据
+  //     }
+  //   } catch (error) {
+  //     console.error('更新用户角色失败:', error);
+  //   }
+  // };
 
   // 筛选用户
   const filteredUsers = users.filter(user => {
@@ -240,7 +232,7 @@ export function UserManagement() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
             <Users className="w-8 h-8 text-red-500" />
@@ -255,141 +247,51 @@ export function UserManagement() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center space-x-4 mb-6">
-        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-          <Users className="w-6 h-6 text-blue-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">用户管理</h1>
-          <p className="text-muted-foreground">管理系统用户账户和权限</p>
-        </div>
-      </div>
-
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总用户数</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              系统注册用户总数
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">管理员数</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.admins}</div>
-            <p className="text-xs text-muted-foreground">
-              拥有管理权限的用户
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">普通用户数</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.users}</div>
-            <p className="text-xs text-muted-foreground">
-              普通用户账户数量
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
+    <div className="mx-auto pt-6">
       {/* 邀请码配置 */}
       <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Key className="w-5 h-5 mr-2" />
-            邀请码配置
-          </CardTitle>
-          <CardDescription>
-            管理用户注册时的邀请码要求
-          </CardDescription>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Key className="w-5 h-5" />
+            邀请码
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={inviteCodeConfig.require_invite_code}
+                onCheckedChange={handleSwitchToggle}
+              />
+              {switchUpdating && (
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {inviteCodeLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <span className="ml-2 text-slate-600">加载配置中...</span>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">启用邀请码</Label>
-                  <div className="text-sm text-muted-foreground">
-                    开启后新用户注册需要提供正确的邀请码
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {switchUpdating && (
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  )}
-                  <Switch
-                    checked={inviteCodeConfig.require_invite_code}
-                    onCheckedChange={handleSwitchToggle}
-                    disabled={switchUpdating}
-                  />
-                </div>
+          {!inviteCodeLoading && (
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="invite-code"
+                  type="text"
+                  placeholder="请输入邀请码"
+                  disabled={!inviteCodeConfig.require_invite_code}
+                  value={inviteCodeConfig.invite_code || ''}
+                  onChange={(e) => 
+                    setInviteCodeConfig(prev => ({ ...prev, invite_code: e.target.value }))
+                  }
+                />
+                <Button 
+                  onClick={handleUpdateInviteCodeConfig}
+                  disabled={inviteCodeUpdating}
+                  size="sm"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {inviteCodeUpdating ? "保存中..." : "保存邀请码"}
+                </Button>
               </div>
-              
-              {inviteCodeConfig.require_invite_code && (
-                <div className="space-y-2">
-                  <Label htmlFor="invite-code">邀请码</Label>
-                  <Input
-                    id="invite-code"
-                    type="text"
-                    placeholder="请输入邀请码"
-                    value={inviteCodeConfig.invite_code || ''}
-                    onChange={(e) => 
-                      setInviteCodeConfig(prev => ({ ...prev, invite_code: e.target.value }))
-                    }
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    用户注册时需要输入此邀请码才能成功注册
-                  </p>
-                  
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={handleUpdateInviteCodeConfig}
-                      disabled={inviteCodeUpdating}
-                      size="sm"
-                    >
-                      {inviteCodeUpdating ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          保存中...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4 mr-2" />
-                          保存邀请码
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {!inviteCodeConfig.require_invite_code && (
-                <p className="text-sm text-muted-foreground bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  💡 当前未启用邀请码功能，所有用户都可以自由注册
-                </p>
-              )}
-            </>
+              <p>
+              💡 {inviteCodeConfig.require_invite_code ? "新用户需要提供正确的邀请码才能注册" : "当前未启用邀请码功能，所有用户都可以自由注册"}
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

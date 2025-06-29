@@ -4,7 +4,7 @@ import { Link} from 'react-router-dom';
 import { Button } from '@/components/x-ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/x-ui/dropdown-menu';
 import { Input } from '@/components/x-ui/input';
-import { Switch } from '@/components/x-ui/switch';
+// import { Switch } from '@/components/x-ui/switch';
 import { 
   BookOpen, 
   User, 
@@ -210,19 +210,6 @@ export function HeadBanner({
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
-            {/* Mobile Theme Toggle */}
-            <div className="mb-4 flex items-center justify-between px-3">
-              <span className="text-sm font-medium">主题模式</span>
-              <div className="flex items-center space-x-2">
-                <Sun className="h-3 w-3 text-muted-foreground" />
-                <Switch 
-                  checked={isDark} 
-                  onCheckedChange={toggleTheme}
-                  aria-label="切换深浅色主题"
-                />
-                <Moon className="h-3 w-3 text-muted-foreground" />
-              </div>
-            </div>
 
             {/* Mobile Search */}
             <form onSubmit={handleSearch} className="mb-4">

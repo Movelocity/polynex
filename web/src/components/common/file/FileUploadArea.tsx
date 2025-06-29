@@ -77,12 +77,6 @@ export function FileUploadArea({
           </div>
           
           <div>
-            <h3 className="text-lg font-medium text-slate-700 mb-2">
-              {uploading ? '正在上传...' : '上传文件'}
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">
-              拖拽文件到此处，或点击选择文件
-            </p>
             
             {uploading && uploadProgress > 0 && (
               <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
@@ -102,7 +96,7 @@ export function FileUploadArea({
               {uploading ? '上传中...' : '选择文件'}
             </Button>
             
-            <div className="text-xs text-slate-400 space-y-1">
+            <div className="text-xs text-slate-500 space-y-1">
               <p>支持的文件类型：图片、PDF、Word、文本文档</p>
               <p>单个文件最大{maxFileSizeMB}MB</p>
             </div>

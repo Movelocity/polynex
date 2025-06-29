@@ -108,15 +108,12 @@ export function UserProfileEditDialog({ user, onUpdate, trigger }: UserProfileEd
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby="">
         <DialogHeader>
           <DialogTitle>编辑个人资料</DialogTitle>
-          <DialogDescription>
-            修改您的用户名和邮箱地址。用户名和邮箱必须是唯一的。
-          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 text-foreground">
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />

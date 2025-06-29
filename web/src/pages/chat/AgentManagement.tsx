@@ -86,24 +86,14 @@ export function AgentManagement() {
             <h1 className="text-3xl font-bold text-foreground mb-2">AI Agent管理</h1>
           </div>
           {/* 统计信息 */}
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-4 text-foreground">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">private</span>
-              <span className="font-bold">{myAgents.length}</span>
+              <span className="">{myAgents.length}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">public</span>
-              <span className="font-bold">{publicAgents.length}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-muted-foreground">default</span>
-              <div className="text-sm">
-                {hasDefaultAgent ? (
-                  <Badge className="bg-green-100 text-green-800 hover:bg-green-200">已配置</Badge>
-                ) : (
-                  <Badge variant="destructive" className="hover:bg-red-200">未配置</Badge>
-                )}
-              </div>
+              <span className="">{publicAgents.length}</span>
             </div>
           </div>
           {/** 编辑供应商 */}

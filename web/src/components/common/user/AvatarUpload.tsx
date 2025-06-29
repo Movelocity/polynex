@@ -64,7 +64,7 @@ export function AvatarUpload({ user, onAvatarUpload, uploading = false, onError 
 
   return (
     <>
-      <div className="flex items-center space-x-6">
+      
         <div className="relative">
           <UserAvatar 
             user={user}
@@ -90,25 +90,8 @@ export function AvatarUpload({ user, onAvatarUpload, uploading = false, onError 
             className="hidden"
           />
         </div>
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">{user.username}</h3>
-          <p className="text-sm text-slate-500">{user.email}</p>
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {uploading ? '上传中...' : '更换头像'}
-            </Button>
-          </div>
-          <p className="text-xs text-slate-400">
-            支持 JPG、PNG 等格式，文件大小不超过 2MB
-          </p>
-        </div>
-      </div>
+        
+
 
       {/* Image Cropper Dialog */}
       <ImageCropperDialog

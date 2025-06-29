@@ -5,7 +5,7 @@ import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Textarea } from '@/components/x-ui/textarea';
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/x-ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/x-ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/x-ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
 import { Slider } from '@/components/x-ui/slider';
@@ -186,7 +186,7 @@ export function AgentEditor() {
             title: '更新成功',
             description: `Agent "${formData.app_preset.name}" 已成功更新`
           });
-          navigate('/chat/agents');
+          // navigate('/chat/agents');
         }
       } else {
         const createData: AgentCreate = {
@@ -208,7 +208,7 @@ export function AgentEditor() {
             title: '创建成功',
             description: `Agent "${formData.app_preset.name}" 已成功创建`
           });
-          navigate('/chat/agents');
+          navigate(`/chat/agents/edit/${formData.agent_id}`);
         }
       }
     } catch (error) {
@@ -321,13 +321,13 @@ export function AgentEditor() {
               size="md"
               onClick={() => setShowAvatarConfig(true)}
             />
-            <div>
-              <h1 className="text-xl font-semibold">
-                {isEditMode ? '编辑 Agent' : '创建 Agent'}
-              </h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col">
+              <span className="font-semibold text-foreground">
                 {formData.app_preset.name || '未命名 Agent'}
-              </p>
+              </span>
+              <span className="text-muted-foreground">
+                {formData.app_preset.description || ''}
+              </span>
             </div>
             {/* 应用配置 */}
             <Dialog open={showAppConfig} onOpenChange={setShowAppConfig}>
@@ -424,7 +424,7 @@ export function AgentEditor() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <Dialog open={showModelConfig} onOpenChange={setShowModelConfig}>
+          {/* <Dialog open={showModelConfig} onOpenChange={setShowModelConfig}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <Settings className="h-4 w-4 mr-2" />
@@ -531,7 +531,110 @@ export function AgentEditor() {
                 </div>
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                模型配置
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[300px]" align="end">
+              <div className="p-2 space-y-4">
+                <div className="space-y-2">
+                  <Label>供应商 *</Label>
+                  <Select
+                    value={formData.provider}
+                    onValueChange={(value) => {
+                      updateFormData('provider', value);
+                      // 重置模型选择
+                      const provider = activeProviders.find(p => p.name === value);
+                      if (provider && provider.models && provider.models.length > 0) {
+                        updateFormData('model', provider.default_model || provider.models[0]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择供应商" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {activeProviders.map(provider => (
+                        <SelectItem key={provider.id} value={provider.name}>
+                          {provider.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>模型 *</Label>
+                  <Select
+                    value={formData.model}
+                    onValueChange={(value) => updateFormData('model', value)}
+                    disabled={!formData.provider}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择模型" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableModels.map(model => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>温度 (Temperature): {formData.temperature}</Label>
+                  <Slider
+                    value={[formData.temperature]}
+                    onValueChange={([value]) => updateFormData('temperature', value)}
+                    max={2}
+                    min={0}
+                    step={0.1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    控制回答的创造性，值越高回答越有创造性
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Top P: {formData.top_p}</Label>
+                  <Slider
+                    value={[formData.top_p]}
+                    onValueChange={([value]) => updateFormData('top_p', value)}
+                    max={1}
+                    min={0}
+                    step={0.1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    控制词汇选择的多样性
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>最大Token数: {formData.max_tokens}</Label>
+                  <Slider
+                    value={[formData.max_tokens]}
+                    onValueChange={([value]) => updateFormData('max_tokens', value)}
+                    max={8192}
+                    min={256}
+                    step={256}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    限制单次回答的最大长度
+                  </p>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button 
             onClick={handleSave} 

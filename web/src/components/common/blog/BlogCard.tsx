@@ -66,7 +66,7 @@ export function BlogCard({
   return (
     <Card className={`hover:shadow-lg transition-all duration-300 ${className}`}>
       <CardHeader>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col md:flex-row items-start justify-between">
           <div className="flex-1">
             {/* Status and Category Badges */}
             <div className="flex items-center gap-2 mb-2">
@@ -109,16 +109,16 @@ export function BlogCard({
             </CardDescription>
             
             {/* Author and Time Info */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <UserAvatar 
-                    username={blog.authorName}
-                    size="xs"
-                  />
-                  <span className="text-sm text-foreground">{blog.authorName}</span>
-                </div>
-                <div className="flex items-center text-sm text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center space-x-2">
+                <UserAvatar 
+                  username={blog.authorName}
+                  size="xs"
+                />
+                <span className="text-sm text-foreground">{blog.authorName}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4 mr-1" />
                   创建：{formatDate(blog.createTime)}
                 </div>
