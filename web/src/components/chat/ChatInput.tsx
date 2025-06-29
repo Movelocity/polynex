@@ -65,17 +65,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   
   // 自动调整高度
-  // useEffect(() => {
-  //   const textarea = textareaRef.current;
-  //   if (textarea) {
-  //     textarea.style.height = 'auto';
-  //     const scrollHeight = textarea.scrollHeight;
-  //     // 最小高度 30px，最大高度 200px
-  //     const newHeight = Math.min(Math.max(scrollHeight, 30), 200);
-  //     console.log('newHeight', newHeight);
-  //     textarea.style.height = `${newHeight}px`;
-  //   }
-  // }, [value]);
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
+      // 最小高度 30px，最大高度 200px
+      const newHeight = Math.min(Math.max(scrollHeight, 30), 200);
+      console.log('newHeight', newHeight);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [value]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Ctrl/Cmd + Enter 也可以发送
@@ -133,6 +133,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 fontSize: '16px', // 防止移动端缩放
                 lineHeight: '1.5'
               }}
+              rows={1}
             />
             
             {/* 字符计数 */}

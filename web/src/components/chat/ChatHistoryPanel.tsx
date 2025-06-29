@@ -126,7 +126,7 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
   return (
     <div className={cn("flex flex-col h-full bg-background border-r border-border", className)}>
       {/* 头部 */}
-      <div className="flex-shrink-0 p-4 border-b border-border">
+      <div className="flex-shrink-0 p-4 pb-3 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-baseline space-x-2">
             <span className="text-lg font-semibold text-foreground">对话历史</span>

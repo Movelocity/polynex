@@ -39,13 +39,13 @@ export function Tools() {
               path: '/chat/agents',
       color: 'from-theme-teal to-theme-green'
     },
-    {
-      title: 'AI供应商管理',
-      description: '管理和配置AI服务供应商，设置API密钥和模型参数',
-      icon: Settings,
-      path: '/chat/ai-provider-management',
-      color: 'from-theme-orange to-theme-red'
-    },
+    // {
+    //   title: 'AI供应商管理',
+    //   description: '管理和配置AI服务供应商，设置API密钥和模型参数',
+    //   icon: Settings,
+    //   path: '/chat/ai-provider-management',
+    //   color: 'from-theme-orange to-theme-red'
+    // },
     // {
     //   title: '对话管理',
     //   description: '管理AI对话历史，查看和整理您的聊天记录',

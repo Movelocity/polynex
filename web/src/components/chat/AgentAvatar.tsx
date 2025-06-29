@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { AvatarConfig } from '@/types';
 import { fileService } from '@/services';
+import cn from "classnames"
 
 interface AgentAvatarProps {
   avatar?: AvatarConfig;
   name: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'default' | 'circle' | 'square';
+  onClick?: () => void;
 }
 
 const variantClasses = {
@@ -15,12 +17,15 @@ const variantClasses = {
   square: 'rounded-lg'
 };
 
+const commonClasses = 'flex items-center justify-center border-2 border-gray-300 dark:border-gray-700';
+
 // Agent头像组件
 export const AgentAvatar: React.FC<AgentAvatarProps> = ({ 
   avatar, 
   name, 
   size = 'md',
-  variant = 'default'
+  variant = 'default',
+  onClick
 }) => {
   const [imageError, setImageError] = useState(false);
   const sizeClasses = {
@@ -42,7 +47,16 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({
 
   if (avatar?.variant === 'link' && avatar.link && !imageError) {
     return (
-      <div className={`${sizeClasses[size]} ${variantClasses[variant]} overflow-hidden flex items-center justify-center`}>
+      <div 
+        className={cn(
+          commonClasses,
+          sizeClasses[size],
+          variantClasses[variant],
+          "overflow-hidden",
+          onClick && "cursor-pointer"
+        )}
+        onClick={onClick}
+      >
         <img 
           src={displayLink} 
           alt={name}
@@ -61,14 +75,33 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({
 
   if (avatar?.variant === 'emoji' && avatar.emoji) {
     return (
-      <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center`}>
+      <div 
+        className={cn(
+          commonClasses,
+          sizeClasses[size],
+          bgColor,
+          variantClasses[variant],
+          onClick && "cursor-pointer"
+        )}
+        onClick={onClick}
+      >
         <span className="text-white">{avatar.emoji}</span>
       </div>
     );
   }
 
   return (
-    <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center text-white font-medium`}>
+    <div 
+      className={cn(
+        commonClasses,
+        sizeClasses[size],
+        bgColor,
+        variantClasses[variant],
+        "text-white font-medium",
+        onClick && "cursor-pointer"
+      )}
+      onClick={onClick}
+    >
       {name.charAt(0).toUpperCase()}
     </div>
   );

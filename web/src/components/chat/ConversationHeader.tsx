@@ -60,11 +60,12 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
                   className="flex items-center space-x-2 h-auto p-2 hover:bg-muted/50 max-w-md"
                   disabled={isLoadingAgents}
                 >
-                  <AgentAvatar 
+                  {/* <AgentAvatar 
                     avatar={selectedAgent.avatar} 
                     name={selectedAgent.app_preset.name}
-                    size="sm" 
-                  />
+                    variant="square"
+                    size="md" 
+                  /> */}
                   <div className="flex items-center space-x-2 min-w-0">
                     <div className="flex items-center min-w-0 gap-2">
                       <span className="text-lg font-bold text-foreground truncate">
@@ -95,7 +96,7 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
                         <AgentAvatar 
                           avatar={agent.avatar} 
                           name={agent.name} 
-                          size="sm" 
+                          size="md" 
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2">

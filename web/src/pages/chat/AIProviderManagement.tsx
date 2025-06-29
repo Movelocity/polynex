@@ -182,7 +182,7 @@ function ProviderDetail({
               variant="outline"
               size="sm"
               onClick={isEditing ? onCancel : onEdit}
-              className="h-8 bg-muted border-border hover:bg-muted/80 text-muted-foreground"
+              className=""
             >
               <Edit3 className="h-3.5 w-3.5 mr-1.5" />
               {isEditing ? "Cancel" : "Edit"}

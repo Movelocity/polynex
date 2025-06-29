@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/x-ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { ImageCropperDialog } from '@/components/ImageCropV1/ImageCropperDialog';
 import { AvatarConfig } from '@/types';
-import { Upload, Palette, Image as ImageIcon, Bot } from 'lucide-react';
+import { Upload, Palette, Image as ImageIcon, Bot, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { fileService } from '@/services';
 import { toast } from '@/hooks/use-toast';
@@ -42,31 +42,62 @@ interface AgentAvatarEditorProps {
   avatar?: AvatarConfig;
   name: string;
   onChange: (avatar: AvatarConfig) => void;
+  onCancel?: () => void;
 }
 
 export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
   avatar,
   name,
-  onChange
+  onChange,
+  onCancel
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  
+  // 本地预览状态
+  const [previewAvatar, setPreviewAvatar] = useState<AvatarConfig>(() => {
+    return avatar || {
+      variant: 'emoji',
+      emoji: '🤖',
+      bg_color: 'bg-blue-500'
+    };
+  });
+  
+  // 预览图片状态
+  const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
 
-  const currentAvatar = avatar || {
-    variant: 'emoji',
-    emoji: '🤖',
-    bg_color: 'bg-blue-500'
+  // 当外部传入的avatar改变时，更新预览状态
+  useEffect(() => {
+    if (avatar) {
+      setPreviewAvatar(avatar);
+    }
+  }, [avatar]);
+
+  // 更新本地预览配置
+  const updatePreview = (updates: Partial<AvatarConfig>) => {
+    setPreviewAvatar(prev => ({
+      ...prev,
+      ...updates
+    }));
   };
 
-  // 更新头像配置
-  const updateAvatar = (updates: Partial<AvatarConfig>) => {
-    onChange({
-      ...currentAvatar,
-      ...updates
-    });
+  // 处理tab切换
+  const handleTabChange = (value: string) => {
+    const newVariant = value as 'emoji' | 'link';
+    
+    if (newVariant === 'emoji') {
+      // 切换到emoji时，清除预览图片
+      setPreviewImageUrl('');
+      if (selectedImage) {
+        URL.revokeObjectURL(selectedImage);
+        setSelectedImage('');
+      }
+    }
+    
+    updatePreview({ variant: newVariant });
   };
 
   // 处理文件（通用）
@@ -136,17 +167,22 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
       console.log('上传结果:', result);
       
       if (result.success) {
-        updateAvatar({
+        // 更新预览状态
+        updatePreview({
           variant: 'link',
           link: result.avatarUrl
         });
+        
+        // 设置预览图片URL
+        const previewUrl = URL.createObjectURL(croppedBlob);
+        setPreviewImageUrl(previewUrl);
         
         toast({
           title: '上传成功',
           description: 'Agent头像已成功上传'
         });
         
-        // 清理预览URL
+        // 清理临时预览URL
         if (selectedImage) {
           URL.revokeObjectURL(selectedImage);
           setSelectedImage('');
@@ -166,71 +202,104 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
     }
   };
 
-  // Agent头像预览组件
-  const AvatarPreview: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'lg' }) => {
-    const [imageError, setImageError] = useState(false);
-    const sizeClasses = {
-      sm: 'w-8 h-8 text-sm',
-      md: 'w-12 h-12 text-lg',
-      lg: 'w-16 h-16 text-xl'
-    };
-
-    const bgColor = currentAvatar.bg_color || 'bg-blue-500';
-
-    const displayLink = currentAvatar.variant === 'link' ? fileService.resolveFileUrl(currentAvatar.link) : '';
-
-    // 当头像链接变化时重置错误状态
-    React.useEffect(() => {
-      setImageError(false);
-      
-    }, [currentAvatar.link]);
-
-    if (currentAvatar.variant === 'link' && displayLink && !imageError) {
-      return (
-        <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
-          <img 
-            src={displayLink} 
-            alt={name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              console.warn('头像图片加载失败:', currentAvatar.link);
-              setImageError(true);
-            }}
-            onLoad={() => {
-              console.log('头像图片加载成功:', currentAvatar.link);
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (currentAvatar.variant === 'emoji' && currentAvatar.emoji) {
-      return (
-        <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center`}>
-          <span className="text-white">{currentAvatar.emoji}</span>
-        </div>
-      );
-    }
-
-    // 默认显示用户名首字符
-    return (
-      <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center text-white font-medium`}>
-        {name.charAt(0).toUpperCase()}
-      </div>
-    );
+  // 确认保存
+  const handleConfirm = () => {
+    onChange(previewAvatar);
+    console.log('确认保存', previewAvatar);
   };
+
+  // 取消操作
+  const handleCancel = () => {
+    // 重置为原始状态
+    setPreviewAvatar(avatar || {
+      variant: 'emoji',
+      emoji: '🤖',
+      bg_color: 'bg-blue-500'
+    });
+    
+    // 清理预览图片
+    setPreviewImageUrl('');
+    if (selectedImage) {
+      URL.revokeObjectURL(selectedImage);
+      setSelectedImage('');
+    }
+    
+    if (onCancel) {
+      onCancel();
+    }
+  };
+
+  // Agent头像预览组件
+  // const AvatarPreview: React.FC<{ size?: 'sm' | 'md' | 'lg'; config?: AvatarConfig }> = ({ 
+  //   size = 'lg', 
+  //   config = previewAvatar 
+  // }) => {
+  //   const [imageError, setImageError] = useState(false);
+  //   const sizeClasses = {
+  //     sm: 'w-8 h-8 text-sm',
+  //     md: 'w-12 h-12 text-lg',
+  //     lg: 'w-16 h-16 text-xl'
+  //   };
+
+  //   const bgColor = config.bg_color || 'bg-blue-500';
+
+  //   const displayLink = config.variant === 'link' ? fileService.resolveFileUrl(config.link) : '';
+
+  //   // 当头像链接变化时重置错误状态
+  //   React.useEffect(() => {
+  //     setImageError(false);
+  //   }, [config.link]);
+
+  //   if (config.variant === 'link' && displayLink && !imageError) {
+  //     return (
+  //       <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex items-center justify-center`}>
+  //         <img 
+  //           src={displayLink} 
+  //           alt={name}
+  //           className="w-full h-full object-cover"
+  //           onError={(e) => {
+  //             console.warn('头像图片加载失败:', config.link);
+  //             setImageError(true);
+  //           }}
+  //           onLoad={() => {
+  //             console.log('头像图片加载成功:', config.link);
+  //           }}
+  //         />
+  //       </div>
+  //     );
+  //   }
+
+  //   if (config.variant === 'emoji' && config.emoji) {
+  //     return (
+  //       <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center`}>
+  //         <span className="text-white">{config.emoji}</span>
+  //       </div>
+  //     );
+  //   }
+
+  //   // 默认显示用户名首字符
+  //   return (
+  //     <div className={`${sizeClasses[size]} ${bgColor} rounded-full flex items-center justify-center text-white font-medium`}>
+  //       {name.charAt(0).toUpperCase()}
+  //     </div>
+  //   );
+  // };
 
   return (
     <div className="space-y-4">
-      {/* 头像预览 */}
-      <div className="flex items-center justify-center">
-        <AvatarPreview />
-      </div>
+      {/* 当前预览 */}
+      {/* <div className="flex items-center space-x-3 p-3 border rounded-lg bg-gray-50">
+        <AvatarPreview size="md" />
+        <div>
+          <p className="text-sm font-medium">预览效果</p>
+          <p className="text-xs text-gray-500">{name}</p>
+        </div>
+      </div> */}
 
       {/* 编辑选项 */}
       <Tabs 
-        value={currentAvatar.variant} 
-        onValueChange={(value) => updateAvatar({ variant: value as 'emoji' | 'link' })}
+        value={previewAvatar.variant} 
+        onValueChange={handleTabChange}
       >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="emoji" className="flex items-center">
@@ -244,33 +313,33 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
         </TabsList>
 
         {/* 图标选择 */}
-        <TabsContent value="emoji" className="space-y-4">
+        <TabsContent value="emoji" className="space-y-2">
           <div>
-            <Label className="text-sm font-medium">选择图标</Label>
+            <span className="flex items-center gap-2">
+              <Label className="text-sm font-medium w-24">选择图标</Label>
+              <Input
+                placeholder="输入表情符号或文字自定义图标"
+                value={previewAvatar.emoji || ''}
+                onChange={(e) => updatePreview({ emoji: e.target.value })}
+                className="mt-1"
+              />
+            </span>
+            
+
             <div className="grid grid-cols-8 gap-2 mt-2 max-h-40 overflow-y-auto p-2 border rounded-lg">
               {PRESET_EMOJIS.map((emoji, index) => (
                 <button
                   key={index}
                   className={cn(
-                    "w-8 h-8 rounded border-2 flex items-center justify-center text-lg hover:bg-gray-100 transition-colors",
-                    currentAvatar.emoji === emoji ? "border-primary bg-primary/10" : "border-gray-200"
+                    "w-8 h-8 rounded hover:border-2 flex items-center justify-center text-lg",
+                    previewAvatar.emoji === emoji ? "border-primary bg-primary/10" : "border-gray-200"
                   )}
-                  onClick={() => updateAvatar({ emoji })}
+                  onClick={() => updatePreview({ emoji })}
                 >
                   {emoji}
                 </button>
               ))}
             </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium">自定义图标</Label>
-            <Input
-              placeholder="输入表情符号或文字..."
-              value={currentAvatar.emoji || ''}
-              onChange={(e) => updateAvatar({ emoji: e.target.value })}
-              className="mt-1"
-            />
           </div>
 
           <div>
@@ -280,17 +349,23 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
                 <button
                   key={index}
                   className={cn(
-                    "w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110",
-                    currentAvatar.bg_color === color.value 
+                    "w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all relative",
+                    previewAvatar.bg_color === color.value 
                       ? "border-primary border-2 ring-2 ring-primary/20" 
                       : "border-gray-300"
                   )}
                   style={{ backgroundColor: color.color }}
-                  onClick={() => updateAvatar({ bg_color: color.value })}
+                  onClick={() => updatePreview({ bg_color: color.value })}
                   title={color.name}
                 >
-                  {currentAvatar.bg_color === color.value && (
-                    <span className="text-white text-xs">✓</span>
+                  {/* 显示当前选中的emoji效果 */}
+                  <span className="text-white text-lg">
+                    {previewAvatar.emoji || '🤖'}
+                  </span>
+                  {previewAvatar.bg_color === color.value && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white dark:text-black" />
+                    </div>
                   )}
                 </button>
               ))}
@@ -303,7 +378,7 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
           <div className="text-center space-y-4">
             <div 
               className={cn(
-                "border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer",
+                "border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer relative",
                 isDragOver 
                   ? "border-primary bg-primary/5" 
                   : "border-gray-300 hover:border-gray-400"
@@ -313,15 +388,35 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className={cn(
-                "mx-auto h-12 w-12 mb-4 transition-colors",
-                isDragOver ? "text-primary" : "text-gray-400"
-              )} />
-              <p className={cn(
-                "text-sm mb-4 transition-colors",
-                isDragOver ? "text-primary" : "text-gray-600"
-              )}>
-                {isDragOver ? '释放以上传图片' : '点击上传图片或拖拽图片到此处'}
+              {/* 预览图片 */}
+              {previewImageUrl ? (
+                <div className="mb-4">
+                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-white shadow-lg">
+                    <img 
+                      src={previewImageUrl} 
+                      alt="预览"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-sm text-green-600 mt-2">✓ 图片已上传</p>
+                </div>
+              ) : (
+                <div>
+                  <Upload className={cn(
+                    "mx-auto h-12 w-12 mb-4 transition-colors",
+                    isDragOver ? "text-primary" : "text-gray-400"
+                  )} />
+                  <p className={cn(
+                    "text-sm mb-1 transition-colors",
+                    isDragOver ? "text-primary" : "text-gray-600"
+                  )}>
+                    点击上传图片或拖拽图片到此处
+                  </p>
+                </div>
+              )}
+              
+              <p className="text-xs text-gray-500 mb-1">
+                支持 JPG、PNG 等格式，文件大小不超过 2MB
               </p>
               <Button
                 variant="outline"
@@ -339,7 +434,7 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
                 ) : (
                   <>
                     <Upload className="w-4 h-4 mr-2" />
-                    选择图片
+                    {previewImageUrl ? "更换图片" : "选择图片"}
                   </>
                 )}
               </Button>
@@ -351,18 +446,14 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
                 className="hidden"
               />
             </div>
-            
-            <p className="text-xs text-gray-500">
-              支持 JPG、PNG 等格式，文件大小不超过 2MB
-            </p>
           </div>
 
           <div>
             <Label className="text-sm font-medium">图片链接</Label>
             <Input
               placeholder="输入图片URL..."
-              value={currentAvatar.link || ''}
-              onChange={(e) => updateAvatar({ link: e.target.value })}
+              value={previewAvatar.link || ''}
+              onChange={(e) => updatePreview({ link: e.target.value })}
               className="mt-1"
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -371,6 +462,26 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* 操作按钮 */}
+      <div className="flex space-x-3 pt-2 border-t">
+        <Button 
+          variant="outline" 
+          onClick={handleCancel}
+          className="flex-1"
+        >
+          <X className="w-4 h-4 mr-2" />
+          取消
+        </Button>
+        <Button 
+          onClick={handleConfirm}
+          className="flex-1"
+          variant="default"
+        >
+          <Check className="w-4 h-4 mr-2" />
+          确认
+        </Button>
+      </div>
 
       {/* 图片裁剪对话框 */}
       <ImageCropperDialog

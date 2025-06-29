@@ -11,7 +11,7 @@ import {
   canEditAgent,
   isAgentOwner
 } from '@/utils/agentUtils';
-import { Plus, Edit,  Star, AlertCircle, Users, Lock, MessageCircle, FileUp } from 'lucide-react';
+import { Plus, Edit,  Star, AlertCircle, Users, Lock, MessageCircle, FileUp, Settings2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
@@ -88,15 +88,15 @@ export function AgentManagement() {
           {/* 统计信息 */}
           <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">我的Agent</span>
+              <span className="text-muted-foreground">private</span>
               <span className="font-bold">{myAgents.length}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">公开Agent</span>
+              <span className="text-muted-foreground">public</span>
               <span className="font-bold">{publicAgents.length}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-muted-foreground">默认Agent</span>
+              <span className="text-muted-foreground">default</span>
               <div className="text-sm">
                 {hasDefaultAgent ? (
                   <Badge className="bg-green-100 text-green-800 hover:bg-green-200">已配置</Badge>
@@ -106,30 +106,35 @@ export function AgentManagement() {
               </div>
             </div>
           </div>
+          {/** 编辑供应商 */}
+          <Button variant="outline" size="sm" onClick={() => {navigate('/chat/ai-provider-management')}}>
+            <Settings2 className="h-6 w-6" />
+            编辑供应商
+          </Button>
         </div>
       </div>
 
       {/* Agent列表 */}
       <div className="space-y-4">
         <div className="flex flex-row gap-4 flex-wrap">
-          <Card className="w-[300px]">
+          <Card className="w-[360px]">
             <CardContent className="flex flex-col justify-start gap-2 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
-              <h3 className="text-lg font-medium text-foreground mb-2">创建应用</h3>
+              <span className="text-md font-medium text-foreground mb-2">创建Agent</span>
               <Button onClick={handleCreateAgent} variant="outline" className="flex justify-start">
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className="h-4 w-4" />
                 创建 Agent
               </Button>
               <Button onClick={()=>{}} variant="outline" className="flex justify-start">
-                <FileUp className="h-4 w-4 mr-1" />
+                <FileUp className="h-4 w-4" />
                 导入 Agent
               </Button>
             </CardContent>
           </Card>
 
           {agents.map((agent) => (
-            <Card key={agent.id} className="relative hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
+            <Card key={agent.id} className="relative w-[360px]">
+              <CardHeader className="p-4">
                 <div className="flex items-start space-x-3">
                   <AgentAvatar 
                     avatar={agent.avatar} 
@@ -138,13 +143,13 @@ export function AgentManagement() {
                     variant="square"
                   />
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg flex items-center space-x-2">
+                    <CardTitle className="text-md flex items-center space-x-2">
                       <span className="truncate">{formatAgentDisplayName(agent)}</span>
                       {agent.id === defaultAgent?.id && (
                         <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
                       )}
                     </CardTitle>
-                    <CardDescription className="flex items-center space-x-2 mt-1">
+                    <CardDescription className="flex items-center space-x-2">
                       <span>{agent.provider}</span>
                       <span>•</span>
                       <span>{agent.model}</span>
@@ -152,7 +157,7 @@ export function AgentManagement() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                   {agent.description || '暂无描述'}
                 </p>
@@ -180,6 +185,17 @@ export function AgentManagement() {
                   </div>
 
                   <div className="flex items-center space-x-2">
+                    {canEditAgent(agent, user.id) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditAgent(agent.agent_id)}
+                        className="text-xs px-2"
+                      >
+                        <Edit className="h-3 w-3" />
+                        编辑
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -189,16 +205,6 @@ export function AgentManagement() {
                       <MessageCircle className="h-3 w-3 mr-1" />
                       对话
                     </Button>
-                    {canEditAgent(agent, user.id) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditAgent(agent.agent_id)}
-                        className="text-xs px-2"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                    )}
                     {/* 到详情页面删除 */}
                     {/* {isAgentOwner(agent, user.id) && (
                       <Button
