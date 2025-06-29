@@ -64,7 +64,7 @@
   - `GET /resources/{unique_id}.{postfix}` - 获取文件
   - `GET /resources/list` - 获取文件列表
   - `DELETE /resources/{unique_id}.{postfix}` - 删除文件
-  - `POST /users/avatar/upload` - 上传用户头像
+  - `POST /resources/user-avatar` - 上传用户头像
 
 ### 4. 管理员相关功能
 

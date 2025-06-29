@@ -85,7 +85,7 @@ export class FileApiService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiBaseUrl}/users/avatar/upload`, {
+      const response = await fetch(`${apiBaseUrl}/resources/user-avatar`, {
         method: 'POST',
         headers,
         body: formData

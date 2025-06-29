@@ -7,7 +7,7 @@ from fields import (
     BatchUsersRequest
 )
 from models.database import get_db
-from core import UserService
+from services import UserService
 from libs.auth import get_current_user_id, get_password_hash
 
 router = APIRouter(prefix="/api/users", tags=["用户管理"])

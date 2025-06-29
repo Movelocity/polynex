@@ -182,8 +182,8 @@ export const ServiceDemo: React.FC = () => {
 
       try {
         setLoading(true);
-        const result = await userService.uploadAvatar(file);
-        if (result.success) {
+        const result = await fileService.uploadAvatar(file);
+        if (result.user) {
           console.log('头像上传成功:', result.user);
           setError(null);
           toast.success({

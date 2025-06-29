@@ -124,4 +124,4 @@ print(log_dict['request_messages'])  # 应该显示正常中文
 ## 相关文档
 
 - [LLM日志记录和SSE流式响应改进](./llm_logging_and_sse_improvements.md)
-- [数据库迁移指南](../server/core/DATABASE_MIGRATION_GUIDE.md) 
+- [数据库迁移指南](../server/services/DATABASE_MIGRATION_GUIDE.md) 

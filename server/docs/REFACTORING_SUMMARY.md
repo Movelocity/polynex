@@ -22,9 +22,6 @@ server/
 │   ├── dev.py
 │   ├── files.py
 │   └── users.py
-├── core/               # 核心应用逻辑，模型集成和工具
-│   ├── __init__.py
-│   └── database.py     # 数据库操作类（从根目录移动）
 ├── fields/             # 序列化/反序列化的字段定义
 │   ├── __init__.py
 │   └── schemas.py      # Pydantic模型（从models.py移动）
@@ -70,14 +67,13 @@ from constants import get_settings
 from fields import UserCreate
 from models import User
 from libs import get_current_user_id
-from core import db
 ```
 
 ### 3. 功能划分说明
 
 - **constants**: 包含应用程序配置、环境变量和全局常量
 - **controllers**: API路由和请求处理，不包含业务逻辑
-- **core**: 核心业务逻辑和数据访问层
+- **services**: 核心业务逻辑和数据访问层
 - **fields**: API数据模型和序列化规则
 - **libs**: 可复用的工具函数和库
 - **models**: 数据库表结构和ORM模型

@@ -7,7 +7,7 @@ from fields import (
     LoginResponse, RegisterResponse, RegistrationConfig
 )
 from models.database import get_db
-from core import UserService, ConfigService
+from services import UserService, ConfigService
 from libs.auth import (
     verify_password, get_password_hash, create_access_token,
     get_current_user_id, ACCESS_TOKEN_EXPIRE_MINUTES,

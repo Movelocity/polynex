@@ -17,7 +17,7 @@ from libs.auth import (
     check_admin_permission
 )
 from models.database import get_db_session, User, UserRole
-from core.user_service import UserService
+from server.services.user_service import UserService
 
 def test_password_functions():
     """测试密码加密和验证功能"""

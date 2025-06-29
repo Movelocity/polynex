@@ -143,7 +143,7 @@ class LLMRequestLogService:
             "estimated_cost": Decimal(str(estimated_cost)) if estimated_cost else None,
             "status": status,
             "error_message": error_message,
-            "end_time": end_time or datetime.utcnow()
+            "end_time": end_time or datetime.now()
         }
         
         # 计算持续时间

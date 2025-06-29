@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from models import UserRole
 from fields import User, Blog
 from models.database import get_db
-from core import UserService
+from services import UserService
 from services import BlogService, CategoryService
 from libs.auth import get_current_user_id, get_password_hash
 

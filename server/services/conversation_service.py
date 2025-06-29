@@ -1449,14 +1449,3 @@ class ConversationService:
                     "timestamp": datetime.utcnow().isoformat()
                 }
             }
-
-
-# 全局服务实例
-_conversation_service: Optional[ConversationService] = None
-
-def get_conversation_service() -> ConversationService:
-    """获取对话服务实例"""
-    global _conversation_service
-    if _conversation_service is None:
-        _conversation_service = ConversationService()
-    return _conversation_service 

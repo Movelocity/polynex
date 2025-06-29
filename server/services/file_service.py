@@ -11,7 +11,6 @@ from pathlib import Path
 import uuid
 import math
 import os
-import shutil
 
 from models.database import FileRecord
 
@@ -152,7 +151,7 @@ class FileService:
     def scan_uploads_folder(self):
         """扫描上传文件夹，将未入库的文件导入数据库"""
         try:
-            from core import UserService
+            from services import UserService
             
             user_service = UserService(self.db)
             files_to_import = []

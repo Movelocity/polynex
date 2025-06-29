@@ -205,7 +205,7 @@ def get_current_user_id_optional(credentials: Optional[HTTPAuthorizationCredenti
 
 def check_admin_permission(current_user_id: str, db: Session) -> bool:
     """检查用户是否为管理员"""
-    from core.user_service import UserService
+    from server.services.user_service import UserService
     user_service = UserService(db)
     user_data = user_service.get_user_by_id(current_user_id)
     return user_data and user_data['role'] == 'admin'
@@ -229,7 +229,7 @@ def get_current_user_info(
     db: Session = Depends(get_db)
 ) -> dict:
     """获取当前用户完整信息的依赖"""
-    from core.user_service import UserService
+    from server.services.user_service import UserService
     user_service = UserService(db)
     user_data = user_service.get_user_by_id(current_user_id)
     

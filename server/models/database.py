@@ -12,7 +12,6 @@ from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import enum
 import uuid
-from decimal import Decimal
 
 Base = declarative_base()
 

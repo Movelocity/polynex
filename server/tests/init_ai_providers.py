@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from models.database import Base, engine, SessionLocal, AIProviderConfig, AIProvider
+from models.database import Base, engine, SessionLocal, AIProvider
 from services.ai_provider_service import AIProviderService
 import logging
 

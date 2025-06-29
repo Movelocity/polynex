@@ -245,57 +245,57 @@ export class UserApiService implements IUserService {
     }
   }
 
-  async uploadAvatar(file: File | Blob): Promise<{ success: boolean; message: string; user?: ClientUser; avatarUrl?: string }> {
-    try {
-      // 创建FormData对象
-      const formData = new FormData();
-      // FormData可以接受Blob或File
-      formData.append('file', file, 'avatar.jpg');
+  // async uploadAvatar(file: File | Blob): Promise<{ success: boolean; message: string; user?: ClientUser; avatarUrl?: string }> {
+  //   try {
+  //     // 创建FormData对象
+  //     const formData = new FormData();
+  //     // FormData可以接受Blob或File
+  //     formData.append('file', file, 'avatar.jpg');
 
-      // 使用fetch直接发送，因为ApiClient可能不支持FormData
-      const baseURL = (this.apiClient as any).baseURL || 'http://localhost:8765/api';
-      const token = this.apiClient.getToken();
+  //     // 使用fetch直接发送，因为ApiClient可能不支持FormData
+  //     const baseURL = (this.apiClient as any).baseURL || 'http://localhost:8765/api';
+  //     const token = this.apiClient.getToken();
       
-      const headers: HeadersInit = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+  //     const headers: HeadersInit = {};
+  //     if (token) {
+  //       headers['Authorization'] = `Bearer ${token}`;
+  //     }
 
-      const response = await fetch(`${baseURL}/users/avatar/upload`, {
-        method: 'POST',
-        headers,
-        body: formData
-      });
+  //     const response = await fetch(`${baseURL}/users/avatar/upload`, {
+  //       method: 'POST',
+  //       headers,
+  //       body: formData
+  //     });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Upload failed' }));
-        throw new ApiError(response.status, errorData.message || 'Upload failed');
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({ message: 'Upload failed' }));
+  //       throw new ApiError(response.status, errorData.message || 'Upload failed');
+  //     }
 
-      const result = await response.json();
+  //     const result = await response.json();
 
-      // 更新本地用户信息
-      if (result.user) {
-        this.setCurrentUser(result.user);
-      }
+  //     // 更新本地用户信息
+  //     if (result.user) {
+  //       this.setCurrentUser(result.user);
+  //     }
 
-      return {
-        success: true,
-        message: result.message || '头像上传成功',
-        user: result.user,
-        avatarUrl: result.avatar_url
-      };
-    } catch (error) {
-      let message = '头像上传失败';
-      if (error instanceof ApiError) {
-        message = error.message;
-      }
-      return {
-        success: false,
-        message
-      };
-    }
-  }
+  //     return {
+  //       success: true,
+  //       message: result.message || '头像上传成功',
+  //       user: result.user,
+  //       avatarUrl: result.avatar_url
+  //     };
+  //   } catch (error) {
+  //     let message = '头像上传失败';
+  //     if (error instanceof ApiError) {
+  //       message = error.message;
+  //     }
+  //     return {
+  //       success: false,
+  //       message
+  //     };
+  //   }
+  // }
 
   async getRegistrationConfig(): Promise<RegistrationConfig> {
     try {

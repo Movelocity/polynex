@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 import mimetypes
 
 from fields.schemas import UserResponse, FileInfo, PaginatedResponse
-from core import UserService
+from services import UserService
 from services import FileService
 from models.database import get_db
 from libs.auth import get_current_user_id
@@ -215,7 +215,7 @@ async def delete_file(
     
     return {"message": "文件删除成功"}
 
-@router.post("/users/avatar/upload")
+@router.post("/user-avatar")
 async def upload_avatar(
     file: UploadFile = File(...),
     current_user_id: str = Depends(get_current_user_id),

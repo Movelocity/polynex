@@ -62,10 +62,10 @@ export function UserSettings() {
   const handleAvatarUpload = async (croppedBlob: Blob) => {
     setUploadingAvatar(true);
     try {
-      // 直接使用userService上传头像，传递Blob
-      const result = await userService.uploadAvatar(croppedBlob);
+      // 直接使用blob改为file
+      const result = await fileService.uploadAvatar(new File([croppedBlob], 'avatar.jpg'));
       
-      if (result.success && result.user) {
+      if (result.user) {
         // 更新用户信息
         if (updateUser) {
           updateUser(result.user);
