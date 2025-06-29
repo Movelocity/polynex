@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     """应用配置类"""
     
     # 数据库配置
-    database_url: str = "sqlite:///./blog_platform.db"
+    database_url: str = "sqlite:///./polynex.db"
     
     # 并发控制配置
     max_concurrent_llm_requests: int = 10

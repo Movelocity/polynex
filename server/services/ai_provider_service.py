@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from models.database import AIProviderConfig, AIProviderType, DatabaseManager
+from models.database import AIProviderConfig, AIProviderType
 
 logger = logging.getLogger(__name__)
 
@@ -342,52 +342,3 @@ class AIProviderService:
         
         # 否则使用默认配置
         return self.get_default_provider_config() or self.get_best_provider_config()
-
-
-def get_ai_provider_service_with_db() -> tuple[AIProviderService, Session]:
-    """
-    获取AI供应商服务实例和数据库会话
-    
-    Returns:
-        tuple: (AIProviderService实例, 数据库会话)
-        
-    Note:
-        调用者需要确保在使用完毕后关闭数据库会话
-        建议使用方式：
-        ```python
-        service, db = get_ai_provider_service_with_db()
-        try:
-            # 使用service进行操作
-            pass
-        except Exception as e:
-            db.rollback()
-            raise e
-        finally:
-            db.close()
-        ```
-    """
-    from models.database import get_db_session
-    db = get_db_session()
-    return AIProviderService(db), db
-
-def get_ai_provider_service(db: Session = None) -> AIProviderService:
-    """
-    获取AI供应商服务实例
-    
-    Args:
-        db: 数据库会话，如果为None则会抛出异常
-        
-    Returns:
-        AIProviderService: 服务实例
-        
-    Raises:
-        ValueError: 当db参数为None时
-        
-    Note:
-        为了避免数据库连接泄漏，现在要求必须传入数据库会话
-        如果需要创建新的会话，请使用get_ai_provider_service_with_db()
-    """
-    if db is None:
-        raise ValueError("Database session is required. Use get_ai_provider_service_with_db() if you need to create a new session.")
-    
-    return AIProviderService(db) 

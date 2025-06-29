@@ -118,4 +118,4 @@ class ConfigService:
         ]
         
         self.db.add_all(default_configs)
-        self.db.commit() 
+        self.db.commit()

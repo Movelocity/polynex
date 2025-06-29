@@ -83,7 +83,7 @@ pip install -r requirements.txt
 创建 `.env` 文件：
 ```bash
 # 数据库配置
-BLOG_DATABASE_URL=sqlite:///./blog_platform.db
+BLOG_DATABASE_URL=sqlite:///./polynex.db
 
 # 安全配置
 BLOG_SECRET_KEY=your-super-secret-key-here

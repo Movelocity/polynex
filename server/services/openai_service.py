@@ -1,9 +1,6 @@
-import os
-import asyncio
 from typing import AsyncGenerator, List, Dict, Any, Optional
 from openai import AsyncOpenAI
 import httpx
-import json
 import logging
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -504,27 +501,3 @@ class OpenAIService:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
         await self.close()
-
-
-# 服务工厂函数
-def get_openai_service(
-    provider_config: AIProviderConfig = None,
-    provider_config_id: str = None,
-    db: Session = None
-) -> OpenAIService:
-    """
-    获取 OpenAI 服务实例
-    
-    Args:
-        provider_config: 供应商配置对象
-        provider_config_id: 供应商配置ID
-        db: 数据库会话
-        
-    Returns:
-        OpenAIService: 服务实例
-    """
-    return OpenAIService(
-        provider_config=provider_config,
-        provider_config_id=provider_config_id,
-        db=db
-    ) 

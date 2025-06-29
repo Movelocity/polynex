@@ -5,14 +5,14 @@ import logging
 
 from models.database import get_db
 from fields.schemas import AgentSummary, AgentDetail, AgentCreate, AgentUpdate
-from services.conversation_service import ConversationService
+from services.agent_service import AgentService
 from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/agents", tags=["AI代理管理"])
 
 # 全局会话服务实例
-conversation_service = ConversationService()
+agent_service = AgentService()
 
 
 @router.post("/agents", response_model=AgentSummary, summary="创建AI代理")
@@ -30,7 +30,7 @@ async def create_agent(
     - **返回**: 创建成功的代理摘要信息
     """
     try:
-        agent = await conversation_service.create_agent(
+        agent = await agent_service.create_agent(
             agent_data=agent_data,
             user_id=current_user_id,
             db=db
@@ -77,7 +77,7 @@ async def get_agents(
     - **返回**: 代理摘要信息列表
     """
     try:
-        agents = await conversation_service.get_user_agents(
+        agents = await agent_service.get_user_agents(
             user_id=current_user_id,
             include_public=include_public,
             limit=limit,
@@ -125,7 +125,7 @@ async def get_agent(
     - **返回**: 代理的详细配置信息
     """
     try:
-        agent = await conversation_service.get_agent(
+        agent = await agent_service.get_agent(
             agent_id=agent_id,
             user_id=current_user_id,
             db=db
@@ -181,7 +181,7 @@ async def update_agent(
     - **返回**: 更新后的代理详细信息
     """
     try:
-        agent = await conversation_service.update_agent(
+        agent = await agent_service.update_agent(
             agent_id=agent_id,
             agent_update=agent_update,
             user_id=current_user_id,
@@ -236,7 +236,7 @@ async def delete_agent(
     - **返回**: 删除成功消息
     """
     try:
-        success = await conversation_service.delete_agent(
+        success = await agent_service.delete_agent(
             agent_id=agent_id,
             user_id=current_user_id,
             db=db
@@ -275,7 +275,7 @@ async def get_public_agents(
     - **返回**: 公开代理的摘要信息列表
     """
     try:
-        agents = await conversation_service.get_public_agents(
+        agents = await agent_service.get_public_agents(
             limit=limit,
             offset=offset,
             db=db

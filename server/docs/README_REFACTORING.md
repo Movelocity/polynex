@@ -85,12 +85,6 @@
     - `DELETE /users/{user_id}` - 删除用户
     - `PUT /users/{user_id}/password` - 重置用户密码
 
-### 5. 测试相关功能
-
-#### 开发测试模块 (`routers/dev.py`)
-- **路由前缀**: `/api/dev`
-- **功能**:
-  - `POST /generate-sample-data` - 生成示例数据
 
 ## 重构后的文件结构
 

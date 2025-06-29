@@ -13,7 +13,10 @@ from constants import get_settings, configure_logging, print_config_status
 from services.llm_request_log_service import start_llm_log_service, stop_llm_log_service
 
 # 导入路由模块
-from controllers import auth, users, blogs, categories, files, admin, dev, conversations, agents, ai_providers, docs
+from controllers import auth, users, blogs, categories, files, admin, conversations, agents, ai_providers, docs
+
+# 导入数据库初始化
+from models.database import create_tables
 
 # 初始化配置和日志
 settings = get_settings()
@@ -22,6 +25,9 @@ configure_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
+    # 创建数据库表，确保数据库就绪
+    create_tables()
+
     # 启动时执行
     print("🔧 启动LLM请求日志服务...")
     await start_llm_log_service()
@@ -90,7 +96,6 @@ app.include_router(blogs.router)
 app.include_router(categories.router)
 app.include_router(files.router)
 app.include_router(admin.router)
-app.include_router(dev.router)
 app.include_router(conversations.router)
 app.include_router(agents.router)
 app.include_router(ai_providers.router)  # 已经有前缀 /api/ai

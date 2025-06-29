@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional, Dict, Any
 import uuid
-
 from models.database import Category, Blog
 from fields import CategoryCreate
 
@@ -113,4 +112,4 @@ class CategoryService:
             )
             self.db.add(category)
         
-        self.db.commit() 
+        self.db.commit()

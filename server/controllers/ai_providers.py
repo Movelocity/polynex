@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import logging
 
-from models.database import AIProviderConfig, AIProviderType, get_db
+from models.database import AIProviderType, get_db
 from libs.auth import get_current_user_id, require_admin_permission
 from services.ai_provider_service import AIProviderService
 from services.openai_service import OpenAIService

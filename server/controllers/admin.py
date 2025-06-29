@@ -9,7 +9,7 @@ from fields import (
 )
 from models.database import get_db
 from services import UserService, ConfigService
-from libs.auth import get_current_user_id, get_password_hash, require_admin_permission
+from libs.auth import get_password_hash, require_admin_permission
 
 router = APIRouter(prefix="/api/admin", tags=["管理员权限接口"])
 

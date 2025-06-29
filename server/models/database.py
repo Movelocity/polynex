@@ -5,13 +5,14 @@
 """
 
 import json
+import enum
+import uuid
+from datetime import datetime
 from sqlalchemy import Column, String, Text, Integer, DateTime, JSON, Enum as SQLEnum, Boolean, Float, Numeric, ForeignKey, TypeDecorator
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
-from datetime import datetime
-import enum
-import uuid
+from constants import get_settings
 
 Base = declarative_base()
 
@@ -275,8 +276,8 @@ class LLMRequestLog(Base):
         }
 
 # 数据库配置
-DATABASE_URL = "sqlite:///./blog_platform.db"
-engine = create_engine(DATABASE_URL, echo=False)
+database_url = get_settings().database_url
+engine = create_engine(database_url, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_tables():
@@ -284,7 +285,7 @@ def create_tables():
     Base.metadata.create_all(bind=engine)
 
 def get_db():
-    """获取数据库会话（用于FastAPI依赖注入）"""
+    """获取数据库会话（用于FastAPI依赖注入）。"""
     db = SessionLocal()
     try:
         yield db

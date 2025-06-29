@@ -285,4 +285,4 @@ class BlogService:
             )
             self.db.add(blog)
         
-        self.db.commit() 
+        self.db.commit()
