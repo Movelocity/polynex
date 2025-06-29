@@ -208,7 +208,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Blog Management */}
-        <Card className="col-span-1 lg:col-span-3 border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+        <Card className="col-span-1 lg:col-span-3">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -419,26 +419,26 @@ export function Dashboard() {
                 站点统计
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 text-muted-foreground">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">文章总数</span>
+                <span className="text-sm">文章总数</span>
                 <span className="font-semibold text-blue-600">{stats.total}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">已发布</span>
+                <span className="text-sm">已发布</span>
                 <span className="font-semibold text-green-600">{stats.published}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">草稿</span>
+                <span className="text-sm">草稿</span>
                 <span className="font-semibold text-green-600">{stats.draft}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">总阅读量</span>
+                <span className="text-sm">总阅读量</span>
                 <span className="font-semibold text-purple-600">{stats.totalViews}</span>
               </div>
               {debouncedSearchQuery.trim() && (
                 <div className="flex items-center justify-between border-t border-border pt-3">
-                  <span className="text-sm text-slate-600">搜索结果</span>
+                  <span className="text-sm">搜索结果</span>
                   <span className="font-semibold text-orange-600">{filteredBlogs.length}</span>
                 </div>
               )}

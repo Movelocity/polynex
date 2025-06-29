@@ -177,7 +177,6 @@ export function Home() {
               layout="grid"
               summaryLines={3}
               maxTags={3}
-              className=""
             />
           ))}
         </div>

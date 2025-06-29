@@ -211,16 +211,16 @@ export function ImageCropper() {
                   className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
-                  返回页面
+                  返回工具列表
                 </Link>
-                <CardTitle className="hidden sm:flex items-center space-x-2 ">
+                <span className="hidden sm:flex items-center space-x-2 ">
                   <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-md">
                     <ImageIcon className="w-4 h-4 text-white" />
                   </div>
                   <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     图片裁剪工具
                   </span>
-                </CardTitle>
+                </span>
                 {mode !== 'cropping' && (
                   <div className="flex gap-3">
                     {/* <Button variant="outline" onClick={()=>{mode === 'preview'? reset() : backToPreview()}}>

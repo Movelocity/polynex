@@ -64,7 +64,7 @@ export function BlogCard({
   const canNavigate = clickable && (blog.status === 'published' || !showStatus);
 
   return (
-    <Card className={`hover:shadow-lg transition-all duration-300 ${className}`}>
+    <Card className={`bg-background ${className}`}>
       <CardHeader>
         <div className="flex flex-col md:flex-row items-start justify-between">
           <div className="flex-1">

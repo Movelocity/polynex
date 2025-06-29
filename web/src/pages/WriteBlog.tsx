@@ -290,10 +290,10 @@ export function WriteBlog() {
             <CardHeader>
               <input
                 id="title"
-                placeholder="输入一个吸引人的标题..."
+                placeholder="请输入标题..."
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                className="text-3xl font-bold outline-none bg-background/80"
+                className="text-3xl font-bold outline-none bg-secondary"
               />
             </CardHeader>
             <CardContent>
