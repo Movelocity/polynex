@@ -11,7 +11,7 @@ from fields.schemas import (
     ConversationSummary, ConversationDetail, ChatRequest, Message, 
     ConversationContextUpdate, SearchRequest, SearchResponse, ConversationSearchResult
 )
-from services import conversation_srv
+from services import conversation_srv, chat_srv
 from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
@@ -21,10 +21,9 @@ class SessionCreateRequest(BaseModel):
     agent_id: Optional[str] = None
     title: Optional[str] = None
     message: Optional[str] = None
-    stream: bool = False
 
 
-@router.post("", response_model=ConversationDetail)
+@router.post("")
 async def create_conversation(
     request: SessionCreateRequest,
     current_user_id: str = Depends(get_current_user_id),
@@ -32,14 +31,14 @@ async def create_conversation(
 ):
     """创建新的对话会话"""
     try:
-        # 如果请求流式响应且有初始消息
-        if request.stream and request.message:
+        # 如果有初始消息，使用流式响应
+        if request.message:
             # 流式响应
             async def generate():
                 # 发送初始心跳
                 yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
                 
-                async for chunk in conversation_srv.stream_create_conversation(
+                async for chunk in chat_srv.stream_create_conversation(
                     user_id=current_user_id,
                     agent_id=request.agent_id,
                     title=request.title,
@@ -65,12 +64,11 @@ async def create_conversation(
                 }
             )
         else:
-            # 非流式响应，使用原有逻辑
+            # 没有初始消息，只创建对话记录
             conversation = await conversation_srv.create_conversation(
                 user_id=current_user_id,
                 agent_id=request.agent_id,
                 title=request.title,
-                initial_message=request.message,
                 db=db
             )
             
@@ -230,48 +228,37 @@ async def chat_with_conversation(
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """在指定对话中发送消息"""
+    """在指定对话中发送消息（仅支持流式响应）"""
     try:
-        if chat_request.stream:
-            # 流式响应
-            async def generate():
-                # 发送初始心跳
-                yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
-                
-                async for chunk in conversation_srv.stream_chat(
-                    conversation_id=conversation_id,
-                    user_id=current_user_id,
-                    message=chat_request.message,
-                    db=db
-                ):
-                    # 根据chunk类型发送不同的事件
-                    chunk_type = chunk.get("type", "data")
-                    yield f"event: {chunk_type}\ndata: {json.dumps(chunk)}\n\n"
-                
-                # 发送完成事件
-                yield "event: done\ndata: {\"type\": \"done\"}\n\n"
+        # 只支持流式响应
+        async def generate():
+            # 发送初始心跳
+            yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
             
-            return StreamingResponse(
-                generate(),
-                media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                    "Content-Type": "text/event-stream",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "Cache-Control",
-                }
-            )
-        else:
-            # 非流式响应
-            response = await conversation_srv.chat(
+            async for chunk in chat_srv.stream_chat(
                 conversation_id=conversation_id,
-                user_message=chat_request.message,
                 user_id=current_user_id,
+                message=chat_request.message,
                 db=db
-            )
+            ):
+                # 根据chunk类型发送不同的事件
+                chunk_type = chunk.get("type", "data")
+                yield f"event: {chunk_type}\ndata: {json.dumps(chunk)}\n\n"
             
-            return response
+            # 发送完成事件
+            yield "event: done\ndata: {\"type\": \"done\"}\n\n"
+        
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Cache-Control",
+            }
+        )
     except HTTPException:
         raise
     except Exception as e:

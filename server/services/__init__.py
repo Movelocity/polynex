@@ -6,14 +6,13 @@ from .file_service import FileService
 from .user_service import UserService
 from .config_service import ConfigService
 from .conversation_service import ConversationService
+from .chat_service import ChatService
 
 # 全局会话服务实例
 conversation_srv = ConversationService()
+chat_srv = ChatService()
 
 __all__ = [
-    'BlogService',
-    'CategoryService',
-    'FileService',
-    'UserService',
-    'ConfigService'
+    'conversation_srv',
+    'chat_srv'
 ]
