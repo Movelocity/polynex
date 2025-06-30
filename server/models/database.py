@@ -52,15 +52,7 @@ class ConversationStatus(enum.Enum):
 
 class AIProviderType(enum.Enum):
     """AI提供商技术类型枚举"""
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
-    GOOGLE = "google"
-    OLLAMA = "ollama"
-    CUSTOM = "custom"
-
-# 保持向后兼容，后续可以移除
-class AIProvider(enum.Enum):
-    """AI提供商枚举（已废弃，使用AIProviderType）"""
+    DEEPSEEK = "deepseek"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -162,8 +154,8 @@ class AIProviderConfig(Base):
     rate_limit_per_minute = Column(Integer, nullable=True)  # 每分钟请求限制
     extra_config = Column(UnicodeJSON, nullable=False, default=dict)  # 额外配置参数
     description = Column(Text, nullable=True)  # 配置描述
-    create_time = Column(DateTime, nullable=False, default=datetime.utcnow)
-    update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
+    update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
     llm_request_logs = relationship("LLMRequestLog", back_populates="provider_config")
 
 class Agent(Base):

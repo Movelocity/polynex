@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from models.database import AIProviderConfig, AIProvider
+from models.database import AIProviderConfig, AIProviderType
 from services.ai_provider_service import AIProviderService
 from services.llm_request_log_service import get_llm_log_service
 
@@ -41,7 +41,7 @@ class OpenAIService:
             self.config = self.provider_service.get_default_provider_config()
             if not self.config:
                 # 如果没有默认配置，使用最佳配置
-                self.config = self.provider_service.get_best_provider_config(AIProvider.OPENAI)
+                self.config = self.provider_service.get_best_provider_config(AIProviderType.OPENAI)
             if not self.config:
                 raise ValueError("No active OpenAI provider configuration found. Please add one through the admin panel.")
         else:

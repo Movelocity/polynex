@@ -15,6 +15,86 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def filter_messages(conversations: List[Conversation], query: str) -> List[Dict[str, Any]]:
+    """
+    对话搜索辅助函数，用于搜索对话标题和消息内容
+    """
+    search_results = []
+    query_lower = query.lower()
+    
+    for conversation in conversations:
+        match_count = 0
+        first_match_context = None
+        
+        # 首先搜索对话标题
+        title_lower = conversation.title.lower()
+        title_matches = title_lower.count(query_lower)
+        if title_matches > 0:
+            match_count += title_matches
+            # 如果标题中有匹配，使用标题作为context
+            match_index = title_lower.find(query_lower)
+            start_index = max(0, match_index - 60)
+            end_index = min(len(conversation.title), match_index + len(query) + 60)
+            
+            context = conversation.title[start_index:end_index]
+            if start_index > 0:
+                context = "..." + context
+            if end_index < len(conversation.title):
+                context = context + "..."
+            
+            first_match_context = f"[标题] {context}"
+        
+        # 然后搜索所有消息
+        if conversation.messages:
+            for message in conversation.messages:
+                content = message.get('content', '')
+                if not content:
+                    continue
+                
+                content_lower = content.lower()
+                
+                # 计算匹配次数
+                message_matches = content_lower.count(query_lower)
+                match_count += message_matches
+                
+                # 如果还没有找到首次匹配的context，且当前消息包含关键词
+                if first_match_context is None and query_lower in content_lower:
+                    # 找到首次匹配的位置
+                    match_index = content_lower.find(query_lower)
+                    
+                    # 提取前后各60个字符（总共120个字符）
+                    start_index = max(0, match_index - 60)
+                    end_index = min(len(content), match_index + len(query) + 60)
+                    
+                    context = content[start_index:end_index]
+                    
+                    # 如果从头开始截取，不添加省略号；否则添加省略号
+                    if start_index > 0:
+                        context = "..." + context
+                    if end_index < len(content):
+                        context = context + "..."
+                    
+                    # 标识消息角色
+                    role = message.get('role', 'unknown')
+                    role_label = {'user': '[用户]', 'assistant': '[助手]', 'system': '[系统]'}.get(role, f'[{role}]')
+                    first_match_context = f"{role_label} {context}"
+        
+        # 如果有匹配，添加到结果中
+        if match_count > 0:
+            search_results.append({
+                'id': conversation.id,
+                'session_id': conversation.session_id,
+                'title': conversation.title,
+                'match_count': match_count,
+                'context': first_match_context or '',
+                'create_time': conversation.create_time.isoformat() + 'Z',
+                'update_time': conversation.update_time.isoformat() + 'Z'
+            })
+    
+    # 按匹配次数和更新时间排序
+    search_results.sort(key=lambda x: (-x['match_count'], x['update_time']), reverse=True)
+    return search_results
+
 class ConversationService:
     """对话服务类"""
     
@@ -602,7 +682,7 @@ class ConversationService:
                 user_message = {
                     "role": "user",
                     "content": message,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now().isoformat()
                 }
                 messages.append(user_message)
                 
@@ -833,80 +913,7 @@ class ConversationService:
                 )
             ).order_by(Conversation.update_time.desc()).all()
             
-            search_results = []
-            query_lower = query.lower()
-            
-            for conversation in conversations:
-                match_count = 0
-                first_match_context = None
-                
-                # 首先搜索对话标题
-                title_lower = conversation.title.lower()
-                title_matches = title_lower.count(query_lower)
-                if title_matches > 0:
-                    match_count += title_matches
-                    # 如果标题中有匹配，使用标题作为context
-                    match_index = title_lower.find(query_lower)
-                    start_index = max(0, match_index - 60)
-                    end_index = min(len(conversation.title), match_index + len(query) + 60)
-                    
-                    context = conversation.title[start_index:end_index]
-                    if start_index > 0:
-                        context = "..." + context
-                    if end_index < len(conversation.title):
-                        context = context + "..."
-                    
-                    first_match_context = f"[标题] {context}"
-                
-                # 然后搜索所有消息
-                if conversation.messages:
-                    for message in conversation.messages:
-                        content = message.get('content', '')
-                        if not content:
-                            continue
-                        
-                        content_lower = content.lower()
-                        
-                        # 计算匹配次数
-                        message_matches = content_lower.count(query_lower)
-                        match_count += message_matches
-                        
-                        # 如果还没有找到首次匹配的context，且当前消息包含关键词
-                        if first_match_context is None and query_lower in content_lower:
-                            # 找到首次匹配的位置
-                            match_index = content_lower.find(query_lower)
-                            
-                            # 提取前后各60个字符（总共120个字符）
-                            start_index = max(0, match_index - 60)
-                            end_index = min(len(content), match_index + len(query) + 60)
-                            
-                            context = content[start_index:end_index]
-                            
-                            # 如果从头开始截取，不添加省略号；否则添加省略号
-                            if start_index > 0:
-                                context = "..." + context
-                            if end_index < len(content):
-                                context = context + "..."
-                            
-                            # 标识消息角色
-                            role = message.get('role', 'unknown')
-                            role_label = {'user': '[用户]', 'assistant': '[助手]', 'system': '[系统]'}.get(role, f'[{role}]')
-                            first_match_context = f"{role_label} {context}"
-                
-                # 如果有匹配，添加到结果中
-                if match_count > 0:
-                    search_results.append({
-                        'id': conversation.id,
-                        'session_id': conversation.session_id,
-                        'title': conversation.title,
-                        'match_count': match_count,
-                        'context': first_match_context or '',
-                        'create_time': conversation.create_time.isoformat() + 'Z',
-                        'update_time': conversation.update_time.isoformat() + 'Z'
-                    })
-            
-            # 按匹配次数和更新时间排序
-            search_results.sort(key=lambda x: (-x['match_count'], x['update_time']), reverse=True)
+            search_results = filter_messages(conversations, query)
             
             # 分页
             total_count = len(search_results)
@@ -969,7 +976,7 @@ class ConversationService:
                     "conversation_id": conversation.id,
                     "session_id": conversation.session_id,
                     "title": conversation.title,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now().isoformat()
                 }
             }
             
@@ -997,7 +1004,7 @@ class ConversationService:
                     user_message = {
                         "role": "user",
                         "content": initial_message,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.now().isoformat()
                     }
                     messages.append(user_message)
                     

@@ -11,15 +11,11 @@ from fields.schemas import (
     ConversationSummary, ConversationDetail, ChatRequest, Message, 
     ConversationContextUpdate, SearchRequest, SearchResponse, ConversationSearchResult
 )
-from services.conversation_service import ConversationService
+from services import conversation_srv
 from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/conversations", tags=["对话管理"])
-
-# 全局会话服务实例
-conversation_service = ConversationService()
-
 
 class SessionCreateRequest(BaseModel):
     agent_id: Optional[str] = None
@@ -43,7 +39,7 @@ async def create_conversation(
                 # 发送初始心跳
                 yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
                 
-                async for chunk in conversation_service.stream_create_conversation(
+                async for chunk in conversation_srv.stream_create_conversation(
                     user_id=current_user_id,
                     agent_id=request.agent_id,
                     title=request.title,
@@ -70,7 +66,7 @@ async def create_conversation(
             )
         else:
             # 非流式响应，使用原有逻辑
-            conversation = await conversation_service.create_conversation(
+            conversation = await conversation_srv.create_conversation(
                 user_id=current_user_id,
                 agent_id=request.agent_id,
                 title=request.title,
@@ -106,7 +102,7 @@ async def get_conversations(
 ):
     """获取用户的对话会话列表"""
     try:
-        conversations = await conversation_service.get_user_conversations(
+        conversations = await conversation_srv.get_user_conversations(
             user_id=current_user_id,
             limit=limit,
             offset=offset,
@@ -158,7 +154,7 @@ async def search_conversations(
                 detail="Search query too long (max 100 characters)"
             )
         
-        result = await conversation_service.search_conversations(
+        result = await conversation_srv.search_conversations(
             user_id=current_user_id,
             query=query.strip(),
             db=db,
@@ -194,7 +190,7 @@ async def get_conversation(
 ):
     """获取指定对话的详细信息"""
     try:
-        conversation = await conversation_service.get_conversation(
+        conversation = await conversation_srv.get_conversation(
             conversation_id=conversation_id,
             user_id=current_user_id,
             db=db
@@ -242,7 +238,7 @@ async def chat_with_conversation(
                 # 发送初始心跳
                 yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
                 
-                async for chunk in conversation_service.stream_chat(
+                async for chunk in conversation_srv.stream_chat(
                     conversation_id=conversation_id,
                     user_id=current_user_id,
                     message=chat_request.message,
@@ -268,7 +264,7 @@ async def chat_with_conversation(
             )
         else:
             # 非流式响应
-            response = await conversation_service.chat(
+            response = await conversation_srv.chat(
                 conversation_id=conversation_id,
                 user_message=chat_request.message,
                 user_id=current_user_id,
@@ -302,7 +298,7 @@ async def update_conversation_title(
                 detail="Title is required"
             )
         
-        success = await conversation_service.update_conversation_title(
+        success = await conversation_srv.update_conversation_title(
             conversation_id=conversation_id,
             title=title,
             user_id=current_user_id,
@@ -335,7 +331,7 @@ async def update_conversation_context(
 ):
     """更新对话上下文"""
     try:
-        success = await conversation_service.update_conversation_context(
+        success = await conversation_srv.update_conversation_context(
             conversation_id=conversation_id,
             user_id=current_user_id,
             messages=context_data.messages,
@@ -367,7 +363,7 @@ async def delete_conversation(
 ):
     """删除对话"""
     try:
-        success = await conversation_service.delete_conversation(
+        success = await conversation_srv.delete_conversation(
             conversation_id=conversation_id,
             user_id=current_user_id,
             db=db
@@ -376,15 +372,15 @@ async def delete_conversation(
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Conversation not found"
+                detail="聊天记录不存在"
             )
         
-        return {"message": "Conversation deleted successfully"}
+        return {"message": f"聊天记录 {conversation_id} 已删除"}
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting conversation {conversation_id}: {str(e)}")
+        logger.error(f"删除聊天记录 {conversation_id} 失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete conversation: {str(e)}"
+            detail=f"删除聊天记录 {conversation_id} 失败: {str(e)}"
         ) 

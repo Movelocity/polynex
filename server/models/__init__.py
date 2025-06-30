@@ -8,7 +8,7 @@ from .database import *
 
 __all__ = [
     # 枚举
-    'UserRole', 'ConversationStatus', 'AIProvider',
+    'UserRole', 'ConversationStatus', 'AIProviderType',
     
     # 数据库模型
     'User', 'SiteConfig', 'Blog', 'Category', 'FileRecord', 'Conversation', 'Agent',
