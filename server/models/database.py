@@ -197,7 +197,6 @@ class LLMRequestLog(Base):
     stream = Column(Boolean, default=False)
     
     # 请求内容 - 改为TEXT类型，手动进行JSON序列化以避免中文转义问题
-    request_messages = Column(Text, nullable=False)  # 存储JSON序列化字符串
     request_params = Column(UnicodeJSON, nullable=True)  # 完整的请求参数
     
     # 响应内容
@@ -233,13 +232,6 @@ class LLMRequestLog(Base):
     
     def to_dict(self):
         # 手动解析JSON字符串为对象
-        request_messages_parsed = None
-        if self.request_messages:
-            try:
-                request_messages_parsed = json.loads(self.request_messages)
-            except (json.JSONDecodeError, TypeError):
-                request_messages_parsed = self.request_messages
-        
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -250,7 +242,6 @@ class LLMRequestLog(Base):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
             "stream": self.stream,
-            "request_messages": request_messages_parsed,  # 解析后的JSON对象
             "request_params": self.request_params,  # 现在会正确显示中文
             "response_content": self.response_content,
             "finish_reason": self.finish_reason,

@@ -51,7 +51,6 @@ def run_migration():
         Column('stream', Boolean, default=False),
         
         # 请求内容 (JSON)
-        Column('request_messages', JSON, nullable=False),
         Column('request_params', JSON, nullable=True),
         
         # 响应内容

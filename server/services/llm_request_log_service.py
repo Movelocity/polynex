@@ -67,7 +67,6 @@ class LLMRequestLogService:
         user_id: str,
         provider_config_id: str,
         model: str,
-        request_messages: List[Dict[str, str]],
         db: Session,
         conversation_id: Optional[str] = None,
         agent_id: Optional[str] = None,
@@ -85,9 +84,6 @@ class LLMRequestLogService:
         """
         log_id = str(uuid.uuid4())
         
-        # 手动序列化request_messages为JSON字符串，确保中文不被转义
-        request_messages_json = json.dumps(request_messages, ensure_ascii=False, separators=(',', ':'))
-        
         log_data = {
             "id": log_id,
             "user_id": user_id,
@@ -98,7 +94,6 @@ class LLMRequestLogService:
             "temperature": temperature,
             "max_tokens": max_tokens,
             "stream": stream,
-            "request_messages": request_messages_json,  # 保存JSON字符串
             "request_params": request_params,
             "start_time": datetime.now(),
             "status": "pending",
@@ -227,9 +222,6 @@ class LLMRequestLogService:
             logs = query.order_by(
                 LLMRequestLog.start_time.desc()
             ).offset(offset).limit(limit).all()
-            
-            # 手动解析request_messages字段（如果需要在这里处理的话）
-            # 注意：实际的JSON解析在LLMRequestLog.to_dict()方法中进行
             
             return logs
             
