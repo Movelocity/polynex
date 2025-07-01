@@ -64,7 +64,7 @@ export interface UseConversationReturn {
 
 export function useConversation(): UseConversationReturn {
   const { user } = useAuth();
-  const { agents, getAgent } = useAgents();
+  const { getAgent } = useAgents();
   
   // 状态定义
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
@@ -115,15 +115,15 @@ export function useConversation(): UseConversationReturn {
     }
   }, [agentId, user]);
 
-  // 加载Agent的函数
-  const loadAgent = async (agentId: string) => {
+  // 加载Agent的函数, new_chat 默认为true
+  const loadAgent = async (agentId: string, new_chat?: boolean) => {
     try {
       setIsLoadingAgent(true);
       const agent = await getAgent(agentId);
       if (agent) {
         setSelectedAgent(agent);
         // 显示欢迎语
-        if (agent.app_preset?.greetings) {
+        if (agent.app_preset?.greetings && new_chat !== false) {
           setMessages([{
             role: 'assistant',
             content: agent.app_preset.greetings,
@@ -198,7 +198,6 @@ export function useConversation(): UseConversationReturn {
   // 对话选择处理
   const handleConversationSelect = async (selectedConversationId: string) => {
     try {
-      setIsLoading(true);
       const conversation = await conversationService.getConversation(selectedConversationId);
       
       setConversationId(selectedConversationId);
@@ -206,7 +205,7 @@ export function useConversation(): UseConversationReturn {
       
       // 如果对话有关联的agent，加载agent信息
       if (conversation.agent_id && conversation.agent_id !== selectedAgent?.id) {
-        await loadAgent(conversation.agent_id);
+        await loadAgent(conversation.agent_id, false);
       }
     } catch (error) {
       toast({
@@ -214,8 +213,6 @@ export function useConversation(): UseConversationReturn {
         description: "加载对话失败",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 

@@ -20,7 +20,7 @@ export const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({ question
       </div>
       <p className="text-sm font-medium text-foreground">试试这样问</p>
     </div>
-    <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+    <div className="flex gap-2 overflow-x-auto" style={{scrollbarWidth: 'none'}}>
       {questions.map((question: string, index: number) => (
         <Button
           key={index}
@@ -131,7 +131,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               )}
               style={{ 
                 fontSize: '16px', // 防止移动端缩放
-                lineHeight: '1.5'
+                lineHeight: '1.5',
+                scrollbarWidth: 'none'
               }}
               rows={1}
             />

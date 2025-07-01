@@ -189,12 +189,6 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
                 >
                   {/* 主要内容 */}
                   <div className="flex items-start space-x-3">
-                    {/* 图标 */}
-                    {/* <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-8 h-8 rounded-lg bg-theme-blue/10 flex items-center justify-center">
-                        <Bot className="h-4 w-4 text-theme-blue" />
-                      </div>
-                    </div> */}
 
                     {/* 内容 */}
                     <div className="flex-1 min-w-0">
