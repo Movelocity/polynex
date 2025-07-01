@@ -23,14 +23,14 @@ export class ConversationApiService implements IConversationService {
    * 需要用户权限
    * @param request 对话创建请求
    */
-  async createConversation(request: ConversationCreateRequest): Promise<Conversation> {
-    try {
-      return await this.apiClient.post<Conversation>('/conversations', request);
-    } catch (error) {
-      console.error('Failed to create conversation:', error);
-      throw error;
-    }
-  }
+  // async createConversation(request: ConversationCreateRequest): Promise<Conversation> {
+  //   try {
+  //     return await this.apiClient.post<Conversation>('/conversations', request);
+  //   } catch (error) {
+  //     console.error('Failed to create conversation:', error);
+  //     throw error;
+  //   }
+  // }
 
   /**
    * 流式创建新的对话会话
@@ -39,78 +39,78 @@ export class ConversationApiService implements IConversationService {
    * @param request 对话创建请求
    * @returns 返回一个处理流式响应的函数
    */
-  async createConversationStream(
-    request: ConversationCreateRequest,
-    onMessage: (data: any) => void,
-    onError: (error: string) => void,
-    onComplete: () => void
-  ): Promise<void> {
-    try {
-      const token = this.apiClient.getToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+  // async createConversationStream(
+  //   request: ConversationCreateRequest,
+  //   onMessage: (data: any) => void,
+  //   onError: (error: string) => void,
+  //   onComplete: () => void
+  // ): Promise<void> {
+  //   try {
+  //     const token = this.apiClient.getToken();
+  //     if (!token) {
+  //       throw new Error('Authentication required');
+  //     }
 
-      const response = await fetch(`${apiBaseUrl}/conversations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...request,
-          stream: true
-        }),
-      });
+  //     const response = await fetch(`${apiBaseUrl}/conversations`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify({
+  //         ...request,
+  //         stream: true
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  //     }
 
-      // 检查响应是否为SSE流
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('text/event-stream')) {
-        throw new Error('Expected SSE stream response');
-      }
+  //     // 检查响应是否为SSE流
+  //     const contentType = response.headers.get('content-type');
+  //     if (!contentType?.includes('text/event-stream')) {
+  //       throw new Error('Expected SSE stream response');
+  //     }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Response body is not readable');
-      }
+  //     const reader = response.body?.getReader();
+  //     if (!reader) {
+  //       throw new Error('Response body is not readable');
+  //     }
 
-      const decoder = new TextDecoder();
+  //     const decoder = new TextDecoder();
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
+  //     try {
+  //       while (true) {
+  //         const { done, value } = await reader.read();
           
-          if (done) {
-            onComplete();
-            break;
-          }
+  //         if (done) {
+  //           onComplete();
+  //           break;
+  //         }
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+  //         const chunk = decoder.decode(value, { stream: true });
+  //         const lines = chunk.split('\n');
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                onMessage(data);
-              } catch (parseError) {
-                console.warn('Failed to parse SSE data:', line);
-              }
-            }
-          }
-        }
-      } finally {
-        reader.releaseLock();
-      }
-    } catch (error) {
-      console.error('Failed to create conversation stream:', error);
-      onError(error instanceof Error ? error.message : 'Unknown error');
-    }
-  }
+  //         for (const line of lines) {
+  //           if (line.startsWith('data: ')) {
+  //             try {
+  //               const data = JSON.parse(line.slice(6));
+  //               onMessage(data);
+  //             } catch (parseError) {
+  //               console.warn('Failed to parse SSE data:', line);
+  //             }
+  //           }
+  //         }
+  //       }
+  //     } finally {
+  //       reader.releaseLock();
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to create conversation stream:', error);
+  //     onError(error instanceof Error ? error.message : 'Unknown error');
+  //   }
+  // }
 
   /**
    * 获取当前用户的对话列表
@@ -155,14 +155,14 @@ export class ConversationApiService implements IConversationService {
    * @param conversationId 对话ID
    * @param request 聊天请求
    */
-  async sendMessage(conversationId: string, request: ChatRequest): Promise<ChatResponse> {
-    try {
-      return await this.apiClient.post<ChatResponse>(`/conversations/${conversationId}/chat`, request);
-    } catch (error) {
-      console.error(`Failed to send message to conversation ${conversationId}:`, error);
-      throw error;
-    }
-  }
+  // async sendMessage(conversationId: string, request: ChatRequest): Promise<ChatResponse> {
+  //   try {
+  //     return await this.apiClient.post<ChatResponse>(`/conversations/${conversationId}/chat`, request);
+  //   } catch (error) {
+  //     console.error(`Failed to send message to conversation ${conversationId}:`, error);
+  //     throw error;
+  //   }
+  // }
 
   /**
    * 流式发送聊天消息
@@ -173,8 +173,7 @@ export class ConversationApiService implements IConversationService {
    * @param onError 处理错误的回调函数
    * @param onComplete 流式响应完成的回调函数
    */
-  async sendMessageStream(
-    conversationId: string,
+  async chat(
     request: ChatRequest,
     onMessage: (data: any) => void,
     onError: (error: string) => void,
@@ -183,10 +182,10 @@ export class ConversationApiService implements IConversationService {
     try {
       const token = this.apiClient.getToken();
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error('需要登录才能使用');
       }
 
-      const response = await fetch(`${apiBaseUrl}/conversations/${conversationId}/chat`, {
+      const response = await fetch(`${apiBaseUrl}/conversations/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +203,7 @@ export class ConversationApiService implements IConversationService {
 
       const reader = response.body?.getReader();
       if (!reader) {
-        throw new Error('Response body is not readable');
+        throw new Error('无法读取响应体');
       }
 
       const decoder = new TextDecoder();
@@ -229,7 +228,7 @@ export class ConversationApiService implements IConversationService {
                 const data = JSON.parse(line.slice(6));
                 onMessage(data);
               } catch (parseError) {
-                console.warn('Failed to parse SSE data:', line);
+                console.warn('无法解析SSE数据:', line);
               }
             }
           }
@@ -238,7 +237,7 @@ export class ConversationApiService implements IConversationService {
         reader.releaseLock();
       }
     } catch (error) {
-      console.error(`Failed to send message stream to conversation ${conversationId}:`, error);
+      console.error(`会话 ${request.conversationId} 流式发送消息失败:`, error);
       onError(error instanceof Error ? error.message : 'Unknown error');
     }
   }

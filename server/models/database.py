@@ -159,11 +159,10 @@ class AIProviderConfig(Base):
     llm_request_logs = relationship("LLMRequestLog", back_populates="provider_config")
 
 class Agent(Base):
-    """对话代理表"""
+    """AI Agent Table"""
     __tablename__ = "agents"
     
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    agent_id = Column(String(100), nullable=False, unique=True)  # agent唯一标识
+    agent_id = Column(String(100), primary_key=True)  # agent唯一标识作为主键
     user_id = Column(String, nullable=False)  # 创建者ID
     provider = Column(String(100), nullable=False)  # 关联的供应商名称（对应AIProviderConfig.name）
     model = Column(String(100), nullable=False)  # 使用的模型名称
@@ -175,8 +174,8 @@ class Agent(Base):
     avatar = Column(UnicodeJSON, nullable=True)  # 头像配置：{variant, emoji, bg_color, link}
     is_public = Column(Boolean, nullable=False, default=False)  # 是否公开
     is_default = Column(Boolean, nullable=False, default=False)  # 是否为默认agent
-    create_time = Column(DateTime, nullable=False, default=datetime.utcnow)
-    update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
+    update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
     llm_request_logs = relationship("LLMRequestLog", back_populates="agent")
 
 class LLMRequestLog(Base):
@@ -188,7 +187,7 @@ class LLMRequestLog(Base):
     # 关联信息
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     conversation_id = Column(String, ForeignKey("conversations.id"), nullable=True, index=True)
-    agent_id = Column(String, ForeignKey("agents.id"), nullable=True)
+    agent_id = Column(String, ForeignKey("agents.agent_id"), nullable=True)
     provider_config_id = Column(String, ForeignKey("ai_provider_configs.id"), nullable=False)
     
     # 请求参数

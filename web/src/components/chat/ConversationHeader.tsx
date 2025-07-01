@@ -87,10 +87,10 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
                   <>
                     {availableAgents.map((agent) => (
                       <DropdownMenuItem
-                        key={agent.agent_id}
-                        onClick={() => onAgentSwitch?.(agent.agent_id)}
+                        key={agent.id}
+                        onClick={() => onAgentSwitch?.(agent.id)}
                         className={`flex items-center space-x-3 p-3 cursor-pointer ${
-                          selectedAgent.agent_id === agent.agent_id ? 'bg-muted' : ''
+                          selectedAgent.id === agent.id ? 'bg-muted' : ''
                         }`}
                       >
                         <AgentAvatar 

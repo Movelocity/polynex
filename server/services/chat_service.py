@@ -1,14 +1,13 @@
 import asyncio
-import uuid
-from typing import List, Dict, Any, Optional, AsyncGenerator
+from typing import Dict, Any, Optional, AsyncGenerator
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from models.database import Conversation, ConversationStatus, AIProviderType
+from models.database import ConversationStatus, AIProviderType
 from services.openai_service import OpenAIService
 from services.ai_provider_service import AIProviderService
-from services.agent_service import AgentService
-from services.conversation_service import ConversationService
+from services.conversation_service import conversation_srv
+from services.agent_service import agent_srv
 from constants import get_settings
 import logging
 
@@ -30,110 +29,82 @@ class ChatService:
         # 正在进行的流式响应记录
         self.active_streams: Dict[str, bool] = {}
         
-        # 依赖服务实例
-        self.agent_service = AgentService()
-        self.conversation_service = ConversationService()
     
     def _get_session_lock(self, session_id: str) -> asyncio.Lock:
         """获取会话特定的锁"""
         if session_id not in self.session_locks:
             self.session_locks[session_id] = asyncio.Lock()
         return self.session_locks[session_id]
-    
-    async def stream_create_conversation(
-        self, 
-        user_id: str, 
-        agent_id: Optional[str] = None,
+
+    async def stream_chat(
+        self,
+        user_id: str,
+        message: str,
+        agent_id: str,
+        conversation_id: Optional[str] = None,
         title: Optional[str] = None,
-        initial_message: Optional[str] = None,
         db: Session = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
-        流式创建新对话并处理初始消息
+        流式聊天 - 核心功能
         
         Args:
-            user_id: 用户ID
-            agent_id: Agent ID
-            title: 对话标题
-            initial_message: 初始消息
-            db: 数据库会话
-            
-        Yields:
-            Dict[str, Any]: 流式响应数据
-        """
-        try:
-            # 创建对话记录
-            conversation = await self.conversation_service.create_conversation(
-                user_id=user_id,
-                agent_id=agent_id,
-                title=title,
-                db=db
-            )
-            
-            logger.info(f"Created conversation {conversation.id} for user {user_id}")
-            
-            # 发送对话创建完成事件
-            yield {
-                "type": "conversation_created",
-                "data": {
-                    "conversation_id": conversation.id,
-                    "session_id": conversation.session_id,
-                    "title": conversation.title,
-                    "timestamp": datetime.now().isoformat()
-                }
-            }
-            
-            # 如果有初始消息，进行流式处理
-            if initial_message:
-                async for chunk in self.stream_chat(
-                    conversation_id=conversation.id,
-                    user_id=user_id,
-                    message=initial_message,
-                    db=db
-                ):
-                    yield chunk
-            
-        except Exception as e:
-            logger.error(f"Error in stream_create_conversation: {str(e)}")
-            yield {
-                "type": "error",
-                "data": {
-                    "error": str(e),
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-    
-    async def stream_chat(
-        self,
-        conversation_id: str,
-        user_id: str,
-        message: str,
-        db: Session
-    ) -> AsyncGenerator[Dict[str, Any], None]:
-        """
-        流式聊天
-        
-        Args:
-            conversation_id: 对话ID
             user_id: 用户ID
             message: 用户消息
+            agent_id: Agent ID
+            conversation_id: 对话ID（为空时自动创建）
+            title: 对话标题（仅在创建新对话时使用）
             db: 数据库会话
             
         Yields:
             Dict[str, Any]: 流式响应数据
         """
+        conversation = None
+        session_lock = None
+        
         try:
-            # 获取对话记录
-            conversation = await self.conversation_service.get_conversation(
-                conversation_id, user_id, db
-            )
-            
-            if not conversation or conversation.status != ConversationStatus.ACTIVE:
+            # 首先获取 Agent
+            agent = await agent_srv.get_agent(agent_id, user_id, db)
+            if not agent:
                 yield {
                     "type": "error",
-                    "data": {"error": "Conversation not found or inactive"}
+                    "data": {"error": f"未找到 ID 为 {agent_id} 的 Agent"}
                 }
                 return
+            # 获取或创建对话
+            if conversation_id:
+                # 获取现有对话
+                conversation = await conversation_srv.get_conversation(
+                    conversation_id, user_id, db
+                )
+                
+                if not conversation or conversation.status != ConversationStatus.ACTIVE:
+                    yield {
+                        "type": "error",
+                        "data": {"error": "会话不存在或已失效"}
+                    }
+                    return
+            else:
+                # 创建新对话
+                conversation = await conversation_srv.create_conversation(
+                    user_id=user_id,
+                    agent_id=agent_id,
+                    title=title if title else "新对话",
+                    db=db
+                )
+                
+                logger.info(f"用户 {user_id} 创建了会话 {conversation.id}")
+                
+                # 发送对话创建完成事件
+                yield {
+                    "type": "conversation_created",
+                    "data": {
+                        "conversation_id": conversation.id,
+                        "session_id": conversation.session_id,
+                        "title": conversation.title,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                }
             
             session_lock = self._get_session_lock(conversation.session_id)
             
@@ -148,118 +119,122 @@ class ChatService:
             # 标记流为活跃状态
             self.active_streams[conversation.session_id] = True
             
-            try:
-                # 准备消息历史
-                messages = conversation.messages.copy() if conversation.messages else []
-                
-                # 添加用户消息
-                user_message = {
-                    "role": "user",
-                    "content": message,
-                    "timestamp": datetime.now().isoformat()
+            # 准备消息历史
+            messages = conversation.messages.copy() if conversation.messages else []
+            
+            # 添加用户消息
+            user_message = {
+                "role": "user",
+                "content": message,
+                "timestamp": datetime.now().isoformat()
+            }
+            messages.append(user_message)
+            
+            # 获取Agent对应的AI服务配置
+            provider_service = AIProviderService(db)
+            provider_config = provider_service.get_provider_config_by_name(agent.provider)
+            
+            if not provider_config or provider_config.provider_type not in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
+                yield {
+                    "type": "error",
+                    "data": {"error": f"Agent provider '{agent.provider}' not found or not supported"}
                 }
-                messages.append(user_message)
-                
-                # 获取AI服务配置
-                openai_service, model, temperature, max_tokens = await self._get_ai_service_config(
-                    conversation, user_id, messages, db
-                )
-                
-                if not openai_service:
+                return
+            
+            openai_service = OpenAIService(
+                provider_config=provider_config,
+                db=db
+            )
+            
+            # 使用Agent的特定配置覆盖默认值
+            model = agent.model or provider_config.default_model
+            temperature = agent.temperature if agent.temperature is not None else provider_config.default_temperature
+            max_tokens = agent.max_tokens if agent.max_tokens is not None else provider_config.default_max_tokens
+            
+            # 添加预设消息到消息历史开头
+            if agent.preset_messages:
+                preset_msgs = [
+                    {"role": msg.get("role", "system"), "content": msg.get("content", "")}
+                    for msg in agent.preset_messages
+                ]
+                # 将预设消息插入到消息列表的开头
+                messages[:-1] = preset_msgs + messages[:-1]  # 保留最后一条用户消息
+            
+            # 第一次存储：保存用户消息
+            async with session_lock:
+                try:
+                    await conversation_srv.add_messages_to_conversation(
+                        conversation_id=conversation.id,
+                        user_id=user_id,
+                        messages=[user_message],
+                        db=db
+                    )
+                    logger.info(f"Saved user message to conversation {conversation.id}")
+                except Exception as e:
+                    logger.error(f"Error saving user message: {str(e)}")
                     yield {
                         "type": "error",
-                        "data": {"error": "No valid AI provider configuration found"}
+                        "data": {"error": f"Failed to save user message: {str(e)}"}
                     }
                     return
+            
+            # 限制并发请求
+            async with self.llm_semaphore:
+                # 准备OpenAI消息格式
+                openai_messages = [
+                    {"role": msg["role"], "content": msg["content"]}
+                    for msg in messages
+                    if msg.get("role") and msg.get("content")
+                ]
                 
-                # 限制并发请求
-                async with self.llm_semaphore:
-                    # 准备OpenAI消息格式
-                    openai_messages = [
-                        {"role": msg["role"], "content": msg["content"]}
-                        for msg in messages
-                        if msg.get("role") and msg.get("content")
-                    ]
+                assistant_response = ""
+                
+                # 流式处理
+                async for chunk in openai_service.stream_chat(
+                    openai_messages,
+                    model=model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    user_id=user_id,
+                    conversation_id=conversation.id,
+                    agent_id=agent_id
+                ):
+                    yield chunk
                     
-                    assistant_response = ""
+                    # 收集助手响应内容
+                    if chunk.get("type") == "content":
+                        assistant_response += chunk["data"]["content"]
                     
-                    # 流式处理
-                    async for chunk in openai_service.stream_chat(
-                        openai_messages,
-                        model=model,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        user_id=user_id,
-                        conversation_id=conversation_id,
-                        agent_id=conversation.agent_id
-                    ):
-                        yield chunk
-                        
-                        # 收集助手响应内容
-                        if chunk.get("type") == "content":
-                            assistant_response += chunk["data"]["content"]
-                        
-                        # 处理完成事件
-                        elif chunk.get("type") == "done":
-                            # 在会话锁内更新数据库
-                            async with session_lock:
-                                try:
-                                    # 构建要添加的消息
-                                    messages_to_add = [user_message]
+                    # 处理完成事件 - 第二次存储：保存AI回复
+                    elif chunk.get("type") == "done":
+                        async with session_lock:
+                            try:
+                                if assistant_response:
+                                    assistant_message = {
+                                        "role": "assistant",
+                                        "content": assistant_response,
+                                        "timestamp": datetime.now().isoformat(),
+                                        "tokens": chunk["data"].get("token_count")
+                                    }
                                     
-                                    if assistant_response:
-                                        assistant_message = {
-                                            "role": "assistant",
-                                            "content": assistant_response,
-                                            "timestamp": datetime.utcnow().isoformat(),
-                                            "tokens": chunk["data"].get("token_count")
-                                        }
-                                        messages_to_add.append(assistant_message)
-                                    
-                                    # 调用conversation service更新对话
-                                    await self.conversation_service.add_messages_to_conversation(
-                                        conversation_id=conversation_id,
+                                    await conversation_srv.add_messages_to_conversation(
+                                        conversation_id=conversation.id,
                                         user_id=user_id,
-                                        messages=messages_to_add,
-                                        db=db,
-                                        auto_update_title=True
+                                        messages=[assistant_message],
+                                        db=db 
                                     )
                                     
-                                    logger.info(f"Updated conversation {conversation_id} with new messages")
+                                    logger.info(f"会话 {conversation.id} 保存AI回复成功")
                                     
-                                except Exception as e:
-                                    logger.error(f"Error updating conversation in database: {str(e)}")
+                            except Exception as e:
+                                logger.error(f"保存AI回复失败: {str(e)}")
+                    
+                    # 处理错误
+                    elif chunk.get("type") == "error":
+                        logger.error(f"会话 {conversation.id} 流式处理错误: {chunk['data']['error']}")
                         
-                        # 处理错误
-                        elif chunk.get("type") == "error":
-                            logger.error(f"Stream error for conversation {conversation_id}: {chunk['data']['error']}")
-                            # 仍然保存用户消息，即使AI回复失败
-                            async with session_lock:
-                                try:
-                                    await self.conversation_service.add_messages_to_conversation(
-                                        conversation_id=conversation_id,
-                                        user_id=user_id,
-                                        messages=[user_message],
-                                        db=db,
-                                        auto_update_title=True
-                                    )
-                                except Exception as e:
-                                    logger.error(f"Error saving user message after stream error: {str(e)}")
-                            
-            finally:
-                # 清理活跃流标记
-                self.active_streams.pop(conversation.session_id, None)
-                
         except Exception as e:
             logger.error(f"Error in stream_chat: {str(e)}")
-            # 清理活跃流标记
-            try:
-                conv = await self.conversation_service.get_conversation(conversation_id, user_id, db)
-                if conv:
-                    self.active_streams.pop(conv.session_id, None)
-            except:
-                pass
-            
             yield {
                 "type": "error",
                 "data": {
@@ -267,76 +242,11 @@ class ChatService:
                     "timestamp": datetime.utcnow().isoformat()
                 }
             }
-    
-    async def _get_ai_service_config(
-        self,
-        conversation: Conversation,
-        user_id: str,
-        messages: List[Dict[str, Any]],
-        db: Session
-    ) -> tuple[Optional[OpenAIService], Optional[str], Optional[float], Optional[int]]:
-        """
-        获取AI服务配置
-        
-        Args:
-            conversation: 对话对象
-            user_id: 用户ID
-            messages: 消息历史（会被修改以添加预设消息）
-            db: 数据库会话
             
-        Returns:
-            tuple: (openai_service, model, temperature, max_tokens)
-        """
-        openai_service = None
-        model = None
-        temperature = None
-        max_tokens = None
-        
-        # 获取Agent配置
-        if conversation.agent_id:
-            agent = await self.agent_service.get_agent_by_id(conversation.agent_id, user_id, db)
-            if agent:
-                # 使用新的供应商配置系统
-                provider_service = AIProviderService(db)
-                provider_config = provider_service.get_provider_config_by_name(agent.provider)
-                
-                if provider_config and provider_config.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
-                    # 创建OpenAI服务实例
-                    openai_service = OpenAIService(
-                        provider_config=provider_config,
-                        db=db
-                    )
-                    
-                    # 使用Agent的特定配置覆盖默认值
-                    model = agent.model or provider_config.default_model
-                    temperature = agent.temperature if agent.temperature is not None else provider_config.default_temperature
-                    max_tokens = agent.max_tokens if agent.max_tokens is not None else provider_config.default_max_tokens
-                    
-                    # 添加预设消息到消息历史开头
-                    if agent.preset_messages:
-                        preset_msgs = [
-                            {"role": msg.get("role", "system"), "content": msg.get("content", "")}
-                            for msg in agent.preset_messages
-                        ]
-                        # 将预设消息插入到消息列表的开头
-                        messages[:-1] = preset_msgs + messages[:-1]  # 保留最后一条用户消息
-                else:
-                    logger.warning(f"Agent {agent.id} uses provider '{agent.provider}' which is not found or not OpenAI-compatible")
-        
-        # 如果没有Agent配置或Agent配置无效，使用默认配置
-        if not openai_service:
-            provider_service = AIProviderService(db)
-            default_config = provider_service.get_default_provider_config()
-            if not default_config:
-                default_config = provider_service.get_best_provider_config(AIProviderType.OPENAI)
-            
-            if default_config:
-                openai_service = OpenAIService(
-                    provider_config=default_config,
-                    db=db
-                )
-                model = default_config.default_model
-                temperature = default_config.default_temperature
-                max_tokens = default_config.default_max_tokens
-        
-        return openai_service, model, temperature, max_tokens
+        finally:
+            # 清理活跃流标记
+            if conversation and conversation.session_id:
+                self.active_streams.pop(conversation.session_id, None)
+
+# 全局实例
+chat_srv = ChatService()

@@ -102,14 +102,14 @@ export function Conversation() {
       const targetAgent = agents.find(agent => agent.is_default) || agents[0];
       if (targetAgent) {
         // 使用hash设置agent参数
-        setAgentHash(targetAgent.agent_id);
+        setAgentHash(targetAgent.id);
       }
     }
   }, [agentId, isLoadingAgents, agents, selectedAgent, setAgentHash]);
 
   // Agent切换处理函数
   const handleAgentSwitch = async (newAgentId: string) => {
-    if (newAgentId === selectedAgent?.agent_id) {
+    if (newAgentId === selectedAgent?.id) {
       return; // 如果选择的是当前Agent，不做任何操作
     }
 

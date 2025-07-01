@@ -107,7 +107,7 @@ export const useAgents = () => {
       
       // 更新列表中的代理信息
       setAgents(prev => prev.map(agent => {
-        if (agent.agent_id === agentId) {
+        if (agent.id === agentId) {
           return {
             ...agent,
             name: updatedAgent.app_preset.name,
@@ -150,7 +150,7 @@ export const useAgents = () => {
       setError(null);
       const success = await agentService.deleteAgent(agentId);
       if (success) {
-        setAgents(prev => prev.filter(agent => agent.agent_id !== agentId));
+        setAgents(prev => prev.filter(agent => agent.id !== agentId));
         toast({
           title: '删除成功',
           description: 'AI代理删除成功'
@@ -202,10 +202,10 @@ export const useAgents = () => {
     try {
       // 先将其他代理设为非默认，再将指定代理设为默认
       const updates = agents.map(async (agent) => {
-        if (agent.agent_id === agentId) {
+        if (agent.id === agentId) {
           return updateAgent(agentId, { is_default: true });
         } else if (agent.is_default) {
-          return updateAgent(agent.agent_id, { is_default: false });
+          return updateAgent(agent.id, { is_default: false });
         }
         return Promise.resolve(true);
       });

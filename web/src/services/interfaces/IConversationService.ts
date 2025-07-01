@@ -15,14 +15,14 @@ import {
  */
 export interface IConversationService {
   /**
-   * 创建新的对话会话
+   * 创建新的对话会话（Deprecated）
    * 需要用户权限
    * @param request 对话创建请求
    */
-  createConversation(request: ConversationCreateRequest): Promise<Conversation>;
+  // createConversation(request: ConversationCreateRequest): Promise<Conversation>;
 
   /**
-   * 流式创建新的对话会话
+   * 流式创建新的对话会话(Deprecated)
    * 当请求包含初始消息且启用流式响应时使用
    * 需要用户权限
    * @param request 对话创建请求
@@ -30,12 +30,12 @@ export interface IConversationService {
    * @param onError 处理错误的回调函数
    * @param onComplete 流式响应完成的回调函数
    */
-  createConversationStream(
-    request: ConversationCreateRequest,
-    onMessage: (data: any) => void,
-    onError: (error: string) => void,
-    onComplete: () => void
-  ): Promise<void>;
+  // createConversationStream(
+  //   request: ConversationCreateRequest,
+  //   onMessage: (data: any) => void,
+  //   onError: (error: string) => void,
+  //   onComplete: () => void
+  // ): Promise<void>;
 
   /**
    * 获取当前用户的对话列表
@@ -57,7 +57,7 @@ export interface IConversationService {
    * @param conversationId 对话ID
    * @param request 聊天请求
    */
-  sendMessage(conversationId: string, request: ChatRequest): Promise<ChatResponse>;
+  // sendMessage(conversationId: string, request: ChatRequest): Promise<ChatResponse>;
 
   /**
    * 流式发送聊天消息
@@ -68,8 +68,7 @@ export interface IConversationService {
    * @param onError 处理错误的回调函数
    * @param onComplete 流式响应完成的回调函数
    */
-  sendMessageStream(
-    conversationId: string,
+  chat(
     request: ChatRequest,
     onMessage: (data: any) => void,
     onError: (error: string) => void,

@@ -347,7 +347,6 @@ class ConversationService:
         user_id: str,
         messages: List[Dict[str, Any]],
         db: Session,
-        auto_update_title: bool = False
     ) -> bool:
         """
         向对话添加消息
@@ -380,9 +379,9 @@ class ConversationService:
             conversation.messages = updated_messages
             conversation.update_time = datetime.utcnow()
             
-            # 自动更新标题（如果是第一次对话且标题是默认的）
-            if auto_update_title and conversation.title == "新对话" and len(updated_messages) <= 2:
-                for msg in messages:
+            # 自动更新标题
+            if conversation.title == "新对话":
+                for msg in reversed(updated_messages):
                     if msg.get("role") == "user":
                         content = msg.get("content", "")
                         if content:
@@ -540,3 +539,5 @@ class ConversationService:
         except Exception as e:
             logger.error(f"Error searching conversations: {str(e)}")
             raise
+
+conversation_srv = ConversationService()

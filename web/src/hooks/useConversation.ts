@@ -205,7 +205,7 @@ export function useConversation(): UseConversationReturn {
       setMessages(conversation.messages || []);
       
       // 如果对话有关联的agent，加载agent信息
-      if (conversation.agent_id && conversation.agent_id !== selectedAgent?.agent_id) {
+      if (conversation.agent_id && conversation.agent_id !== selectedAgent?.id) {
         await loadAgent(conversation.agent_id);
       }
     } catch (error) {
@@ -250,153 +250,71 @@ export function useConversation(): UseConversationReturn {
     setCurrentAIResponse('');
 
     try {
-      // 如果还没有对话ID，使用流式创建对话
-      if (!conversationId) {
-        let createdConversationId: string | null = null;
-        
-        await conversationService.createConversationStream(
-          {
-            agent_id: selectedAgent.agent_id,
-            title: messageContent.slice(0, 20),
-            message: messageContent,
-            stream: true
-          },
-          (data) => {
-            console.log('Stream data:', data);
-            
-            switch (data.type) {
-              case 'conversation_created':
-                createdConversationId = data.data.conversation_id;
-                setConversationId(createdConversationId);
-                break;
-                
-              case 'start':
-                setCurrentAIResponse('');
-                break;
-                
-              case 'content':
-                setCurrentAIResponse(prev => prev + data.data.content);
-                break;
-                
-              case 'done':
-                // 完成响应，将完整消息添加到消息列表
-                const fullResponse = data.data.full_response || currentAIResponseRef.current;
-                if (fullResponse) {
-                  setMessages(prev => {
-                    // 移除欢迎语（如果存在）并只保留用户消息，然后添加AI回复
-                    const hasWelcome = prev.length >= 2 && prev[prev.length - 2].role === 'assistant' && 
-                                       selectedAgent.app_preset?.greetings === prev[prev.length - 2].content;
-                    
-                    const messagesToKeep = hasWelcome ? [prev[0], prev[prev.length - 1]] : [prev[prev.length - 1]];
-                    
-                    return [
-                      ...messagesToKeep,
-                      {
-                        role: 'assistant',
-                        content: fullResponse,
-                        timestamp: data.data.timestamp || new Date().toISOString()
-                      }
-                    ];
-                  });
-                }
-                setCurrentAIResponse('');
-                setIsStreaming(false);
-                break;
-                
-              case 'error':
-                toast({
-                  title: "AI响应错误",
-                  description: data.data.error,
-                  variant: "destructive",
-                });
-                setCurrentAIResponse('');
-                setIsStreaming(false);
-                break;
-                
-              case 'heartbeat':
-                // 心跳消息，保持连接
-                console.log('SSE heartbeat received');
-                break;
-            }
-          },
-          (error) => {
-            toast({
-              title: "创建对话失败",
-              description: error,
-              variant: "destructive",
-            });
-            setCurrentAIResponse('');
-            setIsStreaming(false);
-            // 移除预先添加的用户消息
-            setMessages(prev => prev.slice(0, -1));
-          },
-          () => {
-            setIsStreaming(false);
+      await conversationService.chat(
+        {
+          conversationId: conversationId,
+          agentId: selectedAgent.id,
+          message: messageContent,
+          stream: true,
+        },
+        (data) => {
+          console.log('Stream data:', data);
+          
+          switch (data.type) {
+            case 'start':
+              setCurrentAIResponse('');
+              break;
+              
+            case 'content':
+              setCurrentAIResponse(prev => prev + data.data.content);
+              break;
+
+            case 'conversation_created':
+              setConversationId(data.data.conversation_id);
+              break;
+              
+            case 'done':
+              // 完成响应，将完整消息添加到消息列表
+              const fullResponse = data.data.full_response || currentAIResponseRef.current;
+              if (fullResponse) {
+                setMessages(prev => [...prev, {
+                  role: 'assistant',
+                  content: fullResponse,
+                  timestamp: data.data.timestamp || new Date().toISOString()
+                }]);
+              }
+              setCurrentAIResponse('');
+              setIsStreaming(false);
+              break;
+              
+            case 'error':
+              toast({
+                title: "AI响应错误",
+                description: data.data.error,
+                variant: "destructive",
+              });
+              setCurrentAIResponse('');
+              setIsStreaming(false);
+              break;
+              
+            case 'heartbeat':
+              console.log('SSE heartbeat received');
+              break;
           }
-        );
-      } else {
-        // 继续现有对话，使用流式聊天
-        await conversationService.sendMessageStream(
-          conversationId,
-          {
-            message: messageContent,
-            stream: true,
-          },
-          (data) => {
-            console.log('Stream data:', data);
-            
-            switch (data.type) {
-              case 'start':
-                setCurrentAIResponse('');
-                break;
-                
-              case 'content':
-                setCurrentAIResponse(prev => prev + data.data.content);
-                break;
-                
-              case 'done':
-                // 完成响应，将完整消息添加到消息列表
-                const fullResponse = data.data.full_response || currentAIResponseRef.current;
-                if (fullResponse) {
-                  setMessages(prev => [...prev, {
-                    role: 'assistant',
-                    content: fullResponse,
-                    timestamp: data.data.timestamp || new Date().toISOString()
-                  }]);
-                }
-                setCurrentAIResponse('');
-                setIsStreaming(false);
-                break;
-                
-              case 'error':
-                toast({
-                  title: "AI响应错误",
-                  description: data.data.error,
-                  variant: "destructive",
-                });
-                setCurrentAIResponse('');
-                setIsStreaming(false);
-                break;
-                
-              case 'heartbeat':
-                console.log('SSE heartbeat received');
-                break;
-            }
-          },
-          (error) => {
-            toast({
-              title: "发送失败",
-              description: error,
-              variant: "destructive",
-            });
-            setCurrentAIResponse('');
-            setIsStreaming(false);
-          },
-          () => {
-            setIsStreaming(false);
-          }
-        );
-      }
+        },
+        (error) => {
+          toast({
+            title: "发送失败",
+            description: error,
+            variant: "destructive",
+          });
+          setCurrentAIResponse('');
+          setIsStreaming(false);
+        },
+        () => {
+          setIsStreaming(false);
+        }
+      );
     } catch (error: any) {
       toast({
         title: "发送失败",

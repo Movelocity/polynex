@@ -37,7 +37,7 @@ async def create_agent(
         )
         
         return AgentSummary(
-            id=agent.id,
+            id=agent.agent_id,
             agent_id=agent.agent_id,
             user_id=agent.user_id,
             provider=agent.provider,
@@ -87,7 +87,7 @@ async def get_agents(
         
         return [
             AgentSummary(
-                id=agent.id,
+                id=agent.agent_id,
                 agent_id=agent.agent_id,
                 user_id=agent.user_id,
                 provider=agent.provider,
@@ -138,7 +138,7 @@ async def get_agent(
             )
         
         return AgentDetail(
-            id=agent.id,
+            id=agent.agent_id,
             agent_id=agent.agent_id,
             user_id=agent.user_id,
             provider=agent.provider,
@@ -195,7 +195,7 @@ async def update_agent(
             )
         
         return AgentDetail(
-            id=agent.id,
+            id=agent.agent_id,
             agent_id=agent.agent_id,
             user_id=agent.user_id,
             provider=agent.provider,
@@ -283,7 +283,7 @@ async def get_public_agents(
         
         return [
             AgentSummary(
-                id=agent.id,
+                id=agent.agent_id,
                 agent_id=agent.agent_id,
                 user_id=agent.user_id,
                 provider=agent.provider,

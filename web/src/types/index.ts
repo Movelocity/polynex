@@ -325,6 +325,8 @@ export interface ConversationCreateRequest {
 
 // 聊天请求
 export interface ChatRequest {
+  conversationId?: string;
+  agentId: string;
   message: string;
   stream?: boolean;
 }

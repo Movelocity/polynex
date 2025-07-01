@@ -193,37 +193,24 @@ class AgentService:
             logger.error(f"Error getting agent {agent_id}: {str(e)}")
             raise
     
-    async def get_agent_by_id(
+    async def get_agent_by_agent_id(
         self,
-        id: int,
+        agent_id: str,
         user_id: str,
         db: Session
     ) -> Optional[Agent]:
         """
-        通过数据库ID获取指定的Agent
+        通过agent_id获取指定的Agent（已移除，建议使用get_agent方法）
         
         Args:
-            id: Agent数据库ID
+            agent_id: Agent ID
             user_id: 用户ID
             db: 数据库会话
             
         Returns:
             Optional[Agent]: Agent对象或None
         """
-        try:
-            # 可以获取自己的或公开的Agent
-            agent = db.query(Agent).filter(
-                and_(
-                    Agent.id == id,
-                    (Agent.user_id == user_id) | (Agent.is_public == True)
-                )
-            ).first()
-            
-            return agent
-            
-        except Exception as e:
-            logger.error(f"Error getting agent by id {id}: {str(e)}")
-            raise
+        return await self.get_agent(agent_id, user_id, db)
     
     async def update_agent(
         self,
@@ -276,7 +263,7 @@ class AgentService:
                 db.query(Agent).filter(
                     Agent.is_default == True,
                     Agent.user_id == user_id,
-                    Agent.id != agent.id
+                    Agent.agent_id != agent.agent_id
                 ).update({"is_default": False})
             
             # 更新字段
@@ -465,3 +452,6 @@ class AgentService:
         except Exception as e:
             logger.error(f"Error searching agents: {str(e)}")
             raise
+
+# 全局实例
+agent_srv = AgentService()

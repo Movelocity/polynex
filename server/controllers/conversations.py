@@ -11,7 +11,8 @@ from fields.schemas import (
     ConversationSummary, ConversationDetail, ChatRequest, Message, 
     ConversationContextUpdate, SearchRequest, SearchResponse, ConversationSearchResult
 )
-from services import conversation_srv, chat_srv
+from services.conversation_service import conversation_srv
+from services.chat_service import chat_srv
 from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
@@ -23,71 +24,55 @@ class SessionCreateRequest(BaseModel):
     message: Optional[str] = None
 
 
-@router.post("")
-async def create_conversation(
-    request: SessionCreateRequest,
+@router.post("/chat")
+async def chat(
+    chat_request: ChatRequest,
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """创建新的对话会话"""
+    """在指定对话中发送消息（仅支持流式响应）"""
     try:
-        # 如果有初始消息，使用流式响应
-        if request.message:
-            # 流式响应
-            async def generate():
-                # 发送初始心跳
-                yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
-                
-                async for chunk in chat_srv.stream_create_conversation(
-                    user_id=current_user_id,
-                    agent_id=request.agent_id,
-                    title=request.title,
-                    initial_message=request.message,
-                    db=db
-                ):
-                    # 根据chunk类型发送不同的事件
-                    chunk_type = chunk.get("type", "data")
-                    yield f"event: {chunk_type}\ndata: {json.dumps(chunk)}\n\n"
-                
-                # 发送完成事件
-                yield "event: done\ndata: {\"type\": \"done\"}\n\n"
+        # 只支持流式响应
+        async def generate():
+            # 发送初始心跳
+            yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
             
-            return StreamingResponse(
-                generate(),
-                media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                    "Content-Type": "text/event-stream",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "Cache-Control",
-                }
-            )
-        else:
-            # 没有初始消息，只创建对话记录
-            conversation = await conversation_srv.create_conversation(
+            has_done = False
+            async for chunk in chat_srv.stream_chat(
+                conversation_id=chat_request.conversationId,
+                agent_id=chat_request.agentId,
                 user_id=current_user_id,
-                agent_id=request.agent_id,
-                title=request.title,
+                message=chat_request.message,
                 db=db
-            )
+            ):
+                # 根据chunk类型发送不同的事件
+                chunk_type = chunk.get("type", "data")
+                if chunk_type == 'done':
+                    has_done = True
+                yield f"event: {chunk_type}\ndata: {json.dumps(chunk)}\n\n"
             
-            return ConversationDetail(
-                id=conversation.id,
-                session_id=conversation.session_id,
-                user_id=conversation.user_id,
-                agent_id=conversation.agent_id,
-                title=conversation.title,
-                messages=[Message(**msg) for msg in conversation.messages] if conversation.messages else [],
-                status=conversation.status,
-                create_time=conversation.create_time.isoformat() + 'Z',
-                update_time=conversation.update_time.isoformat() + 'Z'
-            )
+            # 补充发送完成事件
+            if not has_done:
+                yield "event: done\ndata: {\"type\": \"done\", \"data\": {\"content\": \"\"}}\n\n"
+        
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Cache-Control",
+            }
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error creating conversation: {str(e)}")
+        logger.error(f"Error in chat for conversation {chat_request.conversationId}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create conversation: {str(e)}"
+            detail=f"Failed to process chat request: {str(e)}"
         )
 
 
@@ -221,52 +206,7 @@ async def get_conversation(
         )
 
 
-@router.post("/{conversation_id}/chat")
-async def chat_with_conversation(
-    conversation_id: str,
-    chat_request: ChatRequest,
-    current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
-):
-    """在指定对话中发送消息（仅支持流式响应）"""
-    try:
-        # 只支持流式响应
-        async def generate():
-            # 发送初始心跳
-            yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
-            
-            async for chunk in chat_srv.stream_chat(
-                conversation_id=conversation_id,
-                user_id=current_user_id,
-                message=chat_request.message,
-                db=db
-            ):
-                # 根据chunk类型发送不同的事件
-                chunk_type = chunk.get("type", "data")
-                yield f"event: {chunk_type}\ndata: {json.dumps(chunk)}\n\n"
-            
-            # 发送完成事件
-            yield "event: done\ndata: {\"type\": \"done\"}\n\n"
-        
-        return StreamingResponse(
-            generate(),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Content-Type": "text/event-stream",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Cache-Control",
-            }
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error in chat for conversation {conversation_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process chat request: {str(e)}"
-        )
+
 
 
 @router.put("/{conversation_id}/title")

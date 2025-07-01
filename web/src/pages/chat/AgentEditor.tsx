@@ -99,7 +99,7 @@ export function AgentEditor() {
       const agent = await getAgent(agentId);
       if (agent) {
         setFormData({
-          agent_id: agent.agent_id,
+          agent_id: agent.id,
           app_preset: agent.app_preset,
           avatar: agent.avatar,
           provider: agent.provider,

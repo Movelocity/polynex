@@ -400,6 +400,7 @@ class ChatRequest(BaseModel):
     stream: bool = False
     sessionId: Optional[str] = None
     agentId: Optional[str] = None
+    conversationId: Optional[str] = None
 
 
 class ChatStreamResponse(BaseModel):

@@ -61,7 +61,7 @@ export function AgentManagement() {
   };
 
   const handleStartConversation = (agent: any) => {
-    navigate(`/chat/conversation#agent=${agent.agent_id}`);
+    navigate(`/chat/conversation#agent=${agent.id}`);
   };
 
   if (!user) {
@@ -179,7 +179,7 @@ export function AgentManagement() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleEditAgent(agent.agent_id)}
+                        onClick={() => handleEditAgent(agent.id)}
                         className="text-xs px-2"
                       >
                         <Edit className="h-3 w-3" />
@@ -200,7 +200,7 @@ export function AgentManagement() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setDeletingAgent(agent.agent_id)}
+                        onClick={() => setDeletingAgent(agent.id)}
                         className="text-red-600 hover:text-red-700 text-xs px-2"
                       >
                         <Trash2 className="h-3 w-3" />
