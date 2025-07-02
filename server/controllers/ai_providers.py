@@ -369,7 +369,7 @@ async def test_provider(
                 async with OpenAIService(provider_config=provider, db=db) as openai_service:
                     # 首先测试代理连接（如果配置了代理）
                     if provider.proxy:
-                        logger.info(f"Testing proxy connection for provider {provider.name}")
+                        logger.info(f"Provider {provider.name} 测试代理连接")
                         proxy_test_success = await openai_service.test_proxy_connection()
                         if not proxy_test_success:
                             return {
@@ -377,14 +377,14 @@ async def test_provider(
                                 "message": "Proxy connection test failed. Please check your proxy configuration.",
                                 "response": None
                             }
-                        logger.info(f"Proxy connection test passed for provider {provider.name}")
+                        logger.info(f"Provider {provider.name} 代理测试通过")
                     
                     # 使用指定的模型或默认模型
-                    model = test_request.model or provider.default_model
+                    model = test_request.model
                     if not model:
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="No model specified and no default model configured"
+                            detail="没有指定模型"
                         )
                     
                     response = await openai_service.chat_completion(
@@ -395,7 +395,7 @@ async def test_provider(
                     
                     return {
                         "success": True,
-                        "message": "Provider test successful" + (" (with proxy)" if provider.proxy else ""),
+                        "message": "测试成功" + (" (with proxy)" if provider.proxy else ""),
                         "response": response
                     }
             except Exception as e:
@@ -404,7 +404,7 @@ async def test_provider(
                 if any(keyword in error_message for keyword in ['proxy', 'connection', 'tunnel', 'socks']):
                     return {
                         "success": False,
-                        "message": f"Proxy connection failed: {str(e)}",
+                        "message": f"代理连接失败: {str(e)}",
                         "response": None
                     }
                 else:
@@ -412,15 +412,15 @@ async def test_provider(
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Testing not supported for provider type: {provider.provider_type}"
+                detail=f"不支持测试供应商类型: {provider.provider_type}"
             )
             
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error testing provider {provider_id}: {str(e)}")
+        logger.error(f"测试供应商 {provider_id}: {str(e)}")
         return {
             "success": False,
-            "message": f"Provider test failed: {str(e)}",
+            "message": f"测试失败: {str(e)}",
             "response": None
         } 

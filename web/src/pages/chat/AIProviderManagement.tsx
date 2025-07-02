@@ -102,7 +102,7 @@ function ProviderList({ providers, selectedProvider, defaultProvider, onProvider
               </div> */}
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground border-border">
-                  {provider.models.length} models
+                  {(provider.models || []).length} models
                 </Badge>
                 <Badge
                   variant="secondary"
@@ -131,12 +131,13 @@ interface ProviderDetailProps {
   showApiKey: boolean;
   testingProvider: string | null;
   onEdit: () => void;
-  onSave: () => void;
+  onSave: (updatedData: any) => void;
   onCancel: () => void;
   onDelete: () => void;
   onTest: () => void;
   onSetDefault: () => void;
   onToggleApiKey: () => void;
+  onProviderUpdate: (updatedProvider: any) => void;
 }
 
 function ProviderDetail({ 
@@ -151,13 +152,67 @@ function ProviderDetail({
   onDelete, 
   onTest, 
   onSetDefault, 
-  onToggleApiKey 
+  onToggleApiKey,
+  onProviderUpdate
 }: ProviderDetailProps) {
+  const [editData, setEditData] = useState<any>(null);
+  
+  // 当开始编辑时，初始化编辑数据
+  useEffect(() => {
+    if (isEditing && !editData) {
+      setEditData({ ...provider });
+    } else if (!isEditing) {
+      setEditData(null);
+    }
+  }, [isEditing, provider]);
+
   const status = provider.is_active ? 'active' : 'inactive';
 
-  const maskApiKey = (key: string) => {
+  const maskApiKey = (key: string | undefined) => {
     if (!key) return "Not configured";
     return key.substring(0, 6) + "•".repeat(Math.max(0, key.length - 6));
+  };
+
+  const handleFieldChange = (field: string, value: any) => {
+    if (!isEditing) return;
+    setEditData((prev: any) => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleProxyFieldChange = (field: string, value: string) => {
+    if (!isEditing) return;
+    setEditData((prev: any) => ({
+      ...prev,
+      proxy: {
+        ...prev.proxy,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleUpdateModels = (models: string[]) => {
+    if (isEditing) {
+      setEditData((prev: any) => ({
+        ...prev,
+        models
+      }));
+    } else {
+      // Create a new provider object to avoid direct mutation
+      const updatedProvider = { ...provider, models };
+      onProviderUpdate(updatedProvider);
+    }
+  };
+
+  const handleSave = () => {
+    if (editData) {
+      onSave(editData);
+    }
+  };
+
+  const getCurrentData = () => {
+    return isEditing ? editData || provider : provider;
   };
 
   return (
@@ -211,7 +266,8 @@ function ProviderDetail({
               <Label htmlFor="name" className="text-xs text-muted-foreground">Provider Name</Label>
               <Input
                 id="name"
-                value={provider.name}
+                value={getCurrentData().name || ''}
+                onChange={(e) => handleFieldChange('name', e.target.value)}
                 disabled={!isEditing}
                 className="mt-1 h-8 bg-background border-border text-foreground text-sm"
               />
@@ -220,7 +276,7 @@ function ProviderDetail({
               <Label htmlFor="provider_type" className="text-xs text-muted-foreground">Type</Label>
               <Input
                 id="provider_type"
-                value={getProviderTypeDisplayName(provider.provider_type)}
+                value={getProviderTypeDisplayName(getCurrentData().provider_type)}
                 disabled={true}
                 className="mt-1 h-8 bg-background border-border text-foreground text-sm"
               />
@@ -229,7 +285,8 @@ function ProviderDetail({
               <Label htmlFor="base_url" className="text-xs text-muted-foreground">Base URL</Label>
               <Input
                 id="base_url"
-                value={provider.base_url}
+                value={getCurrentData().base_url || ''}
+                onChange={(e) => handleFieldChange('base_url', e.target.value)}
                 disabled={!isEditing}
                 className="mt-1 h-8 bg-background border-border text-foreground text-sm"
               />
@@ -247,7 +304,8 @@ function ProviderDetail({
               <Input
                 id="api_key"
                 type={showApiKey ? "text" : "password"}
-                value={isEditing ? provider.api_key : maskApiKey(provider.api_key)}
+                value={isEditing ? (getCurrentData().api_key || '') : maskApiKey(getCurrentData().api_key || '')}
+                onChange={(e) => handleFieldChange('api_key', e.target.value)}
                 disabled={!isEditing}
                 className="flex-1 h-8 bg-background border-border text-foreground text-sm"
               />
@@ -264,7 +322,7 @@ function ProviderDetail({
         </div>
 
         {/* 代理配置 */}
-        {(provider.proxy?.url || isEditing) && (
+        {(getCurrentData().proxy?.url || isEditing) && (
           <>
             <Separator className="bg-border" />
             <div>
@@ -277,19 +335,21 @@ function ProviderDetail({
                   <Label htmlFor="proxy_url" className="text-xs text-muted-foreground">Proxy URL</Label>
                   <Input
                     id="proxy_url"
-                    value={provider.proxy?.url || ''}
+                    value={(getCurrentData().proxy?.url || '')}
+                    onChange={(e) => handleProxyFieldChange('url', e.target.value)}
                     disabled={!isEditing}
                     placeholder="http://localhost:7890"
                     className="mt-1 h-8 bg-background border-border text-foreground text-sm"
                   />
                 </div>
-                {provider.proxy?.url && (
+                {getCurrentData().proxy?.url && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="proxy_username" className="text-xs text-muted-foreground">Username</Label>
                       <Input
                         id="proxy_username"
-                        value={provider.proxy?.username || ''}
+                        value={(getCurrentData().proxy?.username || '')}
+                        onChange={(e) => handleProxyFieldChange('username', e.target.value)}
                         disabled={!isEditing}
                         className="mt-1 h-8 bg-background border-border text-foreground text-sm"
                       />
@@ -299,7 +359,8 @@ function ProviderDetail({
                       <Input
                         id="proxy_password"
                         type="password"
-                        value={provider.proxy?.password || ''}
+                        value={(getCurrentData().proxy?.password || '')}
+                        onChange={(e) => handleProxyFieldChange('password', e.target.value)}
                         disabled={!isEditing}
                         className="mt-1 h-8 bg-background border-border text-foreground text-sm"
                       />
@@ -326,13 +387,17 @@ function ProviderDetail({
                 {isEditing ? (
                   <Textarea
                     id="models"
-                    value={provider.models.join(", ")}
+                    value={(getCurrentData().models || []).join(", ")}
+                    onChange={(e) => {
+                      const models = e.target.value.split(",").map(model => model.trim()).filter(model => model);
+                      handleUpdateModels(models);
+                    }}
                     className="bg-background border-border text-foreground text-sm resize-none"
                     rows={2}
                   />
                 ) : (
                   <div className="flex flex-wrap gap-1">
-                    {provider.models.map((model: string) => (
+                    {(getCurrentData().models || []).map((model: string) => (
                       <Badge
                         key={model}
                         variant="secondary"
@@ -349,7 +414,8 @@ function ProviderDetail({
               <Label htmlFor="default_model" className="text-xs text-muted-foreground">Default Model</Label>
               <Input
                 id="default_model"
-                value={provider.default_model}
+                value={getCurrentData().default_model || ''}
+                onChange={(e) => handleFieldChange('default_model', e.target.value)}
                 disabled={!isEditing}
                 className="mt-1 h-8 bg-background border-border text-foreground text-sm"
               />
@@ -386,7 +452,7 @@ function ProviderDetail({
 
           {isEditing && (
             <div className="flex gap-2 pt-2">
-              <Button onClick={onSave} className="flex-1 h-8 bg-theme-blue hover:bg-theme-blue/90 text-theme-blue-foreground">
+              <Button onClick={handleSave} className="flex-1 h-8 bg-theme-blue hover:bg-theme-blue/90 text-theme-blue-foreground">
                 <Shield className="h-3.5 w-3.5 mr-1.5" />
                 Save Changes
               </Button>
@@ -467,10 +533,21 @@ export function AIProviderManagement() {
     return success;
   };
 
-  const handleUpdateProvider = async (data: AIProviderConfigUpdate) => {
+  const handleUpdateProvider = async (providerData: any) => {
     if (!selectedProvider?.id) return false;
     
-    const success = await updateProvider(selectedProvider.id, data);
+    // 从完整的 provider 数据中提取更新所需的字段
+    const updateData: AIProviderConfigUpdate = {
+      name: providerData.name,
+      base_url: providerData.base_url,
+      api_key: providerData.api_key,
+      models: providerData.models,
+      default_model: providerData.default_model,
+      is_active: providerData.is_active,
+      proxy: providerData.proxy
+    };
+    
+    const success = await updateProvider(selectedProvider.id, updateData);
     if (success) {
       setIsEditing(false);
       toast({
@@ -505,7 +582,8 @@ export function AIProviderManagement() {
     
     setTestingProvider(selectedProvider.id);
     const testRequest: TestProviderRequest = {
-      message: 'Hello, this is a test message.'
+      message: 'Hello, this is a test message.',
+      model: selectedProvider.default_model
     };
     
     try {
@@ -513,7 +591,7 @@ export function AIProviderManagement() {
       if (result?.success) {
         toast({
           title: "测试成功",
-          description: `响应: ${result.response?.slice(0, 100)}...`,
+          description: `响应: ${result.response?.content?.slice(0, 100)}...`,
         });
       } else {
         toast({
@@ -611,12 +689,18 @@ export function AIProviderManagement() {
                 showApiKey={showApiKey[selectedProvider.id] || false}
                 testingProvider={testingProvider}
                 onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
+                onSave={async (updatedData) => {
+                  const success = await handleUpdateProvider(updatedData);
+                  if (success) {
+                    setSelectedProvider(updatedData);
+                  }
+                }}
                 onCancel={() => setIsEditing(false)}
                 onDelete={handleDeleteProvider}
                 onTest={handleTestProvider}
                 onSetDefault={handleSetDefaultProvider}
                 onToggleApiKey={toggleApiKeyVisibility}
+                onProviderUpdate={(updatedProvider) => setSelectedProvider(updatedProvider)}
               />
             ) : (
               <div className="card-elevated h-96 flex items-center justify-center">
