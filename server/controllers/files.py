@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session
 import mimetypes
 
 from fields.schemas import UserResponse, FileInfo, PaginatedResponse
-from services import UserService
-from services import FileService
+from services import get_user_service_singleton, get_file_service_singleton, FileService, UserService
 from models.database import get_db
 from libs.auth import get_current_user_id
 
@@ -25,8 +24,8 @@ def init_file_system():
         # 创建数据库会话
         db_session = SessionLocal()
         try:
-            file_service = FileService(db_session)
-            file_service.scan_uploads_folder()
+            file_service = get_file_service_singleton()
+            file_service.scan_uploads_folder(db_session)
         finally:
             db_session.close()
         
@@ -40,11 +39,10 @@ init_file_system()
 async def upload_file(
     file: UploadFile = File(...),
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton)
 ):
     """上传文件"""
-    file_service = FileService(db)
-    
     # 读取文件内容
     contents = await file.read()
     
@@ -64,7 +62,7 @@ async def upload_file(
         )
     
     # 保存文件
-    file_record = file_service.save_uploaded_file(contents, file.filename, current_user_id)
+    file_record = file_service.save_uploaded_file(db, contents, file.filename, current_user_id)
     
     return FileInfo(
         uniqueId=file_record['unique_id'],
@@ -80,11 +78,11 @@ async def get_file_list(
     page: int = 1,
     page_size: int = 10,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton)
 ):
     """获取用户上传的文件列表（分页）- 兼容前端调用"""
-    file_service = FileService(db)
-    result = file_service.get_files_with_urls(current_user_id, page, page_size)
+    result = file_service.get_files_with_urls(db, current_user_id, page, page_size)
     
     return {
         "files": result['files'],
@@ -92,10 +90,12 @@ async def get_file_list(
     }
 
 @router.get("/thumbnail/{file_id}")
-async def get_thumbnail(file_id: str, db: Session = Depends(get_db)):
+async def get_thumbnail(
+    file_id: str,
+    db: Session = Depends(get_db),
+    file_service = Depends(get_file_service_singleton)
+):
     """获取文件缩略图"""
-    file_service = FileService(db)
-    
     # 从file_id中提取unique_id (去除.jpg后缀)
     unique_id = file_id.replace('.jpg', '')
     thumbnail_path = file_service.get_thumbnail_path(unique_id, '.jpg')
@@ -112,11 +112,11 @@ async def get_thumbnail(file_id: str, db: Session = Depends(get_db)):
 async def download_file(
     file_id: str,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton)
 ):
     """下载文件"""
-    file_service = FileService(db)
-    file_record = file_service.get_file_by_id(file_id)
+    file_record = file_service.get_file_by_id(db, file_id)
     
     if not file_record:
         raise HTTPException(status_code=404, detail="文件不存在")
@@ -142,11 +142,11 @@ async def get_my_files(
     page: int = 1,
     page_size: int = 10,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton)
 ):
     """获取用户上传的文件列表（分页）"""
-    file_service = FileService(db)
-    result = file_service.get_files_by_uploader(current_user_id, page, page_size)
+    result = file_service.get_files_by_uploader(db, current_user_id, page, page_size)
     
     files = [
         FileInfo(
@@ -168,12 +168,12 @@ async def get_my_files(
 @router.get("", response_model=List[FileInfo])
 async def get_all_files(
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton)
 ):
     """获取所有文件（管理员权限）"""
     # 这里可以添加管理员权限检查
-    file_service = FileService(db)
-    files = file_service.get_all_files()
+    files = file_service.get_all_files(db)
     
     return [
         FileInfo(
@@ -191,11 +191,11 @@ async def get_all_files(
 async def delete_file(
     file_id: str,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton)
 ):
     """删除文件"""
-    file_service = FileService(db)
-    file_record = file_service.get_file_by_id(file_id)
+    file_record = file_service.get_file_by_id(db, file_id)
     
     if not file_record:
         raise HTTPException(status_code=404, detail="文件不存在")
@@ -208,7 +208,7 @@ async def delete_file(
         )
     
     # 删除文件
-    success = file_service.delete_file_with_cleanup(file_id, current_user_id)
+    success = file_service.delete_file_with_cleanup(db, file_id, current_user_id)
     
     if not success:
         raise HTTPException(status_code=404, detail="文件删除失败")
@@ -219,11 +219,11 @@ async def delete_file(
 async def upload_avatar(
     file: UploadFile = File(...),
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """上传用户头像"""
-    file_service = FileService(db)
-    
     # 检查文件大小（头像限制更小一些）
     if file.size and not file_service.validate_file_size(file.size, is_avatar=True):
         raise HTTPException(
@@ -257,19 +257,18 @@ async def upload_avatar(
             "original_name": file.filename,
             "extension": file_extension,
             "size": os.path.getsize(file_path),
-            "upload_time": datetime.utcnow().isoformat() + 'Z',
+            "upload_time": datetime.now().isoformat() + 'Z',
             "uploader_id": current_user_id
         }
         
         # 保存到数据库
-        file_service.create_file_record(file_info)
+        file_service.create_file_record(db, file_info)
         
         # 构建头像URL
         avatar_url = file_service.construct_file_url(unique_id, file_extension)
         
         # 更新用户头像
-        user_service = UserService(db)
-        success = user_service.update_user(current_user_id, {'avatar': avatar_url})
+        success = user_service.update_user(db, current_user_id, {'avatar': avatar_url})
         if not success:
             # 如果更新失败，删除已上传的文件
             if file_path.exists():
@@ -280,7 +279,7 @@ async def upload_avatar(
             )
         
         # 获取更新后的用户信息
-        user_data = user_service.get_user_by_id(current_user_id)
+        user_data = user_service.get_user_by_id(db, current_user_id)
         
         return {
             "message": "头像上传成功",
@@ -307,7 +306,11 @@ async def upload_avatar(
         )
 
 @router.get("/{file_id}")
-async def get_file_direct(file_id: str, db: Session = Depends(get_db)):
+async def get_file_direct(
+    file_id: str,
+    db: Session = Depends(get_db),
+    file_service: FileService = Depends(get_file_service_singleton)
+):
     """直接访问文件 - 格式: unique_id.extension"""
     # 解析文件ID和扩展名
     if '.' not in file_id:
@@ -316,8 +319,7 @@ async def get_file_direct(file_id: str, db: Session = Depends(get_db)):
     unique_id, extension = file_id.rsplit('.', 1)
     extension = '.' + extension
     
-    file_service = FileService(db)
-    file_record = file_service.get_file_by_id(unique_id)
+    file_record = file_service.get_file_by_id(db, unique_id)
     
     if not file_record:
         raise HTTPException(status_code=404, detail="文件不存在")

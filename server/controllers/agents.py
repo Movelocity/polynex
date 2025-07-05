@@ -5,20 +5,18 @@ import logging
 
 from models.database import get_db
 from fields.schemas import AgentSummary, AgentDetail, AgentCreate, AgentUpdate
-from services.agent_service import AgentService
+from services import get_agent_service_singleton, AgentService
 from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/agents", tags=["AI代理管理"])
-
-# 全局会话服务实例
-agent_service = AgentService()
 
 
 @router.post("/agents", response_model=AgentSummary, summary="创建AI代理")
 async def create_agent(
     agent_data: AgentCreate,
     current_user_id: str = Depends(get_current_user_id),
+    agent_service: AgentService = Depends(get_agent_service_singleton),
     db: Session = Depends(get_db)
 ):
     """
@@ -31,9 +29,9 @@ async def create_agent(
     """
     try:
         agent = await agent_service.create_agent(
-            agent_data=agent_data,
-            user_id=current_user_id,
-            db=db
+            db,
+            agent_data,
+            current_user_id
         )
         
         return AgentSummary(
@@ -64,6 +62,7 @@ async def get_agents(
     limit: int = 20,
     offset: int = 0,
     current_user_id: str = Depends(get_current_user_id),
+    agent_service: AgentService = Depends(get_agent_service_singleton),
     db: Session = Depends(get_db)
 ):
     """
@@ -78,11 +77,11 @@ async def get_agents(
     """
     try:
         agents = await agent_service.get_user_agents(
-            user_id=current_user_id,
-            include_public=include_public,
-            limit=limit,
-            offset=offset,
-            db=db
+            db,
+            current_user_id,
+            include_public,
+            limit,
+            offset
         )
         
         return [
@@ -114,6 +113,7 @@ async def get_agents(
 async def get_agent(
     agent_id: str,
     current_user_id: str = Depends(get_current_user_id),
+    agent_service: AgentService = Depends(get_agent_service_singleton),
     db: Session = Depends(get_db)
 ):
     """
@@ -126,9 +126,9 @@ async def get_agent(
     """
     try:
         agent = await agent_service.get_agent(
-            agent_id=agent_id,
-            user_id=current_user_id,
-            db=db
+            db,
+            agent_id,
+            current_user_id
         )
         
         if not agent:
@@ -169,6 +169,7 @@ async def update_agent(
     agent_id: str,
     agent_update: AgentUpdate,
     current_user_id: str = Depends(get_current_user_id),
+    agent_service: AgentService = Depends(get_agent_service_singleton),
     db: Session = Depends(get_db)
 ):
     """
@@ -182,10 +183,10 @@ async def update_agent(
     """
     try:
         agent = await agent_service.update_agent(
-            agent_id=agent_id,
-            agent_update=agent_update,
-            user_id=current_user_id,
-            db=db
+            db,
+            agent_id,
+            agent_update,
+            current_user_id
         )
         
         if not agent:
@@ -225,6 +226,7 @@ async def update_agent(
 async def delete_agent(
     agent_id: str,
     current_user_id: str = Depends(get_current_user_id),
+    agent_service: AgentService = Depends(get_agent_service_singleton),
     db: Session = Depends(get_db)
 ):
     """
@@ -237,9 +239,9 @@ async def delete_agent(
     """
     try:
         success = await agent_service.delete_agent(
-            agent_id=agent_id,
-            user_id=current_user_id,
-            db=db
+            db,
+            agent_id,
+            current_user_id
         )
         
         if not success:
@@ -263,6 +265,7 @@ async def delete_agent(
 async def get_public_agents(
     limit: int = 20,
     offset: int = 0,
+    agent_service: AgentService = Depends(get_agent_service_singleton),
     db: Session = Depends(get_db)
 ):
     """
@@ -276,9 +279,9 @@ async def get_public_agents(
     """
     try:
         agents = await agent_service.get_public_agents(
-            limit=limit,
-            offset=offset,
-            db=db
+            db,
+            limit,
+            offset
         )
         
         return [
@@ -303,4 +306,4 @@ async def get_public_agents(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get public agents: {str(e)}"
-        ) 
+        )

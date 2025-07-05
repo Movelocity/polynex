@@ -69,7 +69,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     avatar = Column(String(500), nullable=True)
     role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.USER)
-    register_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    register_time = Column(DateTime, nullable=False, default=datetime.now)
     llm_request_logs = relationship("LLMRequestLog", back_populates="user", cascade="all, delete-orphan")
 
 class SiteConfig(Base):
@@ -80,8 +80,8 @@ class SiteConfig(Base):
     key = Column(String(100), unique=True, nullable=False)  # 配置键
     value = Column(Text, nullable=True)  # 配置值
     description = Column(Text, nullable=True)  # 配置描述
-    create_time = Column(DateTime, nullable=False, default=datetime.utcnow)
-    update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
+    update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
 class Blog(Base):
     """博客表"""
@@ -94,8 +94,8 @@ class Blog(Base):
     category = Column(String(100), nullable=False)
     tags = Column(UnicodeJSON, nullable=True)  # 存储标签列表
     author_id = Column(String, nullable=False)
-    create_time = Column(DateTime, nullable=False, default=datetime.utcnow)
-    update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
+    update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
     status = Column(String(20), nullable=False, default='draft')  # 'published' or 'draft'
     views = Column(Integer, nullable=False, default=0)
 
@@ -116,7 +116,7 @@ class FileRecord(Base):
     original_name = Column(String(255), nullable=False)
     extension = Column(String(20), nullable=False)
     size = Column(Integer, nullable=False)
-    upload_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    upload_time = Column(DateTime, nullable=False, default=datetime.now)
     uploader_id = Column(String, nullable=True)  # 允许为空，表示未知上传者
 
 class Conversation(Base):
@@ -130,8 +130,8 @@ class Conversation(Base):
     title = Column(String(200), nullable=False, default="新对话")
     messages = Column(UnicodeJSON, nullable=False, default=list)  # 存储消息历史的JSON字符串
     status = Column(SQLEnum(ConversationStatus), nullable=False, default=ConversationStatus.ACTIVE)
-    create_time = Column(DateTime, nullable=False, default=datetime.utcnow)
-    update_time = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
+    update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
     llm_request_logs = relationship("LLMRequestLog", back_populates="conversation", cascade="all, delete-orphan")
 
 class AIProviderConfig(Base):
@@ -210,7 +210,7 @@ class LLMRequestLog(Base):
     estimated_cost = Column(Numeric(precision=10, scale=6), nullable=True)  # 估算成本
     
     # 性能信息
-    start_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    start_time = Column(DateTime, nullable=False, default=datetime.now)
     end_time = Column(DateTime, nullable=True)
     duration_ms = Column(Integer, nullable=True)  # 请求持续时间（毫秒）
     

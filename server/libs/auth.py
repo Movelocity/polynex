@@ -4,6 +4,8 @@
 包含密码加密、JWT令牌处理、登录限制等认证相关的工具函数。
 """
 
+import time
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List
 from jose import JWTError, jwt
@@ -11,9 +13,8 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-import threading
-import time
 from models.database import get_db
+from services import get_user_service_singleton
 
 # 密码加密上下文
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -180,7 +181,7 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    user_id: str = payload.get("sub")
+    user_id = payload.get("sub")
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -190,53 +191,28 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
     
     return user_id
 
-
-# 可选的认证依赖（用于不需要强制认证的端点）
-def get_current_user_id_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[str]:
-    """可选的用户认证，如果没有令牌则返回None"""
-    if credentials is None:
-        return None
-    
-    try:
-        return get_current_user_id(credentials)
-    except HTTPException:
-        return None
-
-
-def check_admin_permission(current_user_id: str, db: Session) -> bool:
-    """检查用户是否为管理员"""
-    from services.user_service import UserService
-    user_service = UserService(db)
-    user_data = user_service.get_user_by_id(current_user_id)
-    return user_data and user_data['role'] == 'admin'
-
-
 def require_admin_permission(
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service = Depends(get_user_service_singleton)
 ) -> str:
     """要求管理员权限的依赖"""
-    if not check_admin_permission(current_user_id, db):
+    user_data = user_service.get_user_by_id(db, current_user_id)
+    isAdmin = user_data and user_data['role'] == 'admin'
+    if not isAdmin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="需要管理员权限访问此资源"
         )
     return current_user_id
 
-
-def get_current_user_info(
-    current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
-) -> dict:
-    """获取当前用户完整信息的依赖"""
-    from services.user_service import UserService
-    user_service = UserService(db)
-    user_data = user_service.get_user_by_id(current_user_id)
+# 可选的认证依赖（用于不需要强制认证的端点）
+# def get_current_user_id_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[str]:
+#     """可选的用户认证，如果没有令牌则返回None"""
+#     if credentials is None:
+#         return None
     
-    if not user_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户不存在或已被删除"
-        )
-    
-    return user_data 
+#     try:
+#         return get_current_user_id(credentials)
+#     except HTTPException:
+#         return None

@@ -1,51 +1,46 @@
-from typing import AsyncGenerator, List, Dict, Any, Optional
+from typing import AsyncGenerator, List, Dict, Any
 from openai import AsyncOpenAI
 import httpx
 import logging
 from datetime import datetime
-from sqlalchemy.orm import Session
-
-from models.database import AIProviderConfig, AIProviderType
-from services.ai_provider_service import AIProviderService
-from services.llm_request_log_service import get_llm_log_service
-
+from models.database import AIProviderConfig
+import json
+import os
+# 确保日志目录存在
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# 移除默认的处理器
+logger.handlers = []
+# 创建文件处理器
+file_handler = logging.FileHandler(f"{log_dir}/openai_provider.log", encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+# 创建日志格式
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+# 将处理器添加到 logger
+logger.addHandler(file_handler)
+logger.propagate = False
 
-class OpenAIService:
-    """OpenAI API 服务类"""
+class OpenAIProvider:
+    """OpenAI API 请求类"""
     
-    def __init__(self, 
-                 provider_config: AIProviderConfig = None,
-                 provider_config_id: str = None,
-                 db: Session = None):
+    def __init__(
+        self, 
+        provider_config: AIProviderConfig = None,
+    ):
         """
         初始化 OpenAI 服务
         
         Args:
             provider_config: 供应商配置对象
-            provider_config_id: 供应商配置ID
-            db: 数据库会话
         """
-        self.db = db
-        self.provider_service = AIProviderService(db) if db else None
-        
+        self.config = provider_config
         # 获取供应商配置
-        if provider_config:
-            self.config = provider_config
-        elif provider_config_id and self.provider_service:
-            self.config = self.provider_service.get_provider_config(provider_config_id)
-            if not self.config:
-                raise ValueError(f"AI provider config not found: {provider_config_id}")
-        elif self.provider_service:
-            # 使用默认配置
-            self.config = self.provider_service.get_default_provider_config()
-            if not self.config:
-                # 如果没有默认配置，使用最佳配置
-                self.config = self.provider_service.get_best_provider_config(AIProviderType.OPENAI)
-            if not self.config:
-                raise ValueError("No active OpenAI provider configuration found. Please add one through the admin panel.")
-        else:
-            raise ValueError("No database session provided and no provider configuration specified")
+        if not self.config:
+            raise ValueError("No provider configuration specified")
         
         # 验证配置
         if not self.config.api_key:
@@ -74,7 +69,7 @@ class OpenAIService:
             http_client=http_client
         )
         
-        logger.info(f"Initialized OpenAI service with config: {self.config.name}")
+        logger.info(f"初始化供应商配置: {self.config.name}")
     
     def _create_proxy_client(self, proxy_config: Dict[str, Any]) -> httpx.AsyncClient:
         """
@@ -127,33 +122,18 @@ class OpenAIService:
                 limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
             )
             
-            logger.debug(f"Created proxy client with URL: {proxy_url}")
+            logger.debug(f"创建代理client: {proxy_url}")
             return client
             
         except Exception as e:
             raise ValueError(f"Invalid proxy configuration: {str(e)}")
     
-    def get_effective_model(self, model: str = None) -> str:
-        """获取有效的模型名称"""
-        return model or self.config.default_model or "gpt-3.5-turbo"
-    
-    def get_effective_temperature(self, temperature: float = None) -> float:
-        """获取有效的温度参数"""
-        return temperature if temperature is not None else (self.config.default_temperature or 0.7)
-    
-    def get_effective_max_tokens(self, max_tokens: int = None) -> int:
-        """获取有效的最大tokens"""
-        return max_tokens if max_tokens is not None else (self.config.default_max_tokens or 2000)
-    
     async def stream_chat(
         self,
         messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        user_id: Optional[str] = None,
-        conversation_id: Optional[str] = None,
-        agent_id: Optional[str] = None,
+        model: str,
+        temperature: float,
+        max_tokens: int,
         **kwargs
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
@@ -172,50 +152,25 @@ class OpenAIService:
         Yields:
             Dict[str, Any]: 流式响应数据
         """
-        log_id = None
-        log_service = get_llm_log_service()
-        
         try:
-            # 准备请求参数
-            effective_model = self.get_effective_model(model)
-            effective_temperature = self.get_effective_temperature(temperature)
-            effective_max_tokens = self.get_effective_max_tokens(max_tokens)
-            
             request_params = {
-                "model": effective_model,
+                "model": model,
                 "messages": messages,
-                "temperature": effective_temperature,
-                "max_tokens": effective_max_tokens,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
                 "stream": True,
                 **kwargs
             }
             
-            # 创建日志记录
-            if user_id and self.db:
-                log_id = log_service.create_log_async(
-                    user_id=user_id,
-                    provider_config_id=self.config.id,
-                    model=effective_model,
-                    db=self.db,
-                    conversation_id=conversation_id,
-                    agent_id=agent_id,
-                    temperature=effective_temperature,
-                    max_tokens=effective_max_tokens,
-                    stream=True,
-                    request_params=request_params,
-                    extra_metadata={"provider_config_name": self.config.name}
-                )
-            
-            logger.info(f"Starting stream chat with model: {effective_model} (config: {self.config.name}) [log_id: {log_id}]")
+            logger.info(f"(config: {self.config.name}) 开始流式聊天: {json.dumps(request_params, ensure_ascii=False)}")
             
             # 发送初始事件
             yield {
                 "type": "start",
                 "data": {
-                    "model": effective_model,
+                    "model": model,
                     "provider_config": self.config.name,
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "log_id": log_id
+                    "timestamp": datetime.now().isoformat(),
                 }
             }
             
@@ -229,6 +184,11 @@ class OpenAIService:
             
             # 处理流式响应
             async for chunk in stream:
+                try:
+                    logger.info(chunk)
+                except Exception as e:
+                    pass
+
                 if chunk.choices and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_response += content
@@ -257,19 +217,6 @@ class OpenAIService:
                         prompt_tokens = sum(len(msg['content'].split()) for msg in messages)
                         total_tokens = prompt_tokens + completion_tokens
                     
-                    # 更新日志记录
-                    if log_id and self.db:
-                        log_service.update_log_async(
-                            log_id=log_id,
-                            db=self.db,
-                            response_content=full_response,
-                            finish_reason=finish_reason,
-                            prompt_tokens=prompt_tokens,
-                            completion_tokens=completion_tokens,
-                            total_tokens=total_tokens,
-                            status="success"
-                        )
-                    
                     # 发送完成事件
                     yield {
                         "type": "done",
@@ -281,43 +228,29 @@ class OpenAIService:
                             "prompt_tokens": prompt_tokens,
                             "completion_tokens": completion_tokens,
                             "provider_config": self.config.name,
-                            "log_id": log_id
                         }
                     }
                     break
                     
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"Error in stream_chat: {error_msg}")
-            
-            # 更新日志记录为错误状态
-            if log_id and self.db:
-                log_service.update_log_async(
-                    log_id=log_id,
-                    db=self.db,
-                    status="error",
-                    error_message=error_msg
-                )
+            logger.error(f"流式聊天错误: {error_msg}")
             
             yield {
                 "type": "error",
                 "data": {
                     "error": error_msg,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now().isoformat(),
                     "provider_config": self.config.name,
-                    "log_id": log_id
                 }
             }
     
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        user_id: Optional[str] = None,
-        conversation_id: Optional[str] = None,
-        agent_id: Optional[str] = None,
+        model: str,
+        temperature: float,
+        max_tokens: int,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -336,58 +269,23 @@ class OpenAIService:
         Returns:
             Dict[str, Any]: 响应数据
         """
-        log_id = None
-        log_service = get_llm_log_service()
         
         try:
-            # 准备请求参数
-            effective_model = self.get_effective_model(model)
-            effective_temperature = self.get_effective_temperature(temperature)
-            effective_max_tokens = self.get_effective_max_tokens(max_tokens)
             
             request_params = {
-                "model": effective_model,
+                "model": model,
                 "messages": messages,
-                "temperature": effective_temperature,
-                "max_tokens": effective_max_tokens,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
                 "stream": False,
                 **kwargs
             }
-            
-            # 创建日志记录
-            if user_id and self.db:
-                log_id = log_service.create_log_async(
-                    user_id=user_id,
-                    provider_config_id=self.config.id,
-                    model=effective_model,
-                    db=self.db,
-                    conversation_id=conversation_id,
-                    agent_id=agent_id,
-                    temperature=effective_temperature,
-                    max_tokens=effective_max_tokens,
-                    stream=False,
-                    request_params=request_params,
-                    extra_metadata={"provider_config_name": self.config.name}
-                )
             
             response = await self.client.chat.completions.create(**request_params)
             
             response_content = response.choices[0].message.content
             finish_reason = response.choices[0].finish_reason
             usage = response.usage
-            
-            # 更新日志记录
-            if log_id and self.db and usage:
-                log_service.update_log_async(
-                    log_id=log_id,
-                    db=self.db,
-                    response_content=response_content,
-                    finish_reason=finish_reason,
-                    prompt_tokens=usage.prompt_tokens,
-                    completion_tokens=usage.completion_tokens,
-                    total_tokens=usage.total_tokens,
-                    status="success"
-                )
             
             return {
                 "content": response_content,
@@ -398,23 +296,13 @@ class OpenAIService:
                     "completion_tokens": usage.completion_tokens,
                     "total_tokens": usage.total_tokens
                 } if usage else None,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now().isoformat(),
                 "provider_config": self.config.name,
-                "log_id": log_id
             }
             
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Error in chat_completion: {error_msg}")
-            
-            # 更新日志记录为错误状态
-            if log_id and self.db:
-                log_service.update_log_async(
-                    log_id=log_id,
-                    db=self.db,
-                    status="error",
-                    error_message=error_msg
-                )
             
             raise
     
@@ -431,24 +319,6 @@ class OpenAIService:
         except Exception as e:
             logger.error(f"API key validation failed for config {self.config.name}: {str(e)}")
             return False
-    
-    def get_provider_info(self) -> Dict[str, Any]:
-        """
-        获取供应商配置信息
-        
-        Returns:
-            Dict[str, Any]: 供应商信息
-        """
-        return {
-            "config_id": self.config.id,
-            "name": self.config.name,
-            "provider": self.config.provider.value,
-            "base_url": self.config.base_url,
-            "default_model": self.config.default_model,
-            "models": self.config.models,
-            "is_default": self.config.is_default,
-            "priority": self.config.priority
-        }
     
     async def test_proxy_connection(self) -> bool:
         """
@@ -470,6 +340,7 @@ class OpenAIService:
             
             async with test_client:
                 response = await test_client.get(test_url, timeout=10.0)
+                print(json.dumps(response.json()))
                 if response.status_code == 200:
                     logger.info(f"Proxy connection test successful for {self.config.name}")
                     return True
@@ -499,3 +370,4 @@ class OpenAIService:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
         await self.close()
+

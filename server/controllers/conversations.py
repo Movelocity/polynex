@@ -11,8 +11,11 @@ from fields.schemas import (
     ConversationSummary, ConversationDetail, ChatRequest, Message, 
     ConversationContextUpdate, SearchRequest, SearchResponse, ConversationSearchResult
 )
-from services.conversation_service import conversation_srv
-from services.chat_service import chat_srv
+from services import (
+    get_conversation_service_singleton, ChatService, 
+    get_chat_service_singleton, ConversationService,
+    get_ai_provider_service_singleton, AIProviderService
+)
 from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
@@ -28,7 +31,9 @@ class SessionCreateRequest(BaseModel):
 async def chat(
     chat_request: ChatRequest,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    chat_service: ChatService = Depends(get_chat_service_singleton),
+    provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
     """在指定对话中发送消息（仅支持流式响应）"""
     try:
@@ -38,12 +43,13 @@ async def chat(
             yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
             
             has_done = False
-            async for chunk in chat_srv.stream_chat(
+            async for chunk in chat_service.stream_chat(
                 conversation_id=chat_request.conversationId,
                 agent_id=chat_request.agentId,
                 user_id=current_user_id,
                 message=chat_request.message,
-                db=db
+                db=db,
+                provider_service=provider_service
             ):
                 # 根据chunk类型发送不同的事件
                 chunk_type = chunk.get("type", "data")
@@ -81,15 +87,16 @@ async def get_conversations(
     limit: int = 20,
     offset: int = 0,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    conversation_service: ConversationService = Depends(get_conversation_service_singleton)
 ):
     """获取用户的对话会话列表"""
     try:
-        conversations = await conversation_srv.get_user_conversations(
-            user_id=current_user_id,
-            limit=limit,
-            offset=offset,
-            db=db
+        conversations = await conversation_service.get_user_conversations(
+            db,
+            current_user_id,
+            limit,
+            offset
         )
         
         return [
@@ -120,7 +127,8 @@ async def search_conversations(
     limit: int = 20,
     offset: int = 0,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    conversation_service: ConversationService = Depends(get_conversation_service_singleton)
 ):
     """搜索用户的对话"""
     try:
@@ -137,12 +145,12 @@ async def search_conversations(
                 detail="Search query too long (max 100 characters)"
             )
         
-        result = await conversation_srv.search_conversations(
-            user_id=current_user_id,
-            query=query.strip(),
-            db=db,
-            limit=limit,
-            offset=offset
+        result = await conversation_service.search_conversations(
+            db,
+            current_user_id,
+            query.strip(),
+            limit,
+            offset
         )
         
         search_results = [
@@ -152,7 +160,7 @@ async def search_conversations(
         return SearchResponse(
             results=search_results,
             total_count=result['total_count'],
-            query=result['query']
+            query=query.strip()
         )
         
     except HTTPException:
@@ -169,14 +177,15 @@ async def search_conversations(
 async def get_conversation(
     conversation_id: str,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    conversation_service = Depends(get_conversation_service_singleton)
 ):
     """获取指定对话的详细信息"""
     try:
-        conversation = await conversation_srv.get_conversation(
-            conversation_id=conversation_id,
-            user_id=current_user_id,
-            db=db
+        conversation = await conversation_service.get_conversation(
+            db,
+            conversation_id,
+            current_user_id
         )
         
         if not conversation:
@@ -206,15 +215,13 @@ async def get_conversation(
         )
 
 
-
-
-
 @router.put("/{conversation_id}/title")
 async def update_conversation_title(
     conversation_id: str,
     title_data: Dict[str, str],
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    conversation_service: ConversationService = Depends(get_conversation_service_singleton)
 ):
     """更新对话标题"""
     try:
@@ -225,11 +232,11 @@ async def update_conversation_title(
                 detail="Title is required"
             )
         
-        success = await conversation_srv.update_conversation_title(
-            conversation_id=conversation_id,
-            title=title,
-            user_id=current_user_id,
-            db=db
+        success = await conversation_service.update_conversation_title(
+            db,
+            conversation_id,
+            title,
+            current_user_id
         )
         
         if not success:
@@ -254,15 +261,16 @@ async def update_conversation_context(
     conversation_id: str,
     context_data: ConversationContextUpdate,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    conversation_service: ConversationService = Depends(get_conversation_service_singleton)
 ):
     """更新对话上下文"""
     try:
-        success = await conversation_srv.update_conversation_context(
-            conversation_id=conversation_id,
-            user_id=current_user_id,
-            messages=context_data.messages,
-            db=db
+        success = await conversation_service.update_conversation_context(
+            db,
+            conversation_id,
+            current_user_id,
+            context_data.messages
         )
         
         if not success:
@@ -286,14 +294,15 @@ async def update_conversation_context(
 async def delete_conversation(
     conversation_id: str,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    conversation_service: ConversationService = Depends(get_conversation_service_singleton)
 ):
     """删除对话"""
     try:
-        success = await conversation_srv.delete_conversation(
-            conversation_id=conversation_id,
-            user_id=current_user_id,
-            db=db
+        success = await conversation_service.delete_conversation(
+            db,
+            conversation_id,
+            current_user_id
         )
         
         if not success:
@@ -310,4 +319,4 @@ async def delete_conversation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"删除聊天记录 {conversation_id} 失败: {str(e)}"
-        ) 
+        )

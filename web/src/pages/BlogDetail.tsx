@@ -176,7 +176,7 @@ export function BlogDetail() {
         </aside>
         
         {/* 中间主内容区 */}
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 px-4">
           {/* 文章头部信息 */}
           <header className="mb-4">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6 leading-tight">

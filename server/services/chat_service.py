@@ -3,11 +3,10 @@ from typing import Dict, Any, Optional, AsyncGenerator
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from models.database import ConversationStatus, AIProviderType
-from services.openai_service import OpenAIService
+from models.database import ConversationStatus
 from services.ai_provider_service import AIProviderService
-from services.conversation_service import conversation_srv
-from services.agent_service import agent_srv
+from services.conversation_service import get_conversation_service_singleton
+from services.agent_service import get_agent_service_singleton
 from constants import get_settings
 import logging
 
@@ -43,7 +42,8 @@ class ChatService:
         agent_id: str,
         conversation_id: Optional[str] = None,
         title: Optional[str] = None,
-        db: Session = None
+        db: Session = None,
+        provider_service: AIProviderService = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         流式聊天 - 核心功能
@@ -64,18 +64,21 @@ class ChatService:
         
         try:
             # 首先获取 Agent
-            agent = await agent_srv.get_agent(agent_id, user_id, db)
+            agent_srv = get_agent_service_singleton()
+            agent = await agent_srv.get_agent(db, agent_id, user_id)
+            conversation_srv = get_conversation_service_singleton()
             if not agent:
                 yield {
                     "type": "error",
                     "data": {"error": f"未找到 ID 为 {agent_id} 的 Agent"}
                 }
                 return
+            
             # 获取或创建对话
             if conversation_id:
-                # 获取现有对话
+                 # 获取现有对话
                 conversation = await conversation_srv.get_conversation(
-                    conversation_id, user_id, db
+                    db, conversation_id, user_id
                 )
                 
                 if not conversation or conversation.status != ConversationStatus.ACTIVE:
@@ -86,6 +89,7 @@ class ChatService:
                     return
             else:
                 # 创建新对话
+                conversation_srv = get_conversation_service_singleton()
                 conversation = await conversation_srv.create_conversation(
                     user_id=user_id,
                     agent_id=agent_id,
@@ -130,26 +134,20 @@ class ChatService:
             }
             messages.append(user_message)
             
-            # 获取Agent对应的AI服务配置
-            provider_service = AIProviderService(db)
-            provider_config = provider_service.get_provider_config_by_name(agent.provider)
+            # 获取Agent对应的AI服务
+            provider = provider_service.get_provider_by_name(db, agent.provider)
             
-            if not provider_config or provider_config.provider_type not in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
+            if not provider:
                 yield {
                     "type": "error",
                     "data": {"error": f"Agent provider '{agent.provider}' not found or not supported"}
                 }
                 return
             
-            openai_service = OpenAIService(
-                provider_config=provider_config,
-                db=db
-            )
-            
             # 使用Agent的特定配置覆盖默认值
-            model = agent.model or provider_config.default_model
-            temperature = agent.temperature if agent.temperature is not None else provider_config.default_temperature
-            max_tokens = agent.max_tokens if agent.max_tokens is not None else provider_config.default_max_tokens
+            model = agent.model
+            temperature = agent.temperature
+            max_tokens = agent.max_tokens
             
             # 添加预设消息到消息历史开头
             if agent.preset_messages:
@@ -190,48 +188,44 @@ class ChatService:
                 assistant_response = ""
                 
                 # 流式处理
-                async for chunk in openai_service.stream_chat(
+                async for chunk in provider.stream_chat(
                     openai_messages,
                     model=model,
                     temperature=temperature,
-                    max_tokens=max_tokens,
-                    user_id=user_id,
-                    conversation_id=conversation.id,
-                    agent_id=agent_id
+                    max_tokens=max_tokens
                 ):
                     yield chunk
                     
                     # 收集助手响应内容
                     if chunk.get("type") == "content":
                         assistant_response += chunk["data"]["content"]
-                    
-                    # 处理完成事件 - 第二次存储：保存AI回复
-                    elif chunk.get("type") == "done":
-                        async with session_lock:
-                            try:
-                                if assistant_response:
-                                    assistant_message = {
-                                        "role": "assistant",
-                                        "content": assistant_response,
-                                        "timestamp": datetime.now().isoformat(),
-                                        "tokens": chunk["data"].get("token_count")
-                                    }
-                                    
-                                    await conversation_srv.add_messages_to_conversation(
-                                        conversation_id=conversation.id,
-                                        user_id=user_id,
-                                        messages=[assistant_message],
-                                        db=db 
-                                    )
-                                    
-                                    logger.info(f"会话 {conversation.id} 保存AI回复成功")
-                                    
-                            except Exception as e:
-                                logger.error(f"保存AI回复失败: {str(e)}")
-                    
+
                     # 处理错误
                     elif chunk.get("type") == "error":
                         logger.error(f"会话 {conversation.id} 流式处理错误: {chunk['data']['error']}")
+
+                # 处理完成事件 - 第二次存储：保存AI回复
+                async with session_lock:
+                    try:
+                        if assistant_response:
+                            assistant_message = {
+                                "role": "assistant",
+                                "content": assistant_response,
+                                "timestamp": datetime.now().isoformat(),
+                                "tokens": chunk["data"].get("token_count")
+                            }
+                            
+                            await conversation_srv.add_messages_to_conversation(
+                                db=db,
+                                conversation_id=conversation.id,
+                                user_id=user_id,
+                                messages=[assistant_message],
+                            )
+                            
+                            logger.info(f"会话 {conversation.id} 保存AI回复成功")
+                            
+                    except Exception as e:
+                        logger.error(f"保存AI回复失败: {str(e)}")
                         
         except Exception as e:
             logger.error(f"Error in stream_chat: {str(e)}")
@@ -239,7 +233,7 @@ class ChatService:
                 "type": "error",
                 "data": {
                     "error": str(e),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now().isoformat()
                 }
             }
             
@@ -248,5 +242,10 @@ class ChatService:
             if conversation and conversation.session_id:
                 self.active_streams.pop(conversation.session_id, None)
 
-# 全局实例
-chat_srv = ChatService()
+_chat_service_singleton = None
+
+def get_chat_service_singleton():
+    global _chat_service_singleton
+    if _chat_service_singleton is None:
+        _chat_service_singleton = ChatService()
+    return _chat_service_singleton

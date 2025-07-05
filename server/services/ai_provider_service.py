@@ -8,19 +8,18 @@ import logging
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from datetime import datetime
-
+from libs.prividers.OpenAIProvider import OpenAIProvider
 from models.database import AIProviderConfig, AIProviderType
+
 
 logger = logging.getLogger(__name__)
 
 class AIProviderService:
     """AI供应商配置管理服务"""
     
-    def __init__(self, db: Session):
-        self.db = db
-    
     def create_provider_config(
         self,
+        db: Session,
         name: str,
         provider_type: AIProviderType,  # 技术类型
         base_url: str,
@@ -41,6 +40,7 @@ class AIProviderService:
         创建新的AI供应商配置
         
         Args:
+            db: 数据库会话
             name: 配置显示名称（同时作为唯一标识符）
             provider_type: 供应商技术类型
             base_url: API基础URL
@@ -65,7 +65,7 @@ class AIProviderService:
         """
         try:
             # 检查name是否已存在
-            existing = self.db.query(AIProviderConfig).filter(
+            existing = db.query(AIProviderConfig).filter(
                 AIProviderConfig.name == name
             ).first()
             if existing:
@@ -73,7 +73,7 @@ class AIProviderService:
             
             # 如果设置为默认供应商，需要先取消其他默认供应商
             if is_default:
-                self.db.query(AIProviderConfig).filter(
+                db.query(AIProviderConfig).filter(
                     AIProviderConfig.is_default == True
                 ).update({"is_default": False})
             
@@ -96,98 +96,115 @@ class AIProviderService:
                 description=description
             )
             
-            self.db.add(config)
-            self.db.commit()
-            self.db.refresh(config)
+            db.add(config)
+            db.commit()
+            db.refresh(config)
             
             logger.info(f"Created AI provider config: {name} (type: {provider_type.value})")
             return config
             
         except Exception as e:
-            self.db.rollback()
+            db.rollback()
             logger.error(f"Failed to create AI provider config: {str(e)}")
             raise
     
-    def get_provider_config(self, config_id: str) -> Optional[AIProviderConfig]:
+    def get_provider_config(self, db: Session, config_id: str) -> Optional[AIProviderConfig]:
         """
         获取指定的供应商配置
         
         Args:
+            db: 数据库会话
             config_id: 配置ID
             
         Returns:
             Optional[AIProviderConfig]: 配置对象或None
         """
-        return self.db.query(AIProviderConfig).filter(
+        return db.query(AIProviderConfig).filter(
             AIProviderConfig.id == config_id,
             AIProviderConfig.is_active == True
         ).first()
     
-    def get_provider_config_for_update(self, config_id: str) -> Optional[AIProviderConfig]:
+    def get_provider_config_for_update(self, db: Session, config_id: str) -> Optional[AIProviderConfig]:
         """
         获取指定的供应商配置（用于更新操作，不过滤激活状态）
         
         Args:
+            db: 数据库会话
             config_id: 配置ID
             
         Returns:
             Optional[AIProviderConfig]: 配置对象或None
         """
-        return self.db.query(AIProviderConfig).filter(
+        return db.query(AIProviderConfig).filter(
             AIProviderConfig.id == config_id
         ).first()
     
-    def get_provider_config_by_name(self, name: str) -> Optional[AIProviderConfig]:
+    def get_provider_config_by_name(self, db: Session, name: str) -> Optional[AIProviderConfig]:
         """
         根据供应商名称获取配置
         
         Args:
+            db: 数据库会话
             name: 供应商名称
             
         Returns:
             Optional[AIProviderConfig]: 配置对象或None
         """
-        return self.db.query(AIProviderConfig).filter(
+        return db.query(AIProviderConfig).filter(
             AIProviderConfig.name == name,
             AIProviderConfig.is_active == True
         ).first()
+
+    def get_provider_by_name(self, db: Session, name: str) -> Optional[OpenAIProvider]:
+        """
+        根据供应商名称获取配置
+        """
+        config = self.get_provider_config_by_name(db, name)
+        return OpenAIProvider(config) if config else None
     
-    def get_all_provider_configs(self) -> List[AIProviderConfig]:
+    def get_all_provider_configs(self, db: Session) -> List[AIProviderConfig]:
         """
         获取所有供应商配置
         
+        Args:
+            db: 数据库会话
+            
         Returns:
             List[AIProviderConfig]: 配置列表
         """
-        return self.db.query(AIProviderConfig).order_by(
+        return db.query(AIProviderConfig).order_by(
             AIProviderConfig.is_default.desc(),
             AIProviderConfig.priority.desc(),
             AIProviderConfig.create_time.asc()
         ).all()
     
-    def get_default_provider_config(self) -> Optional[AIProviderConfig]:
-        """
-        获取默认供应商配置
+    # def get_default_provider_config(self, db: Session) -> Optional[AIProviderConfig]:
+    #     """
+    #     获取默认供应商配置
         
-        Returns:
-            Optional[AIProviderConfig]: 默认配置对象或None
-        """
-        return self.db.query(AIProviderConfig).filter(
-            AIProviderConfig.is_default == True,
-            AIProviderConfig.is_active == True
-        ).first()
+    #     Args:
+    #         db: 数据库会话
+            
+    #     Returns:
+    #         Optional[AIProviderConfig]: 默认配置对象或None
+    #     """
+    #     return db.query(AIProviderConfig).filter(
+    #         AIProviderConfig.is_default == True,
+    #         AIProviderConfig.is_active == True
+    #     ).first()
     
-    def get_best_provider_config(self, provider_type: AIProviderType = None) -> Optional[AIProviderConfig]:
+    def get_best_provider_config(self, db: Session, provider_type: AIProviderType = None) -> Optional[AIProviderConfig]:
         """
         获取最佳供应商配置（按优先级排序）
         
         Args:
+            db: 数据库会话
             provider_type: 指定供应商技术类型，如果为None则返回最高优先级的配置
             
         Returns:
             Optional[AIProviderConfig]: 最佳配置对象或None
         """
-        query = self.db.query(AIProviderConfig).filter(
+        query = db.query(AIProviderConfig).filter(
             AIProviderConfig.is_active == True
         )
         
@@ -202,6 +219,7 @@ class AIProviderService:
     
     def list_provider_configs(
         self,
+        db: Session,
         provider_type: AIProviderType = None,
         is_active: bool = None,
         limit: int = None,
@@ -211,6 +229,7 @@ class AIProviderService:
         列出供应商配置
         
         Args:
+            db: 数据库会话
             provider_type: 过滤指定供应商技术类型
             is_active: 过滤激活状态
             limit: 限制返回数量
@@ -219,7 +238,7 @@ class AIProviderService:
         Returns:
             List[AIProviderConfig]: 配置列表
         """
-        query = self.db.query(AIProviderConfig)
+        query = db.query(AIProviderConfig)
         
         if provider_type:
             query = query.filter(AIProviderConfig.provider_type == provider_type)
@@ -243,6 +262,7 @@ class AIProviderService:
     
     def update_provider_config(
         self,
+        db: Session,
         config_id: str,
         update_data: Dict[str, Any]
     ) -> Optional[AIProviderConfig]:
@@ -250,6 +270,7 @@ class AIProviderService:
         更新供应商配置
         
         Args:
+            db: 数据库会话
             config_id: 配置ID
             update_data: 要更新的字段
             
@@ -261,13 +282,13 @@ class AIProviderService:
         """
         try:
             # 使用 get_provider_config_for_update 以便能够更新非激活的供应商
-            config = self.get_provider_config_for_update(config_id)
+            config = self.get_provider_config_for_update(db, config_id)
             if not config:
                 return None
             
             # 检查name是否冲突
             if 'name' in update_data and update_data['name'] != config.name:
-                existing = self.db.query(AIProviderConfig).filter(
+                existing = db.query(AIProviderConfig).filter(
                     AIProviderConfig.name == update_data['name'],
                     AIProviderConfig.id != config_id
                 ).first()
@@ -276,7 +297,7 @@ class AIProviderService:
             
             # 如果设置为默认供应商，需要先取消其他默认供应商
             if update_data.get('is_default'):
-                self.db.query(AIProviderConfig).filter(
+                db.query(AIProviderConfig).filter(
                     AIProviderConfig.is_default == True,
                     AIProviderConfig.id != config_id
                 ).update({"is_default": False})
@@ -286,23 +307,24 @@ class AIProviderService:
                 if hasattr(config, key):
                     setattr(config, key, value)
             
-            config.update_time = datetime.utcnow()
-            self.db.commit()
-            self.db.refresh(config)
+            config.update_time = datetime.now()
+            db.commit()
+            db.refresh(config)
             
             logger.info(f"Updated AI provider config: {config_id}")
             return config
             
         except Exception as e:
-            self.db.rollback()
+            db.rollback()
             logger.error(f"Failed to update AI provider config: {str(e)}")
             raise
     
-    def delete_provider_config(self, config_id: str) -> bool:
+    def delete_provider_config(self, db: Session, config_id: str) -> bool:
         """
         删除供应商配置（软删除，设置为非激活状态）
         
         Args:
+            db: 数据库会话
             config_id: 配置ID
             
         Returns:
@@ -310,27 +332,28 @@ class AIProviderService:
         """
         try:
             # 使用 get_provider_config_for_update 以便能够删除非激活的供应商
-            config = self.get_provider_config_for_update(config_id)
+            config = self.get_provider_config_for_update(db, config_id)
             if not config:
                 return False
             
             config.is_active = False
-            config.update_time = datetime.utcnow()
-            self.db.commit()
+            config.update_time = datetime.now()
+            db.commit()
             
             logger.info(f"Deleted AI provider config: {config_id}")
             return True
             
         except Exception as e:
-            self.db.rollback()
+            db.rollback()
             logger.error(f"Failed to delete AI provider config: {str(e)}")
             raise
     
-    def get_config_for_agent(self, name: str = None) -> Optional[AIProviderConfig]:
+    def get_config_for_agent(self, db: Session, name: str = None) -> Optional[AIProviderConfig]:
         """
         为Agent获取供应商配置
         
         Args:
+            db: 数据库会话
             name: 指定的供应商名称
             
         Returns:
@@ -338,7 +361,16 @@ class AIProviderService:
         """
         # 如果指定了供应商名称，使用指定的配置
         if name:
-            return self.get_provider_config_by_name(name)
+            return self.get_provider_config_by_name(db, name)
         
         # 否则使用默认配置
-        return self.get_default_provider_config() or self.get_best_provider_config()
+        return self.get_default_provider_config(db) or self.get_best_provider_config(db)
+
+_ai_provider_service = None 
+# 单例获取函数
+def get_ai_provider_service_singleton() -> AIProviderService:
+    """获取AI供应商服务单例"""
+    global _ai_provider_service
+    if _ai_provider_service is None:
+        _ai_provider_service = AIProviderService()
+    return _ai_provider_service

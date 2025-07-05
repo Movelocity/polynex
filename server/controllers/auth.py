@@ -7,7 +7,7 @@ from fields import (
     LoginResponse, RegisterResponse, RegistrationConfig
 )
 from models.database import get_db
-from services import UserService, ConfigService
+from services import get_user_service_singleton, get_config_service_singleton, UserService, ConfigService
 from libs.auth import (
     verify_password, get_password_hash, create_access_token,
     get_current_user_id, ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -19,7 +19,11 @@ router = APIRouter(prefix="/api/auth", tags=["认证"])
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(user_login: UserLogin, db: Session = Depends(get_db)):
+async def login(
+    user_login: UserLogin,
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
+):
     """用户登录"""
     # 检查登录速率限制
     if not check_login_rate_limit(user_login.email):
@@ -42,9 +46,7 @@ async def login(user_login: UserLogin, db: Session = Depends(get_db)):
     
     # 记录登录尝试
     record_login_attempt(user_login.email)
-    
-    user_service = UserService(db)
-    user_data = user_service.get_user_by_email(user_login.email)
+    user_data = user_service.get_user_by_email(db, user_login.email)
     
     if not user_data or not verify_password(user_login.password, user_data['password']):
         raise HTTPException(
@@ -72,12 +74,14 @@ async def login(user_login: UserLogin, db: Session = Depends(get_db)):
 
 
 @router.get("/registration-config", response_model=RegistrationConfig)
-async def get_registration_config(db: Session = Depends(get_db)):
+async def get_registration_config(
+    db: Session = Depends(get_db),
+    config_service: ConfigService = Depends(get_config_service_singleton)
+):
     """获取注册配置（公开接口）"""
-    config_service = ConfigService(db)
     
-    allow_registration = config_service.get_site_config_value('allow_registration', 'true')
-    require_invite_code = config_service.get_site_config_value('require_invite_code', 'false')
+    allow_registration = config_service.get_site_config_value(db, 'allow_registration', 'true')
+    require_invite_code = config_service.get_site_config_value(db, 'require_invite_code', 'false')
     
     return RegistrationConfig(
         allow_registration=allow_registration.lower() == 'true',
@@ -86,13 +90,16 @@ async def get_registration_config(db: Session = Depends(get_db)):
 
 
 @router.post("/register", response_model=RegisterResponse)
-async def register(user_create: UserCreate, db: Session = Depends(get_db)):
+async def register(
+    user_create: UserCreate,
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton),
+    config_service: ConfigService = Depends(get_config_service_singleton)
+):
     """用户注册"""
-    user_service = UserService(db)
-    config_service = ConfigService(db)
     
     # 检查是否允许注册
-    allow_registration = config_service.get_site_config_value('allow_registration', 'true')
+    allow_registration = config_service.get_site_config_value(db, 'allow_registration', 'true')
     if allow_registration.lower() != 'true':
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -100,9 +107,9 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db)):
         )
     
     # 检查是否需要邀请码
-    require_invite_code = config_service.get_site_config_value('require_invite_code', 'false')
+    require_invite_code = config_service.get_site_config_value(db, 'require_invite_code', 'false')
     if require_invite_code.lower() == 'true':
-        invite_code = config_service.get_site_config_value('invite_code', '')
+        invite_code = config_service.get_site_config_value(db, 'invite_code', '')
         
         # 验证邀请码
         if not user_create.invite_code:
@@ -118,7 +125,7 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db)):
             )
     
     # 检查邮箱是否已存在
-    existing_user = user_service.get_user_by_email(user_create.email)
+    existing_user = user_service.get_user_by_email(db, user_create.email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -126,7 +133,7 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db)):
         )
     
     # 检查用户名是否已存在
-    existing_username = user_service.get_user_by_username(user_create.username)
+    existing_username = user_service.get_user_by_username(db, user_create.username)
     if existing_username:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -138,7 +145,7 @@ async def register(user_create: UserCreate, db: Session = Depends(get_db)):
     user_create.password = hashed_password
     
     # 创建用户
-    new_user = user_service.create_user(user_create)
+    new_user = user_service.create_user(db, user_create)
     
     # 创建访问令牌
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -170,11 +177,11 @@ async def logout(current_user_id: str = Depends(get_current_user_id)):
 @router.get("/validate", response_model=UserResponse)
 async def validate_token(
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """验证JWT token并返回当前用户信息"""
-    user_service = UserService(db)
-    user_data = user_service.get_user_by_id(current_user_id)
+    user_data = user_service.get_user_by_id(db, current_user_id)
     
     if not user_data:
         raise HTTPException(
@@ -196,7 +203,8 @@ async def validate_token(
 async def update_password(
     password_data: dict,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """更新用户密码"""
     current_password = password_data.get('currentPassword')
@@ -208,10 +216,9 @@ async def update_password(
             detail="当前密码和新密码都不能为空"
         )
     
-    user_service = UserService(db)
     
     # 获取用户信息
-    user_data = user_service.get_user_by_id(current_user_id)
+    user_data = user_service.get_user_by_id(db, current_user_id)
     if not user_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -227,7 +234,7 @@ async def update_password(
     
     # 更新密码
     hashed_new_password = get_password_hash(new_password)
-    success = user_service.update_user(current_user_id, {'password': hashed_new_password})
+    success = user_service.update_user(db, current_user_id, {'password': hashed_new_password})
     
     if not success:
         raise HTTPException(
@@ -235,4 +242,4 @@ async def update_password(
             detail="密码更新失败"
         )
     
-    return {"message": "密码更新成功"} 
+    return {"message": "密码更新成功"}

@@ -8,16 +8,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import uuid
-
 from models.database import User, UserRole
 from fields import UserCreate
 
 
 class UserService:
     """用户服务类"""
-    
-    def __init__(self, db: Session):
-        self.db = db
     
     def _generate_id(self) -> str:
         """生成唯一ID"""
@@ -35,30 +31,30 @@ class UserService:
             'registerTime': user.register_time.isoformat() + 'Z'
         }
     
-    def get_all_users(self) -> List[Dict[str, Any]]:
+    def get_all_users(self, db: Session) -> List[Dict[str, Any]]:
         """获取所有用户"""
-        users = self.db.query(User).all()
+        users = db.query(User).all()
         return [self._user_to_dict(user) for user in users]
     
-    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+    def get_user_by_id(self, db: Session, user_id: str) -> Optional[Dict[str, Any]]:
         """根据ID获取用户"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         return self._user_to_dict(user) if user else None
     
-    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+    def get_user_by_email(self, db: Session, email: str) -> Optional[Dict[str, Any]]:
         """根据邮箱获取用户"""
-        user = self.db.query(User).filter(User.email == email).first()
+        user = db.query(User).filter(User.email == email).first()
         return self._user_to_dict(user) if user else None
     
-    def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+    def get_user_by_username(self, db: Session, username: str) -> Optional[Dict[str, Any]]:
         """根据用户名获取用户"""
-        user = self.db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(User.username == username).first()
         return self._user_to_dict(user) if user else None
     
-    def create_user(self, user_data: UserCreate) -> Dict[str, Any]:
+    def create_user(self, db: Session, user_data: UserCreate) -> Dict[str, Any]:
         """创建新用户"""
         # 检查是否是第一个用户（自动设为管理员）
-        user_count = self.db.query(User).count()
+        user_count = db.query(User).count()
         role = UserRole.ADMIN if user_count == 0 else UserRole.USER
         
         new_user = User(
@@ -68,17 +64,17 @@ class UserService:
             password=user_data.password,
             avatar=user_data.avatar,
             role=role,
-            register_time=datetime.utcnow()
+            register_time=datetime.now()
         )
         
-        self.db.add(new_user)
-        self.db.commit()
+        db.add(new_user)
+        db.commit()
         
         return self._user_to_dict(new_user)
     
-    def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+    def update_user(self, db: Session, user_id: str, updates: Dict[str, Any]) -> bool:
         """更新用户信息"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return False
         
@@ -87,22 +83,22 @@ class UserService:
                 attr_name = key.replace('Time', '_time') if 'Time' in key else key
                 setattr(user, attr_name, value)
         
-        self.db.commit()
+        db.commit()
         return True
     
-    def delete_user(self, user_id: str) -> bool:
+    def delete_user(self, db: Session, user_id: str) -> bool:
         """删除用户"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return False
         
-        self.db.delete(user)
-        self.db.commit()
+        db.delete(user)
+        db.commit()
         return True
     
-    def update_user_role(self, user_id: str, role: str) -> bool:
+    def update_user_role(self, db: Session, user_id: str, role: str) -> bool:
         """更新用户角色"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return False
         
@@ -111,14 +107,14 @@ class UserService:
             raise ValueError("无效的角色类型")
         
         user.role = UserRole(role)
-        self.db.commit()
+        db.commit()
         return True
     
-    def get_user_stats(self) -> Dict[str, int]:
+    def get_user_stats(self, db: Session) -> Dict[str, int]:
         """获取用户统计数据"""
-        total_count = self.db.query(User).count()
-        admin_count = self.db.query(User).filter(User.role == UserRole.ADMIN).count()
-        user_count = self.db.query(User).filter(User.role == UserRole.USER).count()
+        total_count = db.query(User).count()
+        admin_count = db.query(User).filter(User.role == UserRole.ADMIN).count()
+        user_count = db.query(User).filter(User.role == UserRole.USER).count()
         
         return {
             'total': total_count,
@@ -126,10 +122,10 @@ class UserService:
             'users': user_count
         }
     
-    def save_users_batch(self, users: List[Dict[str, Any]]):
+    def save_users_batch(self, db: Session, users: List[Dict[str, Any]]):
         """批量保存用户"""
         # 清空现有用户
-        self.db.query(User).delete()
+        db.query(User).delete()
         
         # 添加新用户
         for user_data in users:
@@ -142,16 +138,25 @@ class UserService:
                 role=UserRole(user_data.get('role', 'user')),
                 register_time=datetime.fromisoformat(user_data['registerTime'].replace('Z', ''))
             )
-            self.db.add(user)
+            db.add(user)
         
-        self.db.commit()
+        db.commit()
     
-    def reset_user_password(self, user_id: str, new_password: str) -> bool:
+    def reset_user_password(self, db: Session, user_id: str, new_password: str) -> bool:
         """重置用户密码"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return False
         
         user.password = new_password
-        self.db.commit()
-        return True 
+        db.commit()
+        return True
+
+_user_service = None
+# 单例获取函数，只在首次需要时创建实例
+def get_user_service_singleton() -> UserService:
+    """获取用户服务单例"""
+    global _user_service
+    if _user_service is None:
+        _user_service = UserService()
+    return _user_service

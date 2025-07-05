@@ -7,7 +7,7 @@ from fields import (
     BatchUsersRequest
 )
 from models.database import get_db
-from services import UserService
+from services import get_user_service_singleton, UserService
 from libs.auth import get_current_user_id, get_password_hash
 
 router = APIRouter(prefix="/api/users", tags=["用户管理"])
@@ -16,11 +16,11 @@ router = APIRouter(prefix="/api/users", tags=["用户管理"])
 @router.get("", response_model=List[UserResponse])
 async def get_users(
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """获取所有用户"""
-    user_service = UserService(db)
-    users = user_service.get_all_users()
+    users = user_service.get_all_users(db)
     
     return [
         UserResponse(
@@ -39,11 +39,11 @@ async def get_users(
 async def get_user(
     user_id: str,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """根据ID获取用户"""
-    user_service = UserService(db)
-    user = user_service.get_user_by_id(user_id)
+    user = user_service.get_user_by_id(db, user_id)
     
     if not user:
         raise HTTPException(
@@ -66,7 +66,8 @@ async def update_user(
     user_id: str,
     user_update: UserUpdate,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """更新用户信息"""
     # 只能更新自己的信息
@@ -76,10 +77,8 @@ async def update_user(
             detail="只能更新自己的信息"
         )
     
-    user_service = UserService(db)
-    
     # 检查用户是否存在
-    existing_user = user_service.get_user_by_id(user_id)
+    existing_user = user_service.get_user_by_id(db, user_id)
     if not existing_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -96,7 +95,7 @@ async def update_user(
         update_data['avatar'] = user_update.avatar
     
     # 更新用户
-    success = user_service.update_user(user_id, update_data)
+    success = user_service.update_user(db, user_id, update_data)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -110,13 +109,12 @@ async def update_user(
 async def create_user(
     user_create: UserCreate,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """创建用户"""
-    user_service = UserService(db)
-    
     # 检查邮箱是否已存在
-    existing_user = user_service.get_user_by_email(user_create.email)
+    existing_user = user_service.get_user_by_email(db, user_create.email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -128,7 +126,7 @@ async def create_user(
     user_create.password = hashed_password
     
     # 创建用户
-    user_service.create_user(user_create)
+    user_service.create_user(db, user_create)
     return {"message": "用户创建成功"}
 
 
@@ -136,9 +134,9 @@ async def create_user(
 async def save_users_batch(
     batch_request: BatchUsersRequest,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service_singleton)
 ):
     """批量保存用户"""
-    user_service = UserService(db)
-    user_service.save_users_batch(batch_request.users)
-    return {"message": f"成功保存 {len(batch_request.users)} 个用户"} 
+    user_service.save_users_batch(db, batch_request.users)
+    return {"message": f"成功保存 {len(batch_request.users)} 个用户"}

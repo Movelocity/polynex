@@ -4,20 +4,16 @@
 负责博客相关的数据库操作
 """
 
-from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from sqlalchemy.orm import Session
 import uuid
 
 from models.database import Blog, User
 from fields import BlogCreate
 
-
 class BlogService:
     """博客服务类"""
-    
-    def __init__(self, db: Session):
-        self.db = db
     
     def _generate_id(self) -> str:
         """生成唯一ID"""
@@ -122,90 +118,90 @@ class BlogService:
             'views': blog.views
         }
     
-    def get_all_blogs(self) -> List[Dict[str, Any]]:
+    def get_all_blogs(self, db: Session) -> List[Dict[str, Any]]:
         """获取所有博客"""
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).all()
         return [self._blog_to_dict(blog, author) for blog, author in results]
     
-    def get_all_blogs_summary(self) -> List[Dict[str, Any]]:
+    def get_all_blogs_summary(self, db: Session) -> List[Dict[str, Any]]:
         """获取所有博客摘要（不包含content）"""
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).all()
         return [self._blog_summary_to_dict(blog, author) for blog, author in results]
     
-    def get_published_blogs(self) -> List[Dict[str, Any]]:
+    def get_published_blogs(self, db: Session) -> List[Dict[str, Any]]:
         """获取已发布的博客"""
         # 使用join查询获取已发布博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.status == 'published').all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.status == 'published').all()
         return [self._blog_to_dict(blog, author) for blog, author in results]
     
-    def get_published_blogs_summary(self) -> List[Dict[str, Any]]:
+    def get_published_blogs_summary(self, db: Session) -> List[Dict[str, Any]]:
         """获取已发布的博客摘要（不包含content）"""
         # 使用join查询获取已发布博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.status == 'published').all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.status == 'published').all()
         return [self._blog_summary_to_dict(blog, author) for blog, author in results]
     
-    def get_blog_by_id(self, blog_id: str) -> Optional[Dict[str, Any]]:
+    def get_blog_by_id(self, db: Session, blog_id: str) -> Optional[Dict[str, Any]]:
         """根据ID获取博客"""
         # 使用join查询获取博客和作者信息
-        result = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.id == blog_id).first()
+        result = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.id == blog_id).first()
         return self._blog_to_dict(result[0], result[1]) if result else None
     
-    def get_blogs_by_author(self, author_id: str) -> List[Dict[str, Any]]:
+    def get_blogs_by_author(self, db: Session, author_id: str) -> List[Dict[str, Any]]:
         """根据作者ID获取博客"""
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.author_id == author_id).all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.author_id == author_id).all()
         return [self._blog_to_dict(blog, author) for blog, author in results]
     
-    def get_blogs_by_author_summary(self, author_id: str) -> List[Dict[str, Any]]:
+    def get_blogs_by_author_summary(self, db: Session, author_id: str) -> List[Dict[str, Any]]:
         """根据作者ID获取博客摘要（不包含content）"""
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.author_id == author_id).all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.author_id == author_id).all()
         return [self._blog_summary_to_dict(blog, author) for blog, author in results]
     
-    def get_blogs_by_category(self, category: str) -> List[Dict[str, Any]]:
+    def get_blogs_by_category(self, db: Session, category: str) -> List[Dict[str, Any]]:
         """根据分类获取博客"""
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.category == category).all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.category == category).all()
         return [self._blog_to_dict(blog, author) for blog, author in results]
     
-    def get_blogs_by_category_summary(self, category: str) -> List[Dict[str, Any]]:
+    def get_blogs_by_category_summary(self, db: Session, category: str) -> List[Dict[str, Any]]:
         """根据分类获取博客摘要（不包含content）"""
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.category == category).all()
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(Blog.category == category).all()
         return [self._blog_summary_to_dict(blog, author) for blog, author in results]
     
-    def search_blogs(self, query: str) -> List[Dict[str, Any]]:
+    def search_blogs(self, db: Session, query: str) -> List[Dict[str, Any]]:
         """搜索博客"""
         if not query:
             return []
         
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(
             (Blog.title.contains(query)) |
             (Blog.content.contains(query)) |
             (Blog.summary.contains(query))
         ).all()
         return [self._blog_to_dict(blog, author) for blog, author in results]
     
-    def search_blogs_summary(self, query: str) -> List[Dict[str, Any]]:
+    def search_blogs_summary(self, db: Session, query: str) -> List[Dict[str, Any]]:
         """搜索博客摘要（不包含content），根据匹配结果提取上下文作为摘要"""
         if not query:
             return []
         
         # 使用join查询获取博客和作者信息
-        results = self.db.query(Blog, User).join(User, Blog.author_id == User.id).filter(
+        results = db.query(Blog, User).join(User, Blog.author_id == User.id).filter(
             (Blog.title.contains(query)) |
             (Blog.content.contains(query)) |
             (Blog.summary.contains(query))
         ).all()
         return [self._blog_summary_to_dict_with_context(blog, author, query) for blog, author in results]
     
-    def create_blog(self, blog_data: BlogCreate, author_id: str) -> Dict[str, Any]:
+    def create_blog(self, db: Session, blog_data: BlogCreate, author_id: str) -> Dict[str, Any]:
         """创建新博客"""
         # 获取作者信息
-        author = self.db.query(User).filter(User.id == author_id).first()
+        author = db.query(User).filter(User.id == author_id).first()
         if not author:
             raise ValueError("作者不存在")
         
@@ -217,20 +213,20 @@ class BlogService:
             category=blog_data.category,
             tags=blog_data.tags,
             author_id=author_id,
-            create_time=datetime.utcnow(),
-            update_time=datetime.utcnow(),
+            create_time=datetime.now(),
+            update_time=datetime.now(),
             status=blog_data.status,
             views=0
         )
         
-        self.db.add(new_blog)
-        self.db.commit()
+        db.add(new_blog)
+        db.commit()
         
         return self._blog_to_dict(new_blog, author)
     
-    def update_blog(self, blog_id: str, updates: Dict[str, Any]) -> bool:
+    def update_blog(self, db: Session, blog_id: str, updates: Dict[str, Any]) -> bool:
         """更新博客"""
-        blog = self.db.query(Blog).filter(Blog.id == blog_id).first()
+        blog = db.query(Blog).filter(Blog.id == blog_id).first()
         if not blog:
             return False
         
@@ -239,34 +235,34 @@ class BlogService:
                 attr_name = key.replace('Time', '_time') if 'Time' in key else key
                 setattr(blog, attr_name, value)
         
-        blog.update_time = datetime.utcnow()
-        self.db.commit()
+        blog.update_time = datetime.now()
+        db.commit()
         return True
     
-    def delete_blog(self, blog_id: str) -> bool:
+    def delete_blog(self, db: Session, blog_id: str) -> bool:
         """删除博客"""
-        blog = self.db.query(Blog).filter(Blog.id == blog_id).first()
+        blog = db.query(Blog).filter(Blog.id == blog_id).first()
         if not blog:
             return False
         
-        self.db.delete(blog)
-        self.db.commit()
+        db.delete(blog)
+        db.commit()
         return True
     
-    def increment_blog_views(self, blog_id: str) -> bool:
+    def increment_blog_views(self, db: Session, blog_id: str) -> bool:
         """增加博客浏览次数"""
-        blog = self.db.query(Blog).filter(Blog.id == blog_id).first()
+        blog = db.query(Blog).filter(Blog.id == blog_id).first()
         if not blog:
             return False
         
         blog.views += 1
-        self.db.commit()
+        db.commit()
         return True
     
-    def save_blogs_batch(self, blogs: List[Dict[str, Any]]):
+    def save_blogs_batch(self, db: Session, blogs: List[Dict[str, Any]]):
         """批量保存博客"""
         # 清空现有博客
-        self.db.query(Blog).delete()
+        db.query(Blog).delete()
         
         # 添加新博客
         for blog_data in blogs:
@@ -283,6 +279,16 @@ class BlogService:
                 status=blog_data.get('status', 'draft'),
                 views=blog_data.get('views', 0)
             )
-            self.db.add(blog)
+            db.add(blog)
         
-        self.db.commit()
+        db.commit()
+
+_blog_service = None
+# 单例获取函数
+def get_blog_service_singleton() -> BlogService:
+    """获取博客服务单例"""
+    global _blog_service
+    if _blog_service is None:
+        _blog_service = BlogService()
+    return _blog_service
+

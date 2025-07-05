@@ -14,7 +14,7 @@ __all__ = [
     'create_access_token', 'verify_token',
     
     # 认证依赖
-    'get_current_user_id', 'get_current_user_id_optional',
+    'get_current_user_id',
     
     # 登录限制相关
     'check_login_rate_limit', 'record_login_attempt', 

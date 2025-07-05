@@ -33,8 +33,8 @@ class FileService:
     
     THUMBNAIL_SIZE = (200, 200)  # Width, Height
     
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self):
+        super().__init__()
         # 确保目录存在
         self.UPLOAD_DIR.mkdir(exist_ok=True)
         self.THUMBNAIL_DIR.mkdir(exist_ok=True)
@@ -148,12 +148,11 @@ class FileService:
             return extension.lower() in self.ALLOWED_IMAGE_EXTENSIONS
         return extension.lower() in self.ALLOWED_EXTENSIONS
     
-    def scan_uploads_folder(self):
+    def scan_uploads_folder(self, db: Session):
         """扫描上传文件夹，将未入库的文件导入数据库"""
         try:
-            from services import UserService
-            
-            user_service = UserService(self.db)
+            from .user_service import get_user_service_singleton
+            user_service = get_user_service_singleton()
             files_to_import = []
             
             # 扫描主uploads目录（没有uploader的文件）
@@ -163,7 +162,7 @@ class FileService:
                     extension = file_path.suffix
                     
                     # 检查数据库中是否已存在
-                    existing = self.get_file_by_id(unique_id)
+                    existing = self.get_file_by_id(db, unique_id)
                     if not existing:
                         files_to_import.append({
                             'unique_id': unique_id,
@@ -180,7 +179,7 @@ class FileService:
                     uploader_id = user_dir.name
                     
                     # 检查用户是否存在，如果不存在则忽略此文件夹
-                    user_exists = user_service.get_user_by_id(uploader_id)
+                    user_exists = user_service.get_user_by_id(db, uploader_id)
                     if not user_exists:
                         print(f"忽略文件夹 {uploader_id}：对应用户不存在")
                         continue
@@ -191,7 +190,7 @@ class FileService:
                             extension = file_path.suffix
                             
                             # 检查数据库中是否已存在
-                            existing = self.get_file_by_id(unique_id)
+                            existing = self.get_file_by_id(db, unique_id)
                             if not existing:
                                 files_to_import.append({
                                     'unique_id': unique_id,
@@ -204,13 +203,13 @@ class FileService:
             
             # 批量导入到数据库
             if files_to_import:
-                self.scan_and_import_files(files_to_import)
+                self.scan_and_import_files(db, files_to_import)
                 print(f"导入了 {len(files_to_import)} 个文件记录到数据库")
                 
         except Exception as e:
             print(f"扫描上传文件夹时出错: {e}")
     
-    def save_uploaded_file(self, file_contents: bytes, filename: str, uploader_id: str) -> Dict[str, Any]:
+    def save_uploaded_file(self, db: Session, file_contents: bytes, filename: str, uploader_id: str) -> Dict[str, Any]:
         """保存上传的文件并创建记录"""
         # 生成唯一文件名
         unique_id = str(uuid.uuid4())
@@ -227,16 +226,16 @@ class FileService:
             'original_name': filename,
             'extension': file_extension,
             'size': len(file_contents),
-            'upload_time': datetime.utcnow().isoformat() + 'Z',
+            'upload_time': datetime.now().isoformat() + 'Z',
             'uploader_id': uploader_id
         }
         
-        file_record = self.create_file_record(file_data)
+        file_record = self.create_file_record(db, file_data)
         return file_record
     
-    def delete_file_with_cleanup(self, file_id: str, current_user_id: str, user_role: str = None) -> bool:
+    def delete_file_with_cleanup(self, db: Session, file_id: str, current_user_id: str, user_role: str = None) -> bool:
         """删除文件并清理文件系统"""
-        file_record = self.get_file_by_id(file_id)
+        file_record = self.get_file_by_id(db, file_id)
         
         if not file_record:
             return False
@@ -257,11 +256,11 @@ class FileService:
                 thumbnail_path.unlink()
         
         # 删除数据库记录
-        return self.delete_file_record(file_id)
+        return self.delete_file_record(db, file_id)
     
-    def get_files_with_urls(self, uploader_id: str, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
+    def get_files_with_urls(self, db: Session, uploader_id: str, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
         """获取文件列表并包含URL信息"""
-        result = self.get_files_by_uploader(uploader_id, page, page_size)
+        result = self.get_files_by_uploader(db, uploader_id, page, page_size)
         
         files = []
         for file_record in result['files']:
@@ -289,37 +288,37 @@ class FileService:
             "pagination": result['pagination']
         }
 
-    def create_file_record(self, file_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_file_record(self, db: Session, file_data: Dict[str, Any]) -> Dict[str, Any]:
         """创建文件记录"""
         new_file = FileRecord(
             unique_id=file_data['unique_id'],
             original_name=file_data['original_name'],
             extension=file_data['extension'],
             size=file_data['size'],
-            upload_time=datetime.fromisoformat(file_data['upload_time'].replace('Z', '')) if isinstance(file_data.get('upload_time'), str) else datetime.utcnow(),
+            upload_time=datetime.fromisoformat(file_data['upload_time'].replace('Z', '')) if isinstance(file_data.get('upload_time'), str) else datetime.now(),
             uploader_id=file_data.get('uploader_id')
         )
         
-        self.db.add(new_file)
-        self.db.commit()
+        db.add(new_file)
+        db.commit()
         
         return self._file_to_dict(new_file)
     
-    def get_file_by_id(self, unique_id: str) -> Optional[Dict[str, Any]]:
+    def get_file_by_id(self, db: Session, unique_id: str) -> Optional[Dict[str, Any]]:
         """根据ID获取文件记录"""
-        file_record = self.db.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
+        file_record = db.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
         return self._file_to_dict(file_record) if file_record else None
     
-    def get_files_by_uploader(self, uploader_id: str, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
+    def get_files_by_uploader(self, db: Session, uploader_id: str, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
         """根据上传者ID获取文件记录（分页）"""
         # 计算偏移量
         offset = (page - 1) * page_size
         
         # 查询总数
-        total = self.db.query(FileRecord).filter(FileRecord.uploader_id == uploader_id).count()
+        total = db.query(FileRecord).filter(FileRecord.uploader_id == uploader_id).count()
         
         # 查询当前页数据
-        files = self.db.query(FileRecord).filter(
+        files = db.query(FileRecord).filter(
             FileRecord.uploader_id == uploader_id
         ).order_by(
             FileRecord.upload_time.desc()
@@ -340,14 +339,14 @@ class FileService:
             }
         }
     
-    def get_all_files(self) -> List[Dict[str, Any]]:
+    def get_all_files(self, db: Session) -> List[Dict[str, Any]]:
         """获取所有文件记录"""
-        files = self.db.query(FileRecord).order_by(FileRecord.upload_time.desc()).all()
+        files = db.query(FileRecord).order_by(FileRecord.upload_time.desc()).all()
         return [self._file_to_dict(file_record) for file_record in files]
     
-    def update_file_record(self, unique_id: str, updates: Dict[str, Any]) -> bool:
+    def update_file_record(self, db: Session, unique_id: str, updates: Dict[str, Any]) -> bool:
         """更新文件记录"""
-        file_record = self.db.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
+        file_record = db.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
         if not file_record:
             return False
         
@@ -355,33 +354,42 @@ class FileService:
             if hasattr(file_record, key):
                 setattr(file_record, key, value)
         
-        self.db.commit()
+        db.commit()
         return True
     
-    def delete_file_record(self, unique_id: str) -> bool:
+    def delete_file_record(self, db: Session, unique_id: str) -> bool:
         """删除文件记录"""
-        file_record = self.db.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
+        file_record = db.query(FileRecord).filter(FileRecord.unique_id == unique_id).first()
         if not file_record:
             return False
         
-        self.db.delete(file_record)
-        self.db.commit()
+        db.delete(file_record)
+        db.commit()
         return True
     
-    def scan_and_import_files(self, files_data: List[Dict[str, Any]]):
+    def scan_and_import_files(self, db: Session, files_data: List[Dict[str, Any]]):
         """批量导入文件记录（用于启动时扫描）"""
         for file_data in files_data:
             # 检查文件是否已存在
-            existing = self.db.query(FileRecord).filter(FileRecord.unique_id == file_data['unique_id']).first()
+            existing = db.query(FileRecord).filter(FileRecord.unique_id == file_data['unique_id']).first()
             if not existing:
                 new_file = FileRecord(
                     unique_id=file_data['unique_id'],
                     original_name=file_data['original_name'],
                     extension=file_data['extension'],
                     size=file_data['size'],
-                    upload_time=datetime.fromisoformat(file_data['upload_time'].replace('Z', '')) if isinstance(file_data.get('upload_time'), str) else datetime.utcnow(),
+                    upload_time=datetime.fromisoformat(file_data['upload_time'].replace('Z', '')) if isinstance(file_data.get('upload_time'), str) else datetime.now(),
                     uploader_id=file_data.get('uploader_id')
                 )
-                self.db.add(new_file)
+                db.add(new_file)
         
-        self.db.commit()
+        db.commit()
+
+_file_service = None
+# 单例获取函数
+def get_file_service_singleton() -> FileService:
+    """获取文件服务单例"""
+    global _file_service
+    if _file_service is None:
+        _file_service = FileService()
+    return _file_service

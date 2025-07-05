@@ -94,24 +94,21 @@ def filter_messages(conversations: List[Conversation], query: str) -> List[Dict[
 class ConversationService:
     """对话记录管理服务类"""
     
-    def __init__(self):
-        pass
-    
     async def create_conversation(
         self, 
+        db: Session,
         user_id: str, 
         agent_id: Optional[str] = None,
-        title: Optional[str] = None,
-        db: Session = None
+        title: Optional[str] = None
     ) -> Conversation:
         """
         创建新对话记录
         
         Args:
+            db: 数据库会话
             user_id: 用户ID
             agent_id: Agent ID
             title: 对话标题
-            db: 数据库会话
             
         Returns:
             Conversation: 创建的对话记录
@@ -144,17 +141,17 @@ class ConversationService:
     
     async def get_user_conversations(
         self, 
+        db: Session,
         user_id: str, 
         limit: int = 50,
-        offset: int = 0,
-        db: Session = None
+        offset: int = 0
     ) -> List[Conversation]:
         """
         获取用户的对话列表
         
         Args:
-            user_id: 用户ID
             db: 数据库会话
+            user_id: 用户ID
             limit: 限制数量
             offset: 偏移量
             
@@ -177,17 +174,17 @@ class ConversationService:
     
     async def get_conversation(
         self, 
+        db: Session,
         conversation_id: str, 
-        user_id: str, 
-        db: Session
+        user_id: str
     ) -> Optional[Conversation]:
         """
         获取特定对话详情
         
         Args:
+            db: 数据库会话
             conversation_id: 对话ID
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             Optional[Conversation]: 对话详情
@@ -209,19 +206,19 @@ class ConversationService:
     
     async def update_conversation_title(
         self,
+        db: Session,
         conversation_id: str,
         title: str,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> bool:
         """
         更新对话标题
         
         Args:
+            db: 数据库会话
             conversation_id: 对话ID
             title: 新标题
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             bool: 是否更新成功
@@ -238,7 +235,7 @@ class ConversationService:
                 return False
             
             conversation.title = title
-            conversation.update_time = datetime.utcnow()
+            conversation.update_time = datetime.now()
             
             db.commit()
             
@@ -252,17 +249,17 @@ class ConversationService:
     
     async def delete_conversation(
         self,
+        db: Session,
         conversation_id: str,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> bool:
         """
         删除对话（软删除）
         
         Args:
+            db: 数据库会话
             conversation_id: 对话ID
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             bool: 是否成功删除
@@ -279,7 +276,7 @@ class ConversationService:
                 return False
             
             conversation.status = ConversationStatus.DELETED
-            conversation.update_time = datetime.utcnow()
+            conversation.update_time = datetime.now()
             
             db.commit()
             
@@ -293,19 +290,19 @@ class ConversationService:
     
     async def update_conversation(
         self,
+        db: Session,
         conversation_id: str,
         user_id: str,
-        update_data: ConversationUpdate,
-        db: Session
+        update_data: ConversationUpdate
     ) -> Optional[Conversation]:
         """
         更新对话信息
         
         Args:
+            db: 数据库会话
             conversation_id: 对话ID
             user_id: 用户ID
             update_data: 更新数据
-            db: 数据库会话
             
         Returns:
             Optional[Conversation]: 更新后的对话信息
@@ -329,7 +326,7 @@ class ConversationService:
             if update_data.status is not None:
                 conversation.status = ConversationStatus(update_data.status)
             
-            conversation.update_time = datetime.utcnow()
+            conversation.update_time = datetime.now()
             
             db.commit()
             db.refresh(conversation)
@@ -343,20 +340,19 @@ class ConversationService:
     
     async def add_messages_to_conversation(
         self,
+        db: Session,
         conversation_id: str,
         user_id: str,
-        messages: List[Dict[str, Any]],
-        db: Session,
+        messages: List[Dict[str, Any]]
     ) -> bool:
         """
         向对话添加消息
         
         Args:
+            db: 数据库会话
             conversation_id: 对话ID
             user_id: 用户ID
             messages: 要添加的消息列表
-            db: 数据库会话
-            auto_update_title: 是否自动更新标题
             
         Returns:
             bool: 是否成功添加
@@ -377,7 +373,7 @@ class ConversationService:
             updated_messages.extend(messages)
             
             conversation.messages = updated_messages
-            conversation.update_time = datetime.utcnow()
+            conversation.update_time = datetime.now()
             
             # 自动更新标题
             if conversation.title == "新对话":
@@ -390,7 +386,7 @@ class ConversationService:
             
             db.commit()
             
-            logger.info(f"Added {len(messages)} messages to conversation {conversation_id}")
+            logger.info(f"Conversation {conversation_id} 增加了 {len(messages)} 条消息")
             return True
             
         except Exception as e:
@@ -400,19 +396,19 @@ class ConversationService:
     
     async def update_conversation_messages(
         self,
+        db: Session,
         conversation_id: str,
         user_id: str,
-        messages: List[Dict[str, Any]],
-        db: Session
+        messages: List[Dict[str, Any]]
     ) -> bool:
         """
         更新对话的完整消息列表
         
         Args:
+            db: 数据库会话
             conversation_id: 对话ID
             user_id: 用户ID
             messages: 新的消息列表
-            db: 数据库会话
             
         Returns:
             bool: 是否成功更新
@@ -429,7 +425,7 @@ class ConversationService:
                 return False
             
             conversation.messages = messages
-            conversation.update_time = datetime.utcnow()
+            conversation.update_time = datetime.now()
             
             db.commit()
             
@@ -443,19 +439,19 @@ class ConversationService:
     
     async def update_conversation_context(
         self,
+        db: Session,
         conversation_id: str,
         user_id: str,
-        messages: List[Message],
-        db: Session
+        messages: List[Message]
     ) -> bool:
         """
         更新对话上下文
         
         Args:
+            db: 数据库会话
             conversation_id: 对话ID
             user_id: 用户ID
             messages: 新的消息列表
-            db: 数据库会话
             
         Returns:
             bool: 是否成功更新
@@ -477,12 +473,12 @@ class ConversationService:
                 message_data.append({
                     "role": msg.role.value,
                     "content": msg.content,
-                    "timestamp": msg.timestamp or datetime.utcnow().isoformat(),
+                    "timestamp": msg.timestamp or datetime.now().isoformat(),
                     "tokens": msg.tokens
                 })
             
             conversation.messages = message_data
-            conversation.update_time = datetime.utcnow()
+            conversation.update_time = datetime.now()
             
             db.commit()
             
@@ -496,27 +492,27 @@ class ConversationService:
 
     async def search_conversations(
         self,
+        db: Session,
         user_id: str,
         query: str,
-        db: Session,
         limit: int = 20,
         offset: int = 0
     ) -> Dict[str, Any]:
         """
-        搜索用户的对话
+        搜索对话
         
         Args:
+            db: 数据库会话
             user_id: 用户ID
             query: 搜索关键词
-            db: 数据库会话
             limit: 限制数量
             offset: 偏移量
             
         Returns:
-            Dict[str, Any]: 搜索结果，包含结果列表和总数
+            Dict[str, Any]: 搜索结果
         """
         try:
-            # 获取用户的所有对话
+            # 查询所有对话
             conversations = db.query(Conversation).filter(
                 and_(
                     Conversation.user_id == user_id,
@@ -524,20 +520,30 @@ class ConversationService:
                 )
             ).order_by(Conversation.update_time.desc()).all()
             
+            # 进行搜索
             search_results = filter_messages(conversations, query)
             
-            # 分页
+            # 分页处理
             total_count = len(search_results)
             paginated_results = search_results[offset:offset + limit]
             
             return {
                 'results': paginated_results,
                 'total_count': total_count,
-                'query': query
+                'page': offset // limit + 1,
+                'page_size': limit,
+                'total_pages': (total_count + limit - 1) // limit
             }
             
         except Exception as e:
             logger.error(f"Error searching conversations: {str(e)}")
             raise
 
-conversation_srv = ConversationService()
+_conversation_service = None
+# 单例获取函数
+def get_conversation_service_singleton() -> ConversationService:
+    """获取对话服务单例"""
+    global _conversation_service
+    if _conversation_service is None:
+        _conversation_service = ConversationService()
+    return _conversation_service

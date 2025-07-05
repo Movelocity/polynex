@@ -5,7 +5,7 @@ from sqlalchemy import and_
 
 from models.database import Agent
 from fields.schemas import AgentCreate, AgentUpdate
-from services.ai_provider_service import AIProviderService
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,22 +13,19 @@ logger = logging.getLogger(__name__)
 class AgentService:
     """AI代理服务类"""
     
-    def __init__(self):
-        pass
-    
     async def create_agent(
         self,
+        db: Session,
         agent_data: AgentCreate,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> Agent:
         """
         创建新的AI代理
         
         Args:
+            db: 数据库会话
             agent_data: Agent创建数据
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             Agent: 创建的Agent对象
@@ -45,8 +42,9 @@ class AgentService:
                 raise ValueError(f"Agent ID '{agent_data.agent_id}' already exists")
             
             # 验证供应商是否存在
-            provider_service = AIProviderService(db)
-            provider_config = provider_service.get_provider_config_by_name(agent_data.provider)
+            from .ai_provider_service import get_ai_provider_service_singleton
+            provider_service = get_ai_provider_service_singleton()
+            provider_config = provider_service.get_provider_config_by_name(db, agent_data.provider)
             if not provider_config:
                 raise ValueError(f"Provider '{agent_data.provider}' not found")
             
@@ -91,8 +89,8 @@ class AgentService:
     
     async def get_user_agents(
         self,
-        user_id: str,
         db: Session,
+        user_id: str,
         include_public: bool = True,
         limit: int = 20,
         offset: int = 0
@@ -101,11 +99,11 @@ class AgentService:
         获取用户的Agent列表
         
         Args:
+            db: 数据库会话
             user_id: 用户ID
             include_public: 是否包含公开的Agent
             limit: 限制数量
             offset: 偏移量
-            db: 数据库会话
             
         Returns:
             List[Agent]: Agent列表
@@ -141,9 +139,9 @@ class AgentService:
         获取公开的Agent列表
         
         Args:
+            db: 数据库会话
             limit: 限制数量
             offset: 偏移量
-            db: 数据库会话
             
         Returns:
             List[Agent]: 公开的Agent列表
@@ -163,17 +161,17 @@ class AgentService:
     
     async def get_agent(
         self,
+        db: Session,
         agent_id: str,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> Optional[Agent]:
         """
         获取指定的Agent
         
         Args:
+            db: 数据库会话
             agent_id: Agent ID
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             Optional[Agent]: Agent对象或None
@@ -195,38 +193,38 @@ class AgentService:
     
     async def get_agent_by_agent_id(
         self,
+        db: Session,
         agent_id: str,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> Optional[Agent]:
         """
         通过agent_id获取指定的Agent（已移除，建议使用get_agent方法）
         
         Args:
+            db: 数据库会话
             agent_id: Agent ID
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             Optional[Agent]: Agent对象或None
         """
-        return await self.get_agent(agent_id, user_id, db)
+        return await self.get_agent(db, agent_id, user_id)
     
     async def update_agent(
         self,
+        db: Session,
         agent_id: str,
         agent_update: AgentUpdate,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> Optional[Agent]:
         """
         更新Agent
         
         Args:
+            db: 数据库会话
             agent_id: Agent ID
             agent_update: 更新数据
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             Optional[Agent]: 更新后的Agent对象或None
@@ -248,8 +246,9 @@ class AgentService:
             
             # 如果更新了供应商，验证供应商是否存在
             if agent_update.provider and agent_update.provider != agent.provider:
-                provider_service = AIProviderService(db)
-                provider_config = provider_service.get_provider_config_by_name(agent_update.provider)
+                from .ai_provider_service import get_ai_provider_service_singleton
+                provider_service = get_ai_provider_service_singleton()
+                provider_config = provider_service.get_provider_config_by_name(db, agent_update.provider)
                 if not provider_config:
                     raise ValueError(f"Provider '{agent_update.provider}' not found")
                 
@@ -272,7 +271,7 @@ class AgentService:
                 if hasattr(agent, key):
                     setattr(agent, key, value)
             
-            agent.update_time = datetime.utcnow()
+            agent.update_time = datetime.now()
             db.commit()
             db.refresh(agent)
             
@@ -286,17 +285,17 @@ class AgentService:
     
     async def delete_agent(
         self,
+        db: Session,
         agent_id: str,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> bool:
         """
         删除Agent
         
         Args:
+            db: 数据库会话
             agent_id: Agent ID
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             bool: 是否成功删除
@@ -326,15 +325,15 @@ class AgentService:
     
     async def get_default_agent(
         self,
-        user_id: str,
-        db: Session
+        db: Session,
+        user_id: str
     ) -> Optional[Agent]:
         """
         获取用户的默认Agent
         
         Args:
-            user_id: 用户ID
             db: 数据库会话
+            user_id: 用户ID
             
         Returns:
             Optional[Agent]: 默认Agent对象或None
@@ -355,17 +354,17 @@ class AgentService:
     
     async def set_default_agent(
         self,
+        db: Session,
         agent_id: str,
-        user_id: str,
-        db: Session
+        user_id: str
     ) -> bool:
         """
         设置用户的默认Agent
         
         Args:
+            db: 数据库会话
             agent_id: Agent ID
             user_id: 用户ID
-            db: 数据库会话
             
         Returns:
             bool: 是否设置成功
@@ -392,7 +391,7 @@ class AgentService:
             
             # 设置新的默认Agent
             agent.is_default = True
-            agent.update_time = datetime.utcnow()
+            agent.update_time = datetime.now()
             
             db.commit()
             
@@ -406,9 +405,9 @@ class AgentService:
     
     async def search_agents(
         self,
+        db: Session,
         user_id: str,
         query: str,
-        db: Session,
         include_public: bool = True,
         limit: int = 20,
         offset: int = 0
@@ -417,9 +416,9 @@ class AgentService:
         搜索Agent
         
         Args:
+            db: 数据库会话
             user_id: 用户ID
             query: 搜索关键词
-            db: 数据库会话
             include_public: 是否包含公开的Agent
             limit: 限制数量
             offset: 偏移量
@@ -453,5 +452,11 @@ class AgentService:
             logger.error(f"Error searching agents: {str(e)}")
             raise
 
-# 全局实例
-agent_srv = AgentService()
+_agent_service = None
+# 单例获取函数
+def get_agent_service_singleton() -> AgentService:
+    """获取代理服务单例"""
+    global _agent_service
+    if _agent_service is None:
+        _agent_service = AgentService()
+    return _agent_service

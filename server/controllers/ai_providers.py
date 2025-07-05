@@ -10,8 +10,8 @@ import logging
 
 from models.database import AIProviderType, get_db
 from libs.auth import get_current_user_id, require_admin_permission
-from services.ai_provider_service import AIProviderService
-from services.openai_service import OpenAIService
+from services import get_ai_provider_service_singleton, AIProviderService
+from libs.prividers.OpenAIProvider import OpenAIProvider
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["AI供应商管理"])
@@ -89,7 +89,8 @@ class TestProviderRequest(BaseModel):
 @router.get("/providers", response_model=List[AIProviderConfigResponse], summary="获取所有AI供应商配置")
 async def get_all_providers(
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
     """
     获取所有AI供应商配置
@@ -97,8 +98,7 @@ async def get_all_providers(
     需要用户登录权限。返回系统中配置的所有AI供应商信息。
     """
     try:
-        ai_provider_service = AIProviderService(db)
-        providers = ai_provider_service.get_all_provider_configs()
+        providers = ai_provider_service.get_all_provider_configs(db)
         
         return [
             AIProviderConfigResponse(
@@ -134,7 +134,8 @@ async def get_all_providers(
 async def create_provider(
     provider_data: AIProviderConfigCreate,
     admin_user_id: str = Depends(require_admin_permission),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
     """
     创建AI供应商配置
@@ -142,9 +143,8 @@ async def create_provider(
     **需要管理员权限**。创建新的AI供应商配置，包括API密钥、模型列表等信息。
     """
     try:
-        ai_provider_service = AIProviderService(db)
-        
         provider = ai_provider_service.create_provider_config(
+            db,
             name=provider_data.name,
             provider_type=provider_data.provider_type,
             base_url=provider_data.base_url,
@@ -198,7 +198,8 @@ async def create_provider(
 async def get_provider(
     provider_id: str,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
     """
     获取指定AI供应商配置
@@ -206,8 +207,7 @@ async def get_provider(
     需要用户登录权限。根据提供商ID获取详细配置信息。
     """
     try:
-        ai_provider_service = AIProviderService(db)
-        provider = ai_provider_service.get_provider_config(provider_id)
+        provider = ai_provider_service.get_provider_config(db, provider_id)
         
         if not provider:
             raise HTTPException(
@@ -247,7 +247,8 @@ async def update_provider(
     provider_id: str,
     provider_data: AIProviderConfigUpdate,
     admin_user_id: str = Depends(require_admin_permission),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
     """
     更新AI供应商配置
@@ -255,14 +256,12 @@ async def update_provider(
     **需要管理员权限**。更新指定供应商的配置信息，包括API密钥、模型列表等。
     """
     try:
-        ai_provider_service = AIProviderService(db)
-        
         # 处理代理配置的更新
         update_data = provider_data.model_dump(exclude_unset=True)
         if 'proxy' in update_data and update_data['proxy'] is not None:
             update_data['proxy'] = update_data['proxy'] if isinstance(update_data['proxy'], dict) else update_data['proxy'].model_dump()
 
-        provider = ai_provider_service.update_provider_config(provider_id, update_data)
+        provider = ai_provider_service.update_provider_config(db, provider_id, update_data)
         
         if not provider:
             raise HTTPException(
@@ -308,7 +307,8 @@ async def update_provider(
 async def delete_provider(
     provider_id: str,
     admin_user_id: str = Depends(require_admin_permission),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
     """
     删除AI供应商配置
@@ -316,8 +316,7 @@ async def delete_provider(
     **需要管理员权限**。删除指定的AI供应商配置。注意：删除配置可能会影响使用该配置的代理和会话。
     """
     try:
-        ai_provider_service = AIProviderService(db)
-        success = ai_provider_service.delete_provider_config(provider_id)
+        success = ai_provider_service.delete_provider_config(db, provider_id)
         
         if not success:
             raise HTTPException(
@@ -339,7 +338,8 @@ async def test_provider(
     provider_id: str,
     test_request: TestProviderRequest,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
     """
     测试AI供应商配置
@@ -348,28 +348,27 @@ async def test_provider(
     支持的供应商类型：OpenAI兼容API、自定义API。
     """
     try:
-        ai_provider_service = AIProviderService(db)
-        provider = ai_provider_service.get_provider_config(provider_id)
+        provider_config = ai_provider_service.get_provider_config(db, provider_id)
         
-        if not provider:
+        if not provider_config:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Provider not found"
             )
         
-        if not provider.is_active:
+        if not provider_config.is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Provider is not active"
             )
         
         # 目前只支持OpenAI兼容的API测试
-        if provider.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
+        if provider_config.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
             try:
-                async with OpenAIService(provider_config=provider, db=db) as openai_service:
+                async with OpenAIProvider(provider_config=provider_config) as openai_service:
                     # 首先测试代理连接（如果配置了代理）
-                    if provider.proxy:
-                        logger.info(f"Provider {provider.name} 测试代理连接")
+                    if provider_config.proxy:
+                        logger.info(f"Provider {provider_config.name} 测试代理连接")
                         proxy_test_success = await openai_service.test_proxy_connection()
                         if not proxy_test_success:
                             return {
@@ -377,7 +376,7 @@ async def test_provider(
                                 "message": "Proxy connection test failed. Please check your proxy configuration.",
                                 "response": None
                             }
-                        logger.info(f"Provider {provider.name} 代理测试通过")
+                        logger.info(f"Provider {provider_config.name} 代理测试通过")
                     
                     # 使用指定的模型或默认模型
                     model = test_request.model
@@ -395,7 +394,7 @@ async def test_provider(
                     
                     return {
                         "success": True,
-                        "message": "测试成功" + (" (with proxy)" if provider.proxy else ""),
+                        "message": "测试成功" + (" (with proxy)" if provider_config.proxy else ""),
                         "response": response
                     }
             except Exception as e:
@@ -412,7 +411,7 @@ async def test_provider(
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"不支持测试供应商类型: {provider.provider_type}"
+                detail=f"不支持测试供应商类型: {provider_config.provider_type}"
             )
             
     except HTTPException:
