@@ -201,7 +201,7 @@ export function Conversation() {
         <ScrollArea className="flex-1">
           <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             {/* 回到底部按钮 */}
-            {!isAtBottom && (
+            {/* {!isAtBottom && (
               <div className="absolute bottom-20 right-4 z-10">
                 <Button
                   onClick={scrollToBottom}
@@ -212,7 +212,7 @@ export function Conversation() {
                   <ArrowDown className="h-4 w-4" />
                 </Button>
               </div>
-            )}
+            )} */}
             
             {/* 消息列表 */}
             <div className="h-full py-16">

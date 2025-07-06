@@ -90,7 +90,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}>
       <div className={cn(
-        'flex space-x-3 max-w-[80%]',
+        'flex space-x-3 max-w-[90%] w-full',
         message.role === 'user' && 'flex-row-reverse space-x-reverse'
       )}>
         {/* 头像 */}
@@ -111,7 +111,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         
         {/* 消息内容 */}
         <div className={cn(
-          'flex flex-col group justify-start',
+          'flex flex-col group justify-start min-w-0 flex-1',
           message.role === 'user' ? 'items-end' : 'items-start'
         )}>
           {/* 名字和时间 */}
@@ -131,7 +131,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           
           {/* 消息气泡 */}
           <div className={cn(
-            'rounded-lg px-3 py-2',
+            'rounded-lg px-3 py-2 overflow-hidden',
             message.role === 'user' 
               ? 'bg-theme-blue text-white' 
               : 'bg-muted/50 text-foreground border border-border'
@@ -150,21 +150,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   )}
                 </div>
                 <div className={cn(
-                  'mt-2 px-2 overflow-hidden transition-all duration-300 mb-2',
+                  'mt-2 px-2 overflow-hidden transition-all duration-300 mb-2 w-full',
                   isReasoningOpen ? 'max-h-[1000px]' : 'max-h-0'
                 )}>
-                  <span className=" whitespace-pre-wrap">
+                  <span className="whitespace-pre-wrap break-words">
                     {message.reasoning_content.trim()}
                   </span>
                 </div>
               </div>
             )}
             {message.role === 'assistant' ? (
-              <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                <MarkdownPreview content={message.content} />
+              <div className="prose prose-sm w-full overflow-hidden">
+                <MarkdownPreview content={message.content} className="max-w-full" />
               </div>
             ) : (
-              <p className="whitespace-pre-wrap m-0">{message.content}</p>
+              <p className="whitespace-pre-wrap m-0 break-words">{message.content}</p>
             )}
           </div>
           

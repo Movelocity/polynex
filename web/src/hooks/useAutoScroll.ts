@@ -45,9 +45,10 @@ export function useAutoScroll(dependencies: any[] = [], threshold: number = 100)
   }, [threshold, findScrollContainer]);
 
   // 滚动到底部
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback((behavior: 'smooth' | 'instant' = 'smooth') => {
+    console.log("scrollToBottom")
     if (!isUserScrolling) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+      endRef.current?.scrollIntoView({ behavior: behavior });
     }
   }, [isUserScrolling]);
 

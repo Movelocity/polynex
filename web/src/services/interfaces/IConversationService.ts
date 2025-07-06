@@ -1,6 +1,5 @@
 import {
   Conversation,
-  ConversationCreateRequest,
   ChatRequest,
   ChatResponse,
   PaginationParams,
