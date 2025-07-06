@@ -298,6 +298,7 @@ export enum ConversationStatus {
 export interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
+  reasoning_content?: string;
   timestamp?: string;
 }
 

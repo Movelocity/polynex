@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
@@ -69,6 +69,7 @@ export function Conversation() {
     editingMessage,
     editingMessageIndex,
     currentAIResponse,
+    currentAIReasoning,
     isStreaming,
     agentId,
     setInputMessage,
@@ -93,7 +94,7 @@ export function Conversation() {
   const { agents, loading: isLoadingAgents } = useAgents();
 
   // 使用自动滚动hook
-  const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse]);
+  const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse, currentAIReasoning]);
 
   // 自动选择可用的agent（当hash中没有agent参数时）
   useEffect(() => {
@@ -299,31 +300,42 @@ export function Conversation() {
                 ))}
                 
                 {/* 显示当前流式AI响应 */}
-                {isStreaming && currentAIResponse && (
-                  <div className="flex justify-start">
-                    <div className="flex space-x-3 max-w-[80%]">
-                      <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
-                        <Bot className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="flex flex-col items-start">
-                        <div className="mb-1">
-                          <span className="text-xs text-muted-foreground font-medium">
-                            {selectedAgent?.app_preset?.name || 'Assistant'}
-                          </span>
-                          <span className="text-xs text-muted-foreground ml-2">
-                            正在输入...
-                          </span>
-                        </div>
-                        <div className="bg-muted/50 text-foreground border border-border rounded-lg px-3 py-2">
-                          <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                            <MarkdownPreview content={currentAIResponse} />
-                          </div>
-                          {/* 打字机效果光标 */}
-                          <span className="inline-block w-2 h-4 bg-theme-blue ml-1 animate-pulse"></span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {isStreaming && (currentAIResponse || currentAIReasoning) && (
+                  // <div className="flex justify-start">
+                  //   <div className="flex space-x-3 max-w-[80%]">
+                  //     <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                  //       <Bot className="h-5 w-5 text-white" />
+                  //     </div>
+                  //     <div className="flex flex-col items-start">
+                  //       <div className="mb-1">
+                  //         <span className="text-xs text-muted-foreground font-medium">
+                  //           {selectedAgent?.app_preset?.name || 'Assistant'}
+                  //         </span>
+                  //         <span className="text-xs text-muted-foreground ml-2">
+                  //           正在输入...
+                  //         </span>
+                  //       </div>
+                  //       <div className="bg-muted/50 text-foreground border border-border rounded-lg px-3 py-2">
+                  //         <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                  //           <MarkdownPreview content={currentAIResponse} />
+                  //         </div>
+                  //         {/* 打字机效果光标 */}
+                  //         <span className="inline-block w-2 h-4 bg-theme-blue ml-1 animate-pulse"></span>
+                  //       </div>
+                  //     </div>
+                  //   </div>
+                  // </div>
+                  <MessageBubble
+                    message={{
+                      role: 'assistant',
+                      content: currentAIResponse,
+                      reasoning_content: currentAIReasoning,
+                    }}
+                    index={messages.length}
+                    onCopy={() => {}}
+                    onEdit={() => {}}
+                    copiedIndex={null}
+                  />
                 )}
                 
                 {/* {isLoading && !isStreaming && (

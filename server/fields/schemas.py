@@ -253,6 +253,7 @@ class Message(BaseModel):
     """消息模型"""
     role: MessageRole
     content: str
+    reasoning_content: Optional[str] = None
     timestamp: Optional[str] = None
     tokens: Optional[int] = None
 

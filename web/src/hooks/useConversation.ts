@@ -38,6 +38,8 @@ export interface UseConversationReturn {
   editingMessage: ConversationMessage | null;
   editingMessageIndex: number;
   currentAIResponse: string;
+  currentAIReasoning: string;
+  isReasoning: boolean;
   isStreaming: boolean;
   agentId: string | null;
   
@@ -78,10 +80,13 @@ export function useConversation(): UseConversationReturn {
   const [editingMessage, setEditingMessage] = useState<ConversationMessage | null>(null);
   const [editingMessageIndex, setEditingMessageIndex] = useState<number>(-1);
   const [currentAIResponse, setCurrentAIResponse] = useState('');
+  const [currentAIReasoning, setCurrentAIReasoning] = useState('');
+  const [isReasoning, setIsReasoning] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [agentId, setAgentId] = useState<string | null>(null);
   
   const currentAIResponseRef = useRef('');
+  const currentAIReasoningRef = useRef('');
 
   // 从hash中读取agent参数
   useEffect(() => {
@@ -107,6 +112,11 @@ export function useConversation(): UseConversationReturn {
   useEffect(() => {
     currentAIResponseRef.current = currentAIResponse;
   }, [currentAIResponse]);
+
+  // 同步当前推理内容到ref
+  useEffect(() => {
+    currentAIReasoningRef.current = currentAIReasoning;
+  }, [currentAIReasoning]);
 
   // 加载指定的Agent
   useEffect(() => {
@@ -183,7 +193,8 @@ export function useConversation(): UseConversationReturn {
     const updatedMessages = [...messages];
     updatedMessages[messageIndex] = {
       ...updatedMessages[messageIndex],
-      content: newContent
+      content: newContent,
+      reasoning_content: updatedMessages[messageIndex].reasoning_content || ''
     };
     
     try {
@@ -244,7 +255,9 @@ export function useConversation(): UseConversationReturn {
     };
     setMessages(prev => [...prev, userMessage]);
     setIsStreaming(true);
+
     setCurrentAIResponse('');
+    setCurrentAIReasoning('');
 
     try {
       await conversationService.chat(
@@ -263,7 +276,13 @@ export function useConversation(): UseConversationReturn {
               break;
               
             case 'content':
-              setCurrentAIResponse(prev => prev + data.data.content);
+              if (data.data.reasoning_content) {
+                setIsReasoning(true);
+                setCurrentAIReasoning(prev => prev + data.data.reasoning_content);
+              }else {
+                setIsReasoning(false);
+                setCurrentAIResponse(prev => prev + data.data.content);
+              }
               break;
 
             case 'conversation_created':
@@ -291,6 +310,7 @@ export function useConversation(): UseConversationReturn {
                 variant: "destructive",
               });
               setCurrentAIResponse('');
+              setCurrentAIReasoning('');
               setIsStreaming(false);
               break;
               
@@ -306,6 +326,7 @@ export function useConversation(): UseConversationReturn {
             variant: "destructive",
           });
           setCurrentAIResponse('');
+          setCurrentAIReasoning('');
           setIsStreaming(false);
         },
         () => {
@@ -322,6 +343,7 @@ export function useConversation(): UseConversationReturn {
       // 发送失败，移除预先添加的用户消息
       setMessages(prev => prev.slice(0, -1));
       setCurrentAIResponse('');
+      setCurrentAIReasoning('');
       setIsStreaming(false);
     }
   };
@@ -362,6 +384,8 @@ export function useConversation(): UseConversationReturn {
     editingMessage,
     editingMessageIndex,
     currentAIResponse,
+    currentAIReasoning,
+    isReasoning,
     isStreaming,
     agentId,
     

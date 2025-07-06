@@ -1,5 +1,5 @@
 from typing import AsyncGenerator, List, Dict, Any
-from openai import AsyncOpenAI
+# from openai import AsyncOpenAI
 import httpx
 import logging
 from datetime import datetime
@@ -47,10 +47,10 @@ class OpenAIProvider:
             raise ValueError(f"OpenAI API key is required in configuration: {self.config.name}")
         
         # 处理代理配置
-        http_client = None
+        self.client = None
         if self.config.proxy:
             try:
-                http_client = self._create_proxy_client(self.config.proxy)
+                self.client = self._create_proxy_client(self.config.proxy)
                 logger.info(f"Using proxy configuration for {self.config.name}: {self.config.proxy.get('url', 'Unknown')}")
                 
                 # 测试代理连接（可选，在初始化时进行简单测试）
@@ -61,13 +61,15 @@ class OpenAIProvider:
                 error_msg = f"Failed to configure proxy for {self.config.name}: {str(e)}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
+        else:
+            self.client = httpx.AsyncClient()
         
         # 初始化OpenAI客户端
-        self.client = AsyncOpenAI(
-            api_key=self.config.api_key,
-            base_url=self.config.base_url,
-            http_client=http_client
-        )
+        # self.client = AsyncOpenAI(
+        #     api_key=self.config.api_key,
+        #     base_url=self.config.base_url,
+        #     http_client=http_client
+        # )
         
         logger.info(f"初始化供应商配置: {self.config.name}")
     
@@ -175,62 +177,62 @@ class OpenAIProvider:
             }
             
             # 创建流式请求
-            stream = await self.client.chat.completions.create(**request_params)
-            
-            full_response = ""
-            total_tokens = 0
-            prompt_tokens = 0
-            completion_tokens = 0
-            
-            # 处理流式响应
-            async for chunk in stream:
-                try:
-                    logger.info(chunk)
-                except Exception as e:
-                    pass
-
-                if chunk.choices and chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
-                    full_response += content
-                    
-                    # 发送内容片段
-                    yield {
-                        "type": "content",
-                        "data": {
-                            "content": content,
-                            "timestamp": datetime.now().isoformat()
-                        }
-                    }
+            async with self.client as client:
+                response = await client.post(
+                    f"{self.config.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.config.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=request_params,
+                    timeout=30.0
+                )
                 
-                # 检查是否完成
-                if chunk.choices and chunk.choices[0].finish_reason:
-                    finish_reason = chunk.choices[0].finish_reason
-                    
-                    # 提取token使用情况（如果可用）
-                    if hasattr(chunk, 'usage') and chunk.usage:
-                        prompt_tokens = chunk.usage.prompt_tokens
-                        completion_tokens = chunk.usage.completion_tokens
-                        total_tokens = chunk.usage.total_tokens
-                    else:
-                        # 粗略估算token数量
-                        completion_tokens = len(full_response.split())
-                        prompt_tokens = sum(len(msg['content'].split()) for msg in messages)
-                        total_tokens = prompt_tokens + completion_tokens
-                    
-                    # 发送完成事件
-                    yield {
-                        "type": "done",
-                        "data": {
-                            "finish_reason": finish_reason,
-                            "full_response": full_response,
-                            "timestamp": datetime.now().isoformat(),
-                            "token_count": total_tokens,
-                            "prompt_tokens": prompt_tokens,
-                            "completion_tokens": completion_tokens,
-                            "provider_config": self.config.name,
-                        }
-                    }
-                    break
+                # 处理流式响应
+                async for chunk in response.aiter_lines():
+                    logger.info(chunk)
+                    try:
+                        if chunk.startswith("data: "):
+                            chunk = chunk[6:]
+                        if chunk == "[DONE]":
+                            continue
+
+                        data = json.loads(chunk)
+                        
+                        if data.get("choices") and data["choices"][0].get("delta"):
+                            content = data["choices"][0]["delta"].get("content", "")
+                            reasoning_content = data["choices"][0]["delta"].get("reasoning_content", "")
+                            
+                            # 发送内容片段
+                            yield {
+                                "type": "content",
+                                "data": {
+                                    "content": content if content else "",  # 确保不是 NoneType
+                                    "reasoning_content": reasoning_content if reasoning_content else "",
+                                    "timestamp": datetime.now().isoformat()
+                                }
+                            }
+
+                        # 检查是否完成
+                        if data.get("choices") and data["choices"][0].get("finish_reason"):
+                            finish_reason = data["choices"][0]["finish_reason"]
+                            usage = data.get("usage", {})
+                            
+                            # 发送完成事件
+                            yield {
+                                "type": "done",
+                                "data": {
+                                    "finish_reason": finish_reason,
+                                    "timestamp": datetime.now().isoformat(),
+                                    "token_count": usage.get("total_tokens", 0),
+                                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                                    "completion_tokens": usage.get("completion_tokens", 0),
+                                    "provider_config": self.config.name,
+                                }
+                            }
+                            break
+                    except Exception as e:
+                        logger.error(f"处理API流式响应时出错: {str(e)}")
                     
         except Exception as e:
             error_msg = str(e)

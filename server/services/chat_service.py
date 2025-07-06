@@ -186,7 +186,9 @@ class ChatService:
                 ]
                 
                 assistant_response = ""
-                
+                assistant_reasoning = ""
+                has_done = False
+
                 # 流式处理
                 async for chunk in provider.stream_chat(
                     openai_messages,
@@ -194,15 +196,33 @@ class ChatService:
                     temperature=temperature,
                     max_tokens=max_tokens
                 ):
-                    yield chunk
-                    
                     # 收集助手响应内容
                     if chunk.get("type") == "content":
-                        assistant_response += chunk["data"]["content"]
+                        assistant_response += chunk["data"].get("content", "")
+                        assistant_reasoning += chunk["data"].get("reasoning_content", "")
 
                     # 处理错误
                     elif chunk.get("type") == "error":
                         logger.error(f"会话 {conversation.id} 流式处理错误: {chunk['data']['error']}")
+                    
+                    elif chunk.get("type") == "done":
+                        has_done = True
+                    
+                    yield chunk
+                
+                # 补充发送完成事件
+                if not has_done:
+                    yield {
+                        "type": "done",
+                        "data": {
+                            "finish_reason": "completed",
+                            "full_response": assistant_response,
+                            "full_reasoning": assistant_reasoning,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    }
+                
+
 
                 # 处理完成事件 - 第二次存储：保存AI回复
                 async with session_lock:
@@ -211,6 +231,7 @@ class ChatService:
                             assistant_message = {
                                 "role": "assistant",
                                 "content": assistant_response,
+                                "reasoning_content": assistant_reasoning,
                                 "timestamp": datetime.now().isoformat(),
                                 "tokens": chunk["data"].get("token_count")
                             }
