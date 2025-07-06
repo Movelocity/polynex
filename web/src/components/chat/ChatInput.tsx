@@ -97,7 +97,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const charCount = value.length;
-  const maxChars = 2000; // 设置最大字符数
+  const maxChars = 200000; // 设置最大字符数
   const isNearLimit = charCount > maxChars * 0.8;
   const isOverLimit = charCount > maxChars;
 

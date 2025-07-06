@@ -48,44 +48,30 @@ class OpenAIProvider:
         
         # 处理代理配置
         self.client = None
+        proxy_info = ""
         if self.config.proxy:
-            try:
-                self.client = self._create_proxy_client(self.config.proxy)
-                logger.info(f"Using proxy configuration for {self.config.name}: {self.config.proxy.get('url', 'Unknown')}")
-                
-                # 测试代理连接（可选，在初始化时进行简单测试）
-                # 注意：这里不进行实际测试，因为会阻塞初始化过程
-                # 代理的有效性会在实际使用时检测
-                
-            except Exception as e:
-                error_msg = f"Failed to configure proxy for {self.config.name}: {str(e)}"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
+            self.client = httpx.AsyncClient(
+                proxies=self._get_proxy_url(),
+                timeout=httpx.Timeout(30.0),  # 30秒超时
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            )
+
+            proxy_info = f"(proxy: {self.config.proxy.get('url', 'Unknown')})"
+            # 注意：这里不测试代理连接，因为会阻塞初始化过程
+            # 代理的有效性会在实际使用时检测，如果代理无效，会抛出异常
         else:
-            self.client = httpx.AsyncClient()
+            self.client = httpx.AsyncClient(
+                timeout=httpx.Timeout(30.0),  # 30秒超时
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            )
         
-        # 初始化OpenAI客户端
-        # self.client = AsyncOpenAI(
-        #     api_key=self.config.api_key,
-        #     base_url=self.config.base_url,
-        #     http_client=http_client
-        # )
-        
-        logger.info(f"初始化供应商配置: {self.config.name}")
+        logger.info(f"初始化供应商配置: {self.config.name} "+proxy_info)
     
-    def _create_proxy_client(self, proxy_config: Dict[str, Any]) -> httpx.AsyncClient:
+    def _get_proxy_url(self) -> str:
         """
-        创建带有代理配置的httpx客户端
-        
-        Args:
-            proxy_config: 代理配置字典，包含url, username, password
-            
-        Returns:
-            httpx.AsyncClient: 配置了代理的httpx客户端
-            
-        Raises:
-            ValueError: 代理配置无效时抛出
+        获取代理URL
         """
+        proxy_config = self.config.proxy  # 代理配置字典，包含url, username, password
         try:
             proxy_url = proxy_config.get('url')
             if not proxy_url:
@@ -116,20 +102,34 @@ class OpenAIProvider:
                 proxies = proxy_url_with_auth
             else:
                 proxies = proxy_url
-            
-            # 创建httpx客户端
-            client = httpx.AsyncClient(
-                proxies=proxies,
-                timeout=httpx.Timeout(30.0),  # 30秒超时
-                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
-            )
-            
-            logger.debug(f"创建代理client: {proxy_url}")
-            return client
-            
+            return proxies
         except Exception as e:
-            raise ValueError(f"Invalid proxy configuration: {str(e)}")
+            raise ValueError(f"无效的代理配置: {str(e)}")
     
+    async def _make_stream_request(self, request_params: Dict[str, Any]) -> AsyncGenerator[str, None]:
+        """
+        辅助方法，用于处理流式请求
+        
+        Args:
+            request_params: 请求参数字典
+            
+        Yields:
+            str: 流式响应数据
+        """
+        async with self.client as client:
+            async with client.stream(
+                "POST",
+                f"{self.config.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.config.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=request_params,
+                timeout=30.0
+            ) as response:
+                async for line in response.aiter_lines():
+                    yield line
+
     async def stream_chat(
         self,
         messages: List[Dict[str, str]],
@@ -176,64 +176,56 @@ class OpenAIProvider:
                 }
             }
             
-            # 创建流式请求
-            async with self.client as client:
-                response = await client.post(
-                    f"{self.config.base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.config.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json=request_params,
-                    timeout=30.0
-                )
-                
-                # 处理流式响应
-                async for chunk in response.aiter_lines():
-                    logger.info(chunk)
-                    try:
-                        if chunk.startswith("data: "):
-                            chunk = chunk[6:]
-                        if chunk == "[DONE]":
-                            continue
+            # 使用辅助方法处理流式请求
+            async for line in self._make_stream_request(request_params):
+                # print(line)
+                logger.info(line)
+                try:
+                    if line == None or line == "":
+                        continue
+                    if line.startswith("data: "):
+                        line = line[6:]
+                    if line == "[DONE]":
+                        continue
 
-                        data = json.loads(chunk)
-                        
-                        if data.get("choices") and data["choices"][0].get("delta"):
-                            content = data["choices"][0]["delta"].get("content", "")
-                            reasoning_content = data["choices"][0]["delta"].get("reasoning_content", "")
-                            
-                            # 发送内容片段
-                            yield {
-                                "type": "content",
-                                "data": {
-                                    "content": content if content else "",  # 确保不是 NoneType
-                                    "reasoning_content": reasoning_content if reasoning_content else "",
-                                    "timestamp": datetime.now().isoformat()
-                                }
-                            }
-
-                        # 检查是否完成
-                        if data.get("choices") and data["choices"][0].get("finish_reason"):
-                            finish_reason = data["choices"][0]["finish_reason"]
-                            usage = data.get("usage", {})
-                            
-                            # 发送完成事件
-                            yield {
-                                "type": "done",
-                                "data": {
-                                    "finish_reason": finish_reason,
-                                    "timestamp": datetime.now().isoformat(),
-                                    "token_count": usage.get("total_tokens", 0),
-                                    "prompt_tokens": usage.get("prompt_tokens", 0),
-                                    "completion_tokens": usage.get("completion_tokens", 0),
-                                    "provider_config": self.config.name,
-                                }
-                            }
-                            break
-                    except Exception as e:
-                        logger.error(f"处理API流式响应时出错: {str(e)}")
+                    data = json.loads(line)
+                    print(data)
                     
+                    if data.get("choices") and data["choices"][0].get("delta"):
+                        content = data["choices"][0]["delta"].get("content", "")
+                        reasoning_content = data["choices"][0]["delta"].get("reasoning_content", "")
+                        
+                        # 发送内容片段
+                        yield {
+                            "type": "content",
+                            "data": {
+                                "content": content if content else "",  # 确保不是 NoneType
+                                "reasoning_content": reasoning_content if reasoning_content else "",
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        }
+
+                    # 检查是否完成
+                    if data.get("choices") and data["choices"][0].get("finish_reason"):
+                        finish_reason = data["choices"][0]["finish_reason"]
+                        usage = data.get("usage", {})
+                        
+                        # 发送完成事件
+                        yield {
+                            "type": "done",
+                            "data": {
+                                "finish_reason": finish_reason,
+                                "timestamp": datetime.now().isoformat(),
+                                "token_count": usage.get("total_tokens", 0),
+                                "prompt_tokens": usage.get("prompt_tokens", 0),
+                                "completion_tokens": usage.get("completion_tokens", 0),
+                                "provider_config": self.config.name,
+                            }
+                        }
+                        break
+                except Exception as e:
+                    logger.error(f"处理API流式响应时出错: {str(e)}")
+                
         except Exception as e:
             error_msg = str(e)
             logger.error(f"流式聊天错误: {error_msg}")

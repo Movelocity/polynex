@@ -283,7 +283,7 @@ export function ImageOCR() {
                 )}
               </CardTitle>
               <CardDescription>
-                提取的文本内容将显示在此处
+                ...
               </CardDescription>
             </CardHeader>
             <CardContent>

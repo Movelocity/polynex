@@ -69,6 +69,8 @@ interface MessageBubbleProps {
   avatar?: AvatarConfig;
   onCopy: (content: string, index: number) => void;
   onEdit: (message: ConversationMessage, index: number) => void;
+  isReasoning?: boolean;
+  defaultReasoningOpen?: boolean;
   copiedIndex: number | null;
 }
 
@@ -79,9 +81,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   avatar,
   onCopy, 
   onEdit,
+  isReasoning=false,
+  defaultReasoningOpen=false,
   copiedIndex 
 }) => {
-  const [isReasoningOpen, setIsReasoningOpen] = useState(false);
+  const [isReasoningOpen, setIsReasoningOpen] = useState(defaultReasoningOpen);
 
   return (
     <div className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}>
@@ -131,14 +135,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             message.role === 'user' 
               ? 'bg-theme-blue text-white' 
               : 'bg-muted/50 text-foreground border border-border'
-              // 'bg-[#f0f0f0] dark:bg-[#3a3f3f] text-[#212529] dark:text-[#dfe6e9] border border-border'
           )}>
             {message.role === 'assistant' && message.reasoning_content && (
-              <div className="flex flex-col items-center mb-2 w-full">
-                <div className="text-xs flex items-center justify-between w-full cursor-pointer" onClick={() => setIsReasoningOpen(!isReasoningOpen)}>
+              <div className="flex flex-col items-center w-full text-sm text-muted-foreground">
+                <div className="flex items-center justify-between w-full cursor-pointer" onClick={() => setIsReasoningOpen(!isReasoningOpen)}>
                   <span className="flex items-center gap-2">
                     <Lightbulb className="h-4 w-4 text-yellow-500" />
-                    思考过程
+                    {isReasoning? '思考中...' : '思考过程'}
                   </span>
                   {isReasoningOpen ? (
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -147,10 +150,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   )}
                 </div>
                 <div className={cn(
-                  'mt-2 px-2 overflow-hidden transition-all duration-300',
+                  'mt-2 px-2 overflow-hidden transition-all duration-300 mb-2',
                   isReasoningOpen ? 'max-h-[1000px]' : 'max-h-0'
                 )}>
-                  <span className="text-xs text-muted-foreground whitespace-pre-wrap">
+                  <span className=" whitespace-pre-wrap">
                     {message.reasoning_content.trim()}
                   </span>
                 </div>

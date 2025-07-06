@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
+// import rehypeRaw from 'rehype-raw';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; // KaTeX CSS
 
@@ -62,7 +62,7 @@ export function MarkdownPreview({ content }: { content: string }) {
         ]}
         rehypePlugins={[
           rehypeHighlight, 
-          rehypeRaw, 
+          // rehypeRaw, 
           [rehypeKatex, {
             strict: false,
             throwOnError: false,
@@ -249,7 +249,7 @@ export function MarkdownPreview({ content }: { content: string }) {
           ),
         }}
       >
-        {processedContent || '文章内容将在这里显示...'}
+        {processedContent || '...'}
       </ReactMarkdown>
     </div>
   )

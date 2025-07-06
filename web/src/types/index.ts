@@ -316,14 +316,6 @@ export interface Conversation {
   update_time: string;
 }
 
-// 对话创建请求
-export interface ConversationCreateRequest {
-  agent_id?: string;
-  title?: string;
-  message: string;
-  stream?: boolean;
-}
-
 // 聊天请求
 export interface ChatRequest {
   conversationId?: string;

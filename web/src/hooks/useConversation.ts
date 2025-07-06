@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { conversationService } from '@/services';
-import { ConversationMessage } from '@/types';
+import { ConversationMessage, Conversation as ConversationType } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 // Hash参数工具函数
@@ -42,6 +42,7 @@ export interface UseConversationReturn {
   isReasoning: boolean;
   isStreaming: boolean;
   agentId: string | null;
+  conversations: ConversationType[];
   
   // 方法
   setInputMessage: (message: string) => void;
@@ -49,6 +50,8 @@ export interface UseConversationReturn {
   setEditingMessage: (message: ConversationMessage | null) => void;
   setEditingMessageIndex: (index: number) => void;
   loadAgent: (agentId: string) => Promise<void>;
+  loadConversations: () => Promise<void>;
+  deleteConversation: (conversationId: string) => Promise<void>;
   copyMessage: (content: string, index: number) => Promise<void>;
   handleEditMessage: (message: ConversationMessage, index: number) => void;
   handleSaveEditedMessage: (messageIndex: number, newContent: string) => Promise<void>;
@@ -67,7 +70,6 @@ export interface UseConversationReturn {
 export function useConversation(): UseConversationReturn {
   const { user } = useAuth();
   const { getAgent } = useAgents();
-  
   // 状态定义
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -87,6 +89,49 @@ export function useConversation(): UseConversationReturn {
   
   const currentAIResponseRef = useRef('');
   const currentAIReasoningRef = useRef('');
+
+  const creatingConversation = useRef(false);
+
+  const [conversations, setConversations] = useState<ConversationType[]>([]);
+  // 加载对话列表
+  const loadConversations = async () => {
+    if (!user) return;
+    
+    try {
+      const data = await conversationService.getConversations({ limit: 50 });
+      setConversations(data);
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+      toast({
+        title: "错误",
+        description: "加载对话历史失败",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // 删除对话
+  const deleteConversation = async (conv_id: string) => {
+    if (!confirm('确定要删除这个对话吗？')) return;
+
+    try {
+      await conversationService.deleteConversation(conv_id);
+      if(conv_id === conversationId) {
+        handleNewConversation();
+      }
+      setConversations(prev => prev.filter(c => c.id !== conv_id));
+      toast({
+        title: "成功",
+        description: "对话删除成功",
+      });
+    } catch (error) {
+      toast({
+        title: "错误",
+        description: "删除对话失败",
+        variant: "destructive",
+      });
+    }
+  };
 
   // 从hash中读取agent参数
   useEffect(() => {
@@ -207,17 +252,18 @@ export function useConversation(): UseConversationReturn {
   };
 
   // 对话选择处理
-  const handleConversationSelect = async (selectedConversationId: string) => {
+  const handleConversationSelect = async (selectConvId: string) => {
     try {
-      const conversation = await conversationService.getConversation(selectedConversationId);
+      const conversation = await conversationService.getConversation(selectConvId);
       
-      setConversationId(selectedConversationId);
+      setConversationId(selectConvId);
       setMessages(conversation.messages || []);
       
       // 如果对话有关联的agent，加载agent信息
       if (conversation.agent_id && conversation.agent_id !== selectedAgent?.id) {
         await loadAgent(conversation.agent_id, false);
       }
+      console.log("select conversation ", selectConvId)
     } catch (error) {
       toast({
         title: "错误",
@@ -259,6 +305,10 @@ export function useConversation(): UseConversationReturn {
     setCurrentAIResponse('');
     setCurrentAIReasoning('');
 
+    if (!conversationId) {
+      creatingConversation.current = true;  // 标记正在创建对话，结束后刷新对话列表
+    }
+  
     try {
       await conversationService.chat(
         {
@@ -273,6 +323,7 @@ export function useConversation(): UseConversationReturn {
           switch (data.type) {
             case 'start':
               setCurrentAIResponse('');
+              setCurrentAIReasoning('');
               break;
               
             case 'content':
@@ -296,10 +347,12 @@ export function useConversation(): UseConversationReturn {
                 setMessages(prev => [...prev, {
                   role: 'assistant',
                   content: fullResponse,
+                  reasoning_content: currentAIReasoningRef.current,
                   timestamp: data.data.timestamp || new Date().toISOString()
                 }]);
               }
               setCurrentAIResponse('');
+              setCurrentAIReasoning('');
               setIsStreaming(false);
               break;
               
@@ -333,6 +386,7 @@ export function useConversation(): UseConversationReturn {
           setIsStreaming(false);
         }
       );
+
     } catch (error: any) {
       toast({
         title: "发送失败",
@@ -345,6 +399,11 @@ export function useConversation(): UseConversationReturn {
       setCurrentAIResponse('');
       setCurrentAIReasoning('');
       setIsStreaming(false);
+    } finally {
+      if (creatingConversation.current) {
+        creatingConversation.current = false;
+        loadConversations();
+      }
     }
   };
 
@@ -388,6 +447,7 @@ export function useConversation(): UseConversationReturn {
     isReasoning,
     isStreaming,
     agentId,
+    conversations,
     
     // 方法
     setInputMessage,
@@ -395,6 +455,8 @@ export function useConversation(): UseConversationReturn {
     setEditingMessage,
     setEditingMessageIndex,
     loadAgent,
+    loadConversations,
+    deleteConversation,
     copyMessage,
     handleEditMessage,
     handleSaveEditedMessage,

@@ -1,66 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/x-ui/button';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
-import { conversationService } from '@/services';
-import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { Conversation } from '@/types';
 import { ChatSearchDialog } from './ChatSearchDialog';
 import { 
   MessageCircle, 
   Trash2, 
-  Clock, 
   MessageSquare,
-  Bot,
   ChevronRight,
   Plus,
   Search
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 import cn from 'classnames';
 
 interface ChatHistoryPanelProps {
+  conversations: Conversation[];
   currentConversationId?: string | null;
   onConversationSelect?: (conversationId: string) => void;
+  onConversationDelete?: (conversationId: string) => void;
   onNewConversation?: () => void;
   className?: string;
 }
 
 export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
+  conversations,
   currentConversationId,
   onConversationSelect,
+  onConversationDelete,
   onNewConversation,
   className
 }) => {
-  const { user } = useAuth();
   const { agents } = useAgents();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-
-  // 加载对话列表
-  const loadConversations = async () => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      const data = await conversationService.getConversations({ limit: 50 });
-      setConversations(data);
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
-      toast({
-        title: "错误",
-        description: "加载对话历史失败",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadConversations();
-  }, [user]);
 
   // 添加快捷键支持 (Ctrl+F 打开搜索)
   useEffect(() => {
@@ -76,28 +49,6 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-
-  // 删除对话
-  const handleDeleteConversation = async (conversationId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    if (!confirm('确定要删除这个对话吗？')) return;
-
-    try {
-      await conversationService.deleteConversation(conversationId);
-      setConversations(prev => prev.filter(c => c.id !== conversationId));
-      toast({
-        title: "成功",
-        description: "对话删除成功",
-      });
-    } catch (error) {
-      toast({
-        title: "错误",
-        description: "删除对话失败",
-        variant: "destructive",
-      });
-    }
-  };
 
   // 获取Agent名称
   const getAgentName = (agentId: string | null) => {
@@ -167,11 +118,7 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
       {/* 对话列表 */}
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-theme-blue"></div>
-            </div>
-          ) : conversations.length === 0 ? (
+          {conversations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">暂无对话历史</p>
@@ -227,7 +174,10 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
                     variant="ghost"
                     size="sm"
                     className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                    onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onConversationDelete?.(conversation.id);
+                    }}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
