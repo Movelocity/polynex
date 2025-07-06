@@ -189,7 +189,7 @@ class OpenAIProvider:
                         continue
 
                     data = json.loads(line)
-                    print(data)
+                    # print(data)
                     
                     if data.get("choices") and data["choices"][0].get("delta"):
                         content = data["choices"][0]["delta"].get("content", "")

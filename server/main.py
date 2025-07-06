@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi import HTTPException
 from pathlib import Path
 from contextlib import asynccontextmanager
 import uvicorn
@@ -88,9 +90,24 @@ app.include_router(conversations.router)
 app.include_router(agents.router)
 app.include_router(ai_providers.router)  # 已经有前缀 /api/ai
 
-# 根路径欢迎信息
+# 挂载静态文件目录
+app.mount("/assets", StaticFiles(directory="static/assets"), name="static_assets")
+
+# 添加favicon路由
+@app.get("/favicon.ico")
+async def favicon():
+    """提供网站图标"""
+    return FileResponse("static/favicon.ico")
+
+# 根路径 - 提供前端SPA
 @app.get("/")
 async def root():
+    """提供前端SPA首页"""
+    return FileResponse("static/index.html")
+
+# 根路径欢迎信息 - API文档
+@app.get("/api")
+async def api_root():
     """
     API根路径 - 欢迎页面
     
@@ -131,10 +148,21 @@ async def health_check():
     """健康检查接口"""
     return {"status": "healthy", "message": "服务运行正常"}
 
+# 前端SPA路由 - 捕获所有非API路由
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    """
+    捕获所有非API路由，返回前端SPA的index.html
+    
+    这使得前端路由可以正常工作，无论用户访问什么URL，都返回前端应用
+    """
+    # 如果是API路由，不处理（实际上这个条件不会触发，因为API路由已经被各自的路由器处理）
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API路径不存在")
+        
+    # 如果请求的是根路径或任何非API路径，返回SPA的index.html
+    return FileResponse("static/index.html")
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8765)
 
 def main():
     """启动 FastAPI 服务"""
