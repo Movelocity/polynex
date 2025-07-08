@@ -28,7 +28,6 @@ import { Conversation } from '@/pages/chat/Conversation';
 import { NotFound } from '@/pages/NotFound';
 import { ServiceDemo } from '@/components/ServiceDemo';
 import { ThemeDemo } from '@/components/ThemeDemo';
-import { FileManage } from '@/pages/FileManage';
 
 function App() {
 
@@ -101,16 +100,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <UserSettings />
-                </ProtectedRoute>
-              } 
-            />
-
-            {/* File manage routes */}
-            <Route 
-              path="file-manage" 
-              element={
-                <ProtectedRoute>
-                  <FileManage />
                 </ProtectedRoute>
               } 
             />

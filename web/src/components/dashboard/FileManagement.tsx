@@ -5,7 +5,7 @@ import { FileList } from '@/components/common/FileList';
 import { fileService } from '@/services';
 import { toast } from '@/hooks/use-toast';
 
-export function FileManage() {
+export function FileManagement() {
   // File management state
   const [userFiles, setUserFiles] = useState<any[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
@@ -168,29 +168,27 @@ export function FileManage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pt-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>文件管理</CardTitle>
-          <CardDescription>上传、查看、下载和删除您的文件</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <FileUploadArea
-            onFileUpload={handleFileUpload}
-            uploading={uploadingFile}
-            uploadProgress={uploadProgress}
-          />
+    <Card>
+      <CardHeader>
+        <CardTitle>文件管理</CardTitle>
+        <CardDescription>上传、查看、下载和删除您的文件</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <FileUploadArea
+          onFileUpload={handleFileUpload}
+          uploading={uploadingFile}
+          uploadProgress={uploadProgress}
+        />
 
-          <FileList
-            files={userFiles}
-            loading={loadingFiles}
-            pagination={filePagination}
-            onDelete={handleFileDelete}
-            onRefresh={loadUserFiles}
-            onPageChange={handlePageChange}
-          />
-        </CardContent>
-      </Card>
-    </div>
+        <FileList
+          files={userFiles}
+          loading={loadingFiles}
+          pagination={filePagination}
+          onDelete={handleFileDelete}
+          onRefresh={loadUserFiles}
+          onPageChange={handlePageChange}
+        />
+      </CardContent>
+    </Card>
   )
-}
+} 
