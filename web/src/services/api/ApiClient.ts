@@ -1,5 +1,5 @@
 /** 基础后端api路径 */
-export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8765/api';
+export const apiBaseUrl = import.meta.env.DEV ? 'http://localhost:8765/api' : '/api';
 
 /**
  * API客户端基类

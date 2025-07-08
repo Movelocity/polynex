@@ -84,7 +84,7 @@ async def get_blog_by_id(
     return blog
 
 
-@router.post("", response_model=Blog, status_code=201)
+@router.post("/create", response_model=Blog, status_code=201)
 async def create_blog(
     blog_create: BlogCreate,
     current_user_id: str = Depends(get_current_user_id),
@@ -92,12 +92,11 @@ async def create_blog(
     blog_service: BlogService = Depends(get_blog_service_singleton)
 ):
     """创建博客"""
-    # 创建博客（不再需要传递用户名，数据库层会自动查询）
     new_blog = blog_service.create_blog(db, blog_create, current_user_id)
     return new_blog
 
 
-@router.put("/{blog_id}", response_model=Blog)
+@router.put("/update/{blog_id}", response_model=Blog)
 async def update_blog(
     blog_id: str,
     blog_update: BlogUpdate,
@@ -128,11 +127,29 @@ async def update_blog(
     updated_blog = blog_service.get_blog_by_id(db, blog_id)
     return updated_blog
 
+@router.put("/publish/{blog_id}", response_model=Blog)
+async def publish_blog(
+    blog_id: str,
+    publish_data: dict,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+    blog_service: BlogService = Depends(get_blog_service_singleton)
+):
+    """发布或取消发布博客"""
+    publish = publish_data.get("publish", False)
+    success = blog_service.publish_blog(db, user_id, blog_id, should_publish=publish)
+    if not success:
+        raise HTTPException(status_code=404, detail="博客不存在或无权限")
+    
+    # 返回更新后的博客
+    updated_blog = blog_service.get_blog_by_id(db, blog_id)
+    return updated_blog
+
 
 @router.delete("/{blog_id}")
 async def delete_blog(
     blog_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
     blog_service: BlogService = Depends(get_blog_service_singleton)
 ):
@@ -143,7 +160,7 @@ async def delete_blog(
         raise HTTPException(status_code=404, detail="博客不存在")
 
     # 检查是否是博客作者
-    if existing_blog['authorId'] != current_user_id:
+    if existing_blog['authorId'] != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="只能删除自己的博客"
@@ -173,7 +190,7 @@ async def increment_blog_views(blog_id: str, db: Session = Depends(get_db),
 @router.post("/batch")
 async def save_blogs_batch(
     batch_request: BatchBlogsRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
     blog_service: BlogService = Depends(get_blog_service_singleton)
 ):

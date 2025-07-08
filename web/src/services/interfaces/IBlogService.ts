@@ -59,4 +59,9 @@ export interface IBlogService {
    * 增加博客浏览量
    */
   incrementViews(blogId: string): Promise<void>;
+
+  /**
+   * 设置博客发布状态
+   */
+  setPublishStatus(blogId: string, publish: boolean): Promise<boolean>;
 } 

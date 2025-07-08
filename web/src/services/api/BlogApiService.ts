@@ -21,14 +21,28 @@ export class BlogApiService implements IBlogService {
   }
 
   async addBlog(blog: Blog): Promise<Blog> {
-    return await this.apiClient.post<Blog>('/blogs', blog);
+    return await this.apiClient.post<Blog>('/blogs/create', blog);
   }
 
   async updateBlog(blogId: string, updates: Partial<Blog>): Promise<boolean> {
     try {
-      await this.apiClient.put(`/blogs/${blogId}`, updates);
+      await this.apiClient.put(`/blogs/update/${blogId}`, updates);
       return true;
     } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  async setPublishStatus(blogId: string, publish: boolean): Promise<boolean> {
+    try {
+      const response = await this.apiClient.put(`/blogs/publish/${blogId}`, { publish });
+      console.log(response);
+      return true;
+    } catch (error) {
+      console.log(error);
       if (error instanceof ApiError && error.status === 404) {
         return false;
       }

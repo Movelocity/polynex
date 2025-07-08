@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 10080  # 7天
     
     # 服务器配置
-    host: str = "0.0.0.0"
+    host: str = "localhost"
     port: int = 8765
     debug: bool = False
     

@@ -249,6 +249,20 @@ class BlogService:
         db.commit()
         return True
     
+    def publish_blog(self, db: Session, user_id: str, blog_id: str, should_publish: bool) -> bool:
+        """发布或取消发布博客"""
+        blog = db.query(Blog).filter(Blog.id == blog_id).first()
+        if not blog:
+            return False
+        
+        if blog.author_id != user_id:
+            if blog.author_id != 'admin': # 管理员可以发布或取消发布所有博客
+                return False
+        
+        blog.status = 'published' if should_publish else 'draft'
+        db.commit()
+        return True
+    
     def increment_blog_views(self, db: Session, blog_id: str) -> bool:
         """增加博客浏览次数"""
         blog = db.query(Blog).filter(Blog.id == blog_id).first()

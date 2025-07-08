@@ -9,7 +9,8 @@ import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/CustomSelect';
 import { Badge } from '@/components/x-ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
@@ -23,7 +24,9 @@ import {
   X,
   Tag,
   FileText,
-  Loader2
+  Loader2,
+  Globe,
+  Lock
 } from 'lucide-react';
 
 // Temporary utility functions until we move them to proper utils
@@ -41,27 +44,6 @@ const generateSummary = (content: string): string => {
   return plainText.length > 120 ? plainText.substring(0, 120) + '...' : plainText;
 };
 
-function MarkdownGuide() {
-  return (
-    <Card className="hidden lg:block bg-theme-blue/5 border-theme-blue/20">
-      <CardHeader>
-        <CardTitle className="text-lg text-theme-blue">Markdown 快速指南</CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm text-theme-blue space-y-2">
-        <div><code># 标题</code> - 一级标题</div>
-        <div><code>## 标题</code> - 二级标题</div>
-        <div><code>**粗体**</code> - 粗体文字</div>
-        <div><code>*斜体*</code> - 斜体文字</div>
-        <div><code>`代码`</code> - 行内代码</div>
-        <div><code>[链接](url)</code> - 链接</div>
-        <div><code>![图片](url)</code> - 图片</div>
-        <div><code>- 列表</code> - 无序列表</div>
-        <div><code>1. 列表</code> - 有序列表</div>
-        <div><code>&gt; 引用</code> - 引用块</div>
-      </CardContent>
-    </Card>
-  )
-}
 
 export function WriteBlog() {
   const { id } = useParams<{ id: string }>();
@@ -76,6 +58,7 @@ export function WriteBlog() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [publishLoading, setPublishLoading] = useState(false);
   const [error, setError] = useState('');
   const [isEdit, setIsEdit] = useState(false);
   const [activeTab, setActiveTab] = useState('write');
@@ -187,7 +170,7 @@ export function WriteBlog() {
     return true;
   };
 
-  const handleSave = async (status: 'published' | 'draft') => {
+  const handleSave = async () => {
     if (!user) {
       setError('请先登录');
       return;
@@ -197,32 +180,27 @@ export function WriteBlog() {
       return;
     }
 
-    if (status === 'published') {
-      setLoading(true);
-    } else {
-      setSaveLoading(true);
-    }
+    setSaveLoading(true);
 
     try {
       const summary = generateSummary(formData.content);
       const now = new Date().toISOString();
 
       if (isEdit && id) {
-        // 更新博客
+        // 更新博客内容，但不改变发布状态
         const success = await blogService.updateBlog(id, {
           title: formData.title,
           content: formData.content,
           summary,
           category: formData.category,
           tags: formData.tags,
-          status,
           updateTime: now,
         });
 
         if (success) {
           toast.success({
             title: "保存成功",
-            description: status === 'published' ? "文章已成功发布！" : "文章已保存为草稿",
+            description: "文章内容已保存",
           });
         } else {
           toast.error({
@@ -243,15 +221,20 @@ export function WriteBlog() {
           authorName: user.username,
           createTime: now,
           updateTime: now,
-          status,
+          status: 'draft', // 新创建的博客默认为草稿状态
           views: 0,
         };
 
-        await blogService.addBlog(newBlog);
+        const createdBlog = await blogService.addBlog(newBlog);
         toast.success({
           title: "创建成功",
-          description: status === 'published' ? "文章已成功发布！" : "文章已保存为草稿",
+          description: "文章已保存为草稿",
         });
+        
+        // 更新ID以便后续操作
+        if (createdBlog && createdBlog.id) {
+          navigate(`/edit/${createdBlog.id}`);
+        }
       }
     } catch (err: any) {
       console.error('保存文章失败:', err);
@@ -269,8 +252,70 @@ export function WriteBlog() {
         });
       }
     } finally {
-      setLoading(false);
       setSaveLoading(false);
+    }
+  };
+
+  const handleTogglePublish = async () => {
+    if (!user) {
+      setError('请先登录');
+      return;
+    }
+
+    if (!validateForm()) {
+      return;
+    }
+
+    // 如果是新文章，需要先保存
+    if (!isEdit) {
+      toast.error({
+        title: "请先保存文章",
+        description: "新文章需要先保存后才能发布",
+      });
+      return;
+    }
+
+    setPublishLoading(true);
+    
+    try {
+      if (id) {
+        const newStatus = formData.status === 'published' ? false : true;
+        const success = await blogService.setPublishStatus(id, newStatus);
+        
+        if (success) {
+          const newStatusText = newStatus ? 'published' : 'draft';
+          setFormData(prev => ({
+            ...prev,
+            status: newStatusText as 'published' | 'draft'
+          }));
+          
+          toast.success({
+            title: newStatus ? "发布成功" : "取消发布",
+            description: newStatus ? "文章已公开发布" : "文章已设为草稿状态",
+          });
+        } else {
+          toast.error({
+            title: "操作失败",
+            description: "请检查网络连接后重试",
+          });
+        }
+      }
+    } catch (err: any) {
+      console.error('切换发布状态失败:', err);
+      
+      if (err?.status === 401) {
+        toast.error({
+          title: "登录已过期",
+          description: "系统将自动跳转到登录页面，请重新登录",
+        });
+      } else {
+        toast.error({
+          title: "操作失败",
+          description: "请检查网络连接后重试",
+        });
+      }
+    } finally {
+      setPublishLoading(false);
     }
   };
 
@@ -283,7 +328,6 @@ export function WriteBlog() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-
         {/* Editor */}
         <div className="col-span-1 lg:col-span-3">
           <Card className="">
@@ -309,42 +353,7 @@ export function WriteBlog() {
                     预览
                   </TabsTrigger>
                 </TabsList>
-                <div className="flex gap-2 ml-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleSave('draft')}
-                    disabled={saveLoading || loading}
-                  >
-                    {saveLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        正在保存
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        保存草稿
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    onClick={() => handleSave('published')}
-                    disabled={loading || saveLoading}
-                    variant="pretty"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        正在发布
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        发布文章
-                      </>
-                    )}
-                  </Button>
-                </div>
+                
                 </div>
                 <TabsContent value="write">
                   <div className="relative min-h-[600px] pb-4">
@@ -353,7 +362,7 @@ export function WriteBlog() {
                       placeholder="开始编写您的文章... 支持 Markdown 语法"
                       value={formData.content}
                       onChange={(e) => handleInputChange('content', e.target.value)}
-                      className="w-full p-2 rounded-lg resize-none outline-none bg-background"
+                      className="w-full p-2 rounded-lg resize-none outline-none bg-secondary"
                       minRows={20}
                     />
                     <div className="text-xs text-muted-foreground absolute bottom-0">
@@ -371,88 +380,125 @@ export function WriteBlog() {
         </div>
 
         {/* Sidebar */}
-        <div className="col-span-1 space-y-6">
-          
-            {/* Tags */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Tag className="w-5 h-5 mr-2" />
-                  分类 & 标签设置
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="category">选择分类</Label>
-                    <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue placeholder="选择文章分类" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="tagInput">添加标签</Label>
-                    <div className="flex space-x-2 mt-2">
-                      <Input
-                        id="tagInput"
-                        placeholder="输入标签名"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        disabled={formData.tags.length >= 5}
-                      />
-                      <Button 
-                        size="sm" 
-                        onClick={handleAddTag}
-                        disabled={!tagInput.trim() || formData.tags.length >= 5}
-                      >
-                        添加
-                      </Button>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      最多可添加 5 个标签，按回车键快速添加
-                    </div>
-                  </div>
-                  
-                  {formData.tags.length > 0 && (
-                    <div>
-                      <Label>已添加的标签</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center">
-                            {tag}
-                            <button
-                              onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 hover:text-destructive"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+        <div className="col-span-1 space-y-6 ">
+          {/* Tags */}
+          <Card className="sticky top-20">
+            <CardHeader>
+              <CardTitle> 文章设置 </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2 mt-0 m-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleSave}
+                  disabled={saveLoading || publishLoading}
+                >
+                  {saveLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />正在保存
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />保存
+                    </>
                   )}
+                </Button>
+                {isEdit && (
+                  <Button 
+                    onClick={handleTogglePublish}
+                    disabled={publishLoading || saveLoading}
+                    variant={formData.status === 'published' ? 'outline' : 'pretty'}
+                  >
+                    {publishLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />处理中
+                      </>
+                    ) : formData.status === 'published' ? (
+                      <>
+                        <Lock className="w-4 h-4 mr-2" />设为草稿
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-4 h-4 mr-2" />发布文章
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="category">选择分类</Label>
+                  {/* <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="选择文章分类" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select> */}
+                  <Select defaultValue={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择文章分类" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          
-
-          <div className="hidden lg:block">
-            {/* Markdown Guide */}
-            <MarkdownGuide />
-          </div>
+                <div>
+                  <Label htmlFor="tagInput">添加标签</Label>
+                  <div className="flex space-x-2 mt-2">
+                    <Input
+                      id="tagInput"
+                      placeholder="输入标签名"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      disabled={formData.tags.length >= 5}
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={handleAddTag}
+                      disabled={!tagInput.trim() || formData.tags.length >= 5}
+                    >
+                      添加
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    最多可添加 5 个标签，按回车键快速添加
+                  </div>
+                </div>
+                
+                {formData.tags.length > 0 && (
+                  <div>
+                    <Label>已添加的标签</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center">
+                          {tag}
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-
-        
       </div>
     </div>
   );

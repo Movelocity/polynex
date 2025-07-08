@@ -512,7 +512,7 @@ img {
   position: absolute;
   inset: auto 0 0;
   height: 2px;
-  background: hsl(var(--primary));
+  background: hsl(var(--blue));
   visibility: hidden;
   transition: transform .3s ease;
   transform: scaleX(0);
