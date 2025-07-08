@@ -339,7 +339,7 @@ export function WriteBlog() {
   };
 
   return (
-    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-8">
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>

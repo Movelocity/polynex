@@ -125,30 +125,18 @@ export function BlogDetail() {
 
   return (
     <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-8">
-      {/* 顶部导航区域 */}
-      <div className="my-6">
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-          <span 
-            onClick={() => navigate(-1)}
-            className="cursor-pointer flex items-center text-foreground hover:text-theme-blue mr-2"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回
-          </span>
-          <Badge variant="secondary" className="bg-theme-blue/10 text-theme-blue">
-            {blog.category}
-          </Badge>
-          <div className="flex items-center text-muted-foreground text-sm">
-            <Eye className="w-4 h-4 mr-1" />
-            {blog.views} 次阅读
-          </div>
-        </div>
-      </div>
-      
       {/* 左中右三栏布局 */}
       <div className="flex gap-8">
         {/* 左侧栏 - 推荐文章 */}
         <aside className="hidden lg:block w-64 flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span 
+              onClick={() => navigate(-1)}
+              className="cursor-pointer flex items-center text-foreground hover:text-theme-blue mr-2"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />返回
+            </span>
+          </div>
           {relatedBlogs.length > 0 && (
             <div className="sticky top-20">
               <h3 className="text-lg font-bold text-foreground mb-4">推荐文章</h3>
@@ -178,11 +166,10 @@ export function BlogDetail() {
         {/* 中间主内容区 */}
         <main className="flex-1 min-w-0 px-4">
           {/* 文章头部信息 */}
-          <header className="mb-4">
+          <header className="my-4">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6 leading-tight">
               {blog.title}
             </h1>
-            
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
               <div className="flex items-center ">
                 <div className="flex items-center text-sm text-muted-foreground">
@@ -197,6 +184,13 @@ export function BlogDetail() {
                       更新于 {formatDate(blog.updateTime)}
                     </>
                   )}
+                </div>
+                <Badge variant="secondary" className="bg-theme-blue/10 text-theme-blue ml-2">
+                  {blog.category}
+                </Badge>
+                <div className="flex items-center text-muted-foreground text-sm ml-2">
+                  <Eye className="w-4 h-4 mr-1" />
+                  {blog.views} 次阅读
                 </div>
               </div>
               <div className="flex items-center space-x-2">

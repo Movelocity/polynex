@@ -94,7 +94,7 @@ export function HeadBanner({
             
             {isAuthenticated && (
               <>
-                <Link 
+                {/* <Link 
                   to="/write" 
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
                     isActivePath('/write') 
@@ -104,7 +104,7 @@ export function HeadBanner({
                 >
                   <PenTool className="w-4 h-4" />
                   <span>写文章</span>
-                </Link>
+                </Link> */}
                 
                 <Link 
                   to="/dashboard" 
