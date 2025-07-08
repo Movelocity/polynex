@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/x-ui/button';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
 import { useAgents } from '@/hooks/useAgents';
-import { Conversation } from '@/types';
+import { Conversation, AgentSummary, AgentDetail, AvatarConfig } from '@/types';
 import { ChatSearchDialog } from './ChatSearchDialog';
 import { 
   MessageCircle, 
@@ -10,9 +10,13 @@ import {
   MessageSquare,
   ChevronRight,
   Plus,
-  Search
+  Search,
+  Users,
+  History
 } from 'lucide-react';
-import cn from 'classnames';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/x-ui/tabs"
+import { fileService } from '@/services';
+import { cn } from '@/lib/utils';
 
 interface ChatHistoryPanelProps {
   conversations: Conversation[];
@@ -21,7 +25,31 @@ interface ChatHistoryPanelProps {
   onConversationDelete?: (conversationId: string) => void;
   onNewConversation?: () => void;
   className?: string;
+  // For agent switching
+  availableAgents: AgentSummary[];
+  selectedAgent: AgentDetail | null;
+  onAgentSwitch: (agentId: string) => void;
+  isLoadingAgents: boolean;
 }
+
+const AgentAvatarDisplay = ({ avatar }: { avatar: AvatarConfig }) => {
+  const displayLink = avatar?.variant === 'link' ? fileService.resolveFileUrl(avatar.link) : '';
+  if (avatar.variant === 'link' && displayLink) {
+    return <img src={displayLink} alt="avatar" className="w-8 h-8 rounded-full" />;
+  }
+  if (avatar.variant === 'emoji' && avatar.emoji) {
+    return (
+      <div 
+        className="w-8 h-8 rounded-full flex items-center justify-center text-xl"
+        style={{ backgroundColor: avatar.bg_color || '#ccc' }}
+      >
+        {avatar.emoji}
+      </div>
+    );
+  }
+  // Fallback
+  return <div className="w-8 h-8 rounded-full bg-gray-300" />;
+};
 
 export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
   conversations,
@@ -29,7 +57,11 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
   onConversationSelect,
   onConversationDelete,
   onNewConversation,
-  className
+  className,
+  availableAgents,
+  selectedAgent,
+  onAgentSwitch,
+  isLoadingAgents,
 }) => {
   const { agents } = useAgents();
   // const [loading, setLoading] = useState(true);
@@ -74,120 +106,167 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
     return time.toLocaleDateString();
   };
 
+  const [activeTab, setActiveTab] = useState('history');
+
   return (
     <div className={cn("flex flex-col h-full bg-background border-r border-border", className)}>
-      {/* 头部 */}
-      <div className="flex-shrink-0 p-4 pb-3 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline space-x-2">
-            <span className="text-lg font-semibold text-foreground">对话历史</span>
-            <span className="text-xs text-muted-foreground">
-              共 {conversations.length} 个对话
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {/* 搜索按钮 */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSearchDialogOpen(true)}
-              className="h-8 w-8 p-0"
-              title="搜索对话历史"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-
-            {/* 新建对话按钮 */}
-            {onNewConversation && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onNewConversation}
-                className="h-8 w-8 p-0"
-                title="新建对话"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+      <Tabs className="flex flex-col h-full" value={activeTab} onValueChange={setActiveTab}>
+        <div className="p-2 pb-0">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2"/>
+              历史
+            </TabsTrigger>
+            <TabsTrigger value="agents">
+              <Users className="h-4 w-4 mr-2"/>
+              助手
+            </TabsTrigger>
+          </TabsList>
         </div>
-        
-      </div>
-
-      {/* 对话列表 */}
-      <ScrollArea className="flex-1">
-        <div className="p-2">
-          {conversations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">暂无对话历史</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {conversations.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  className={cn(
-                    "group relative rounded-lg p-3 cursor-pointer hover:bg-muted/50",
-                    currentConversationId === conversation.id ? "bg-theme-blue/10 border border-theme-blue/30" : "hover:bg-muted"
-                  )}
-                  onClick={() => onConversationSelect?.(conversation.id)}
-                >
-                  {/* 主要内容 */}
-                  <div className="flex items-start space-x-3">
-
-                    {/* 内容 */}
-                    <div className="flex-1 min-w-0">
-                      {/* 标题 */}
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-foreground truncate pr-2 max-w-[240px]" title={conversation.title || '未命名对话'}>
-                          {conversation.title || '未命名对话'}
-                        </span>
-                        {currentConversationId === conversation.id && (
-                          <ChevronRight className="h-3 w-3 text-theme-blue flex-shrink-0" />
-                        )}
+        <TabsContent value="agents" className="flex-grow min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-2">
+              {isLoadingAgents ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm">正在加载助手...</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {availableAgents.map((agent) => (
+                    <div
+                      key={agent.id}
+                      className={cn(
+                        "group relative rounded-lg p-3 cursor-pointer hover:bg-muted/50 flex items-center space-x-3",
+                        selectedAgent?.id === agent.id ? "bg-theme-blue/10 border border-theme-blue/30" : "hover:bg-muted"
+                      )}
+                      onClick={() => onAgentSwitch(agent.id)}
+                    >
+                      <AgentAvatarDisplay avatar={agent.avatar} />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-foreground">{agent.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{agent.description}</div>
                       </div>
+                      {selectedAgent?.id === agent.id && (
+                        <ChevronRight className="h-3 w-3 text-theme-blue flex-shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="history" className="flex-grow flex flex-col min-h-0">
+          {/* 头部 */}
+          <div className="flex-shrink-0 p-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-baseline space-x-2">
+                <span className="text-sm text-muted-foreground">
+                  共 {conversations.length} 个对话
+                </span>
+              </div>
 
-                      {/* Agent 和消息数量 */}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                        <span className="flex items-center space-x-2">
-                          <span className="truncate">
-                            {getAgentName(conversation.agent_id)}
-                          </span>
-                          <span className="flex items-center space-x-1 flex-shrink-0">
-                            <MessageSquare className="h-3 w-3" />
-                            <span>{conversation.message_count || 0}</span>
-                          </span>
-                        </span>
-                        {/* 时间 */}
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          {/* <Clock className="h-3 w-3 mr-1" /> */}
-                          <span>{formatTime(conversation.update_time)}</span>
+              <div className="flex items-center space-x-2">
+                {/* 搜索按钮 */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchDialogOpen(true)}
+                  className="h-8 w-8 p-0"
+                  title="搜索对话历史"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+
+                {/* 新建对话按钮 */}
+                {onNewConversation && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onNewConversation}
+                    className="h-8 w-8 p-0"
+                    title="新建对话"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-2 pt-0">
+              {conversations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">暂无对话历史</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {conversations.map((conversation) => (
+                    <div
+                      key={conversation.id}
+                      className={cn(
+                        "group relative rounded-lg p-3 cursor-pointer hover:bg-muted/50",
+                        currentConversationId === conversation.id ? "bg-theme-blue/10 border border-theme-blue/30" : "hover:bg-muted"
+                      )}
+                      onClick={() => onConversationSelect?.(conversation.id)}
+                    >
+                      {/* 主要内容 */}
+                      <div className="flex items-start space-x-3">
+
+                        {/* 内容 */}
+                        <div className="flex-1 min-w-0">
+                          {/* 标题 */}
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-foreground truncate pr-2 max-w-[240px]" title={conversation.title || '未命名对话'}>
+                              {conversation.title || '未命名对话'}
+                            </span>
+                            {currentConversationId === conversation.id && (
+                              <ChevronRight className="h-3 w-3 text-theme-blue flex-shrink-0" />
+                            )}
+                          </div>
+
+                          {/* Agent 和消息数量 */}
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                            <span className="flex items-center space-x-2">
+                              <span className="truncate">
+                                {getAgentName(conversation.agent_id)}
+                              </span>
+                              <span className="flex items-center space-x-1 flex-shrink-0">
+                                <MessageSquare className="h-3 w-3" />
+                                <span>{conversation.message_count || 0}</span>
+                              </span>
+                            </span>
+                            {/* 时间 */}
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              {/* <Clock className="h-3 w-3 mr-1" /> */}
+                              <span>{formatTime(conversation.update_time)}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
+
+                      {/* 删除按钮 */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onConversationDelete?.(conversation.id);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
-                  </div>
-
-                  {/* 删除按钮 */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onConversationDelete?.(conversation.id);
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
-      </ScrollArea>
-
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
+      
       {/* 搜索对话框 */}
       <ChatSearchDialog
         open={searchDialogOpen}

@@ -12,9 +12,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 import { 
   Bot, 
-  ArrowDown
+  ArrowDown,
+  PanelLeftOpen
 } from 'lucide-react';
-import { ConversationHeader } from '@/components/chat/ConversationHeader';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatInput, SuggestedQuestions } from '@/components/chat/ChatInput';
 
@@ -80,6 +80,9 @@ export function Conversation() {
   // Agent切换处理函数
   const handleAgentSwitch = async (newAgentId: string) => {
     if (newAgentId === selectedAgent?.id) {
+      if (isMobile) {
+        setIsSidebarOpen(false);
+      }
       return; // 如果选择的是当前Agent，不做任何操作
     }
 
@@ -89,6 +92,10 @@ export function Conversation() {
       
       // 重置对话状态
       handleNewConversation();
+
+      if (isMobile) {
+        setIsSidebarOpen(false);
+      }
     } catch (error) {
       console.error('切换Agent失败:', error);
     }
@@ -147,8 +154,17 @@ export function Conversation() {
     loadConversations();
   }, [user]);
 
+  // 默认打开侧边栏
+  useEffect(() => {
+    if (!isMobile) {
+      setIsSidebarOpen(true);
+    } else {
+      setIsSidebarOpen(false);
+    }
+  }, [isMobile, setIsSidebarOpen]);
+
   return (
-    <div className="flex h-[calc(100vh-65px)] relative">
+    <div className="flex h-[calc(100vh-65px)] relative bg-muted/20">
       {/* 移动端背景遮罩 */}
       {isMobile && isSidebarOpen && (
         <div 
@@ -158,64 +174,48 @@ export function Conversation() {
       )}
 
       {/* 侧边栏 */}
-      {(isSidebarOpen || isMobile) && (
-        <div className={`
-          ${isMobile 
-            ? 'fixed top-[65px] left-0 bottom-0 z-50 w-[280px] sm:w-[320px] transform transition-transform duration-300 ease-in-out' 
-            : 'w-80 flex-shrink-0 relative'
-          }
-          ${isMobile && !isSidebarOpen ? '-translate-x-full' : 'translate-x-0'}
-          ${!isMobile && !isSidebarOpen ? 'hidden' : ''}
-        `}>
-          <ChatHistoryPanel
-            conversations={conversations}
-            onConversationDelete={deleteConversation}
-            currentConversationId={conversationId}
-            onConversationSelect={handleMobileConversationSelect}
-            onNewConversation={handleMobileNewConversation}
-            className={isMobile ? 'shadow-lg' : ''}
-          />
-        </div>
-      )}
+      <div className={`
+        ${isMobile 
+          ? 'fixed top-0 left-0 bottom-0 z-50 w-[280px] sm:w-[320px] transform transition-transform duration-300 ease-in-out' 
+          : 'w-80 flex-shrink-0 relative'
+        }
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${!isMobile ? 'block' : ''}
+      `}>
+        <ChatHistoryPanel
+          conversations={conversations}
+          onConversationDelete={deleteConversation}
+          currentConversationId={conversationId}
+          onConversationSelect={handleMobileConversationSelect}
+          onNewConversation={handleMobileNewConversation}
+          className={isMobile ? 'h-full shadow-lg' : 'h-full'}
+          // Agent props
+          availableAgents={agents}
+          selectedAgent={selectedAgent}
+          onAgentSwitch={handleAgentSwitch}
+          isLoadingAgents={isLoadingAgents}
+        />
+      </div>
 
       {/* 主要内容区域 */}
       <div className="flex-1 flex flex-col relative">
-        {/* 头部 */}
-        <div className="flex-shrink-0">
-          <div className="flex items-center">
-            <div className="flex-1">
-              <ConversationHeader 
-                isSidebarOpen={isSidebarOpen}
-                setIsSidebarOpen={setIsSidebarOpen}
-                selectedAgent={selectedAgent}
-                onBack={() => navigate('/chat/agents')}
-                availableAgents={agents}
-                onAgentSwitch={handleAgentSwitch}
-                isLoadingAgents={isLoadingAgents}
-              />
-            </div>
-          </div>
-        </div>
-
         {/* 对话区域 */}
         <ScrollArea className="flex-1">
           <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-            {/* 回到底部按钮 */}
-            {/* {!isAtBottom && (
-              <div className="absolute bottom-20 right-4 z-10">
-                <Button
-                  onClick={scrollToBottom}
-                  size="icon"
-                  className="rounded-full shadow-lg"
-                  title="回到底部"
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-              </div>
-            )} */}
+            {/* 移动端汉堡菜单 */}
+            {isMobile && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="fixed top-[70px] left-2 z-50"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <PanelLeftOpen className="h-5 w-5" />
+              </Button>
+            )}
             
             {/* 消息列表 */}
-            <div className="h-full py-16">
+            <div className="h-full py-8">
               <div className="">
                 {messages.length === 0 && selectedAgent && !selectedAgent.app_preset?.greetings && (
                   <div className="text-center text-muted-foreground py-16">
