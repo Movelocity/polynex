@@ -93,16 +93,17 @@ async def get_file_list(
 async def get_thumbnail(
     file_id: str,
     db: Session = Depends(get_db),
-    file_service = Depends(get_file_service_singleton)
+    file_service: FileService = Depends(get_file_service_singleton)
 ):
-    """获取文件缩略图"""
+    """获取文件缩略图. 如果缩略图不存在，会尝试从原图生成。"""
     # 从file_id中提取unique_id (去除.jpg后缀)
     unique_id = file_id.replace('.jpg', '')
-    thumbnail_path = file_service.get_thumbnail_path(unique_id, '.jpg')
-    
-    if not thumbnail_path.exists():
-        raise HTTPException(status_code=404, detail="缩略图不存在")
-    
+
+    thumbnail_path = file_service.get_or_create_thumbnail(db, unique_id)
+
+    if not thumbnail_path or not thumbnail_path.exists():
+        raise HTTPException(status_code=404, detail="缩略图不存在或无法生成")
+
     return FileResponse(
         path=thumbnail_path,
         media_type="image/jpeg"

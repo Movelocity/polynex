@@ -65,7 +65,7 @@ class FileService:
             # 主目录下的文件
             return self.UPLOAD_DIR / f"{unique_id}{extension}"
     
-    def get_thumbnail_path(self, unique_id: str, extension: str) -> Path:
+    def get_thumbnail_path(self, unique_id: str) -> Path:
         """获取缩略图路径"""
         return self.THUMBNAIL_DIR / f"{unique_id}.jpg"
     
@@ -118,7 +118,7 @@ class FileService:
     async def create_thumbnail_if_needed(self, file_path: Path, unique_id: str, extension: str) -> Optional[bool]:
         """为图片创建缩略图（如果是图片的话）"""
         if extension.lower() in self.ALLOWED_IMAGE_EXTENSIONS:
-            thumbnail_path = self.get_thumbnail_path(unique_id, extension)
+            thumbnail_path = self.get_thumbnail_path(unique_id)
             
             # 如果缩略图不存在，则生成
             if not thumbnail_path.exists():
@@ -127,6 +127,39 @@ class FileService:
                     return True
         
         return None
+    
+    def get_or_create_thumbnail(self, db: Session, unique_id: str) -> Optional[Path]:
+        """获取缩略图路径，如果不存在则尝试创建"""
+        thumbnail_path = self.get_thumbnail_path(unique_id)
+
+        if thumbnail_path.exists():
+            return thumbnail_path
+
+        # 缩略图不存在，尝试从原文件生成
+        file_record = self.get_file_by_id(db, unique_id)
+        if not file_record:
+            return None  # 文件记录不存在，无法生成
+
+        # 检查是否为图片类型
+        if file_record["extension"].lower() not in self.ALLOWED_IMAGE_EXTENSIONS:
+            return None  # 非图片文件，不生成缩略图
+
+        # 获取原文件路径
+        original_file_path = self.get_file_path(
+            unique_id, file_record["extension"], file_record.get("uploader_id")
+        )
+
+        if not original_file_path.exists():
+            return None  # 原文件不存在，无法生成
+
+        # 生成缩略图
+        success = self.generate_thumbnail(original_file_path, thumbnail_path)
+
+        # 检查是否生成成功
+        if success and thumbnail_path.exists():
+            return thumbnail_path
+        else:
+            return None
     
     def check_file_permission(self, file_record: Dict[str, Any], current_user_id: str, user_role: str) -> bool:
         """检查文件权限（删除权限）"""
@@ -251,7 +284,7 @@ class FileService:
         
         # 删除缩略图
         if file_record['extension'].lower() in self.ALLOWED_IMAGE_EXTENSIONS:
-            thumbnail_path = self.get_thumbnail_path(file_id, file_record['extension'])
+            thumbnail_path = self.get_thumbnail_path(file_id)
             if thumbnail_path.exists():
                 thumbnail_path.unlink()
         
