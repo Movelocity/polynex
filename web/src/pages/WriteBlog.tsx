@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TextareaAutosize from 'react-textarea-autosize';
 import { MarkdownPreview } from '@/components/common/MarkdownPreview';
@@ -154,7 +154,7 @@ export function WriteBlog() {
     }
   };
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     if (!formData.title.trim()) {
       setError('请输入文章标题');
       return false;
@@ -168,9 +168,9 @@ export function WriteBlog() {
       return false;
     }
     return true;
-  };
+  }, [formData.title, formData.content, formData.category]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!user) {
       setError('请先登录');
       return;
@@ -254,7 +254,26 @@ export function WriteBlog() {
     } finally {
       setSaveLoading(false);
     }
-  };
+  }, [user, formData, isEdit, id, navigate, validateForm]);
+
+  // 全局快捷键保存
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        if (saveLoading || publishLoading) {
+          return;
+        }
+        handleSave();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [saveLoading, publishLoading, handleSave]);
 
   const handleTogglePublish = async () => {
     if (!user) {
@@ -320,126 +339,52 @@ export function WriteBlog() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Editor */}
-        <div className="col-span-1 lg:col-span-3">
-          <Card className="">
-            <CardHeader>
-              <input
-                id="title"
-                placeholder="请输入标题..."
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                className="text-3xl font-bold outline-none bg-secondary"
-              />
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <div className="flex justify-between">
-                <TabsList>
-                  <TabsTrigger value="write" className="flex items-center">
-                    <FileText className="w-4 h-4 mr-2" />
-                    编辑
-                  </TabsTrigger>
-                  <TabsTrigger value="preview" className="flex items-center">
-                    <Eye className="w-4 h-4 mr-2" />
-                    预览
-                  </TabsTrigger>
-                </TabsList>
-                
-                </div>
-                <TabsContent value="write">
-                  <div className="relative min-h-[600px] pb-4">
-                    <TextareaAutosize
-                      id="content"
-                      placeholder="开始编写您的文章... 支持 Markdown 语法"
-                      value={formData.content}
-                      onChange={(e) => handleInputChange('content', e.target.value)}
-                      className="w-full p-2 rounded-lg resize-none outline-none bg-secondary"
-                      minRows={20}
-                    />
-                    <div className="text-xs text-muted-foreground absolute bottom-0">
-                      支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="preview" className="mt-4 p-4 min-h-[600px]">
-                  <MarkdownPreview content={formData.content} />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Sidebar */}
-        <div className="col-span-1 space-y-6 ">
-          {/* Tags */}
+        <div>
           <Card className="sticky top-20">
             <CardHeader>
               <CardTitle> 文章设置 </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex gap-2 mt-0 m-2">
+            <CardContent className="space-y-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button 
-                  variant="outline" 
+                  variant="pretty" 
                   onClick={handleSave}
                   disabled={saveLoading || publishLoading}
                 >
-                  {saveLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />正在保存
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />保存
-                    </>
-                  )}
+                  <Save className="w-4 h-4 mr-2" />保存
                 </Button>
+
                 {isEdit && (
                   <Button 
                     onClick={handleTogglePublish}
                     disabled={publishLoading || saveLoading}
-                    variant={formData.status === 'published' ? 'outline' : 'pretty'}
+                    variant='outline'
                   >
-                    {publishLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />处理中
-                      </>
-                    ) : formData.status === 'published' ? (
+                    {formData.status === 'published' ? (
                       <>
                         <Lock className="w-4 h-4 mr-2" />设为草稿
                       </>
                     ) : (
                       <>
-                        <Globe className="w-4 h-4 mr-2" />发布文章
+                        <Globe className="w-4 h-4 mr-2" />发布
                       </>
                     )}
                   </Button>
                 )}
+                
               </div>
               <div className="space-y-3">
                 <div>
                   <Label htmlFor="category">选择分类</Label>
-                  {/* <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="选择文章分类" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select> */}
                   <Select defaultValue={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择文章分类" />
@@ -496,9 +441,56 @@ export function WriteBlog() {
                   </div>
                 )}
               </div>
+              <Button className="" onClick={() => {
+                if (activeTab === 'write') {
+                  setActiveTab('preview');
+                } else {
+                  setActiveTab('write');
+                }
+              }}>
+                {activeTab === 'write' ? '预览' : '编辑'}
+              </Button>
             </CardContent>
           </Card>
         </div>
+
+        {/* Editor */}
+        <div className="col-span-1 lg:col-span-4">
+          <Card className="">
+            <CardHeader>
+              <input
+                id="title"
+                placeholder="Title..."
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                className="text-3xl font-bold outline-none bg-secondary"
+              />
+            </CardHeader>
+            <CardContent className="border-t border-border p-4">
+              {activeTab === 'write' && (
+                <div className="relative min-h-[600px] pb-4">
+                  <TextareaAutosize
+                    id="content"
+                    placeholder="开始编写您的文章..."
+                    value={formData.content}
+                    onChange={(e) => handleInputChange('content', e.target.value)}
+                    className="w-full p-2 rounded-lg resize-none outline-none bg-secondary"
+                    minRows={20}
+                  />
+                  <div className="text-xs text-muted-foreground absolute bottom-0">
+                    支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等
+                  </div>
+                </div>
+              )}
+              {activeTab === 'preview' && (
+                <div className="min-h-[600px] px-2">
+                  <MarkdownPreview content={formData.content} />
+                </div>  
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        
       </div>
     </div>
   );
