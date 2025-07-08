@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { blogService, fileService } from '@/services';
 import { Blog } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/x-ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
-import { BlogCard } from '@/components/common/blog/BlogCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Input } from '@/components/x-ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/x-ui/alert-dialog';
@@ -18,6 +17,8 @@ import {
   User,
   File,
 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/x-ui/table';
+import { Badge } from '@/components/x-ui/badge';
 
 export function Dashboard() {
   // 设置页面标题
@@ -33,7 +34,7 @@ export function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const blogsPerPage = 6;
+  const blogsPerPage = 9;
 
   // 防抖搜索
   useEffect(() => {
@@ -187,28 +188,55 @@ export function Dashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center space-x-4 mb-4">
-        {user.avatar && (
-          <img 
-            src={fileService.resolveFileUrl(user.avatar)} 
-            alt={user.username}
-            className="w-16 h-16 rounded-full object-cover cursor-pointer"
-            onError={(e) => {
-              // 如果头像加载失败，隐藏图片
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        )}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">欢迎回来，{user.username}</h1>
-          <p className="text-muted-foreground">管理您的博客内容</p>
-        </div>
-      </div>
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* side */}
+        <div className="col-span-1 space-y-4">
+          <div className="flex items-center justify-around">
+            {user.avatar && (
+              <img 
+                src={fileService.resolveFileUrl(user.avatar)} 
+                alt={user.username}
+                className="w-12 h-12 rounded-full object-cover cursor-pointer"
+                onError={(e) => {
+                  // 如果头像加载失败，隐藏图片
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            <span className="text-xl font-bold text-foreground">欢迎回来，{user.username}</span>
+          </div>
+          {/* Admin Section - Only visible to admins */}
+          {user.role === 'admin' && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    onClick={() => navigate('/settings')}
+                    className="justify-start"
+                    variant="outline"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    账户设置
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/file-manage')}
+                    className="justify-start"
+                    variant="outline"
+                  >
+                    <File className="w-4 h-4 mr-2" />
+                    文件管理
+                  </Button>
+                </div>
+                
+              </CardContent>
+            </Card>
+          )}
+
+        </div>
         {/* Blog Management */}
-        <Card className="col-span-1 lg:col-span-3">
+        <Card className="col-span-1 lg:col-span-4">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -251,23 +279,61 @@ export function Dashboard() {
               <TabsContent value={activeTab} className="mt-6">
                 {currentBlogs.length > 0 ? (
                   <>
-                    <div className="space-y-4 mb-8">
-                      {currentBlogs.map((blog) => (
-                        <BlogCard
-                          key={blog.id}
-                          blog={blog}
-                          layout="list"
-                          showActions={true}
-                          showStatus={true}
-                          showUpdateTime={true}
-                          summaryLines={2}
-                          maxTags={5}
-                          onEdit={handleEdit}
-                          onToggleStatus={handleToggleStatus}
-                          onDelete={(blogId) => setDeleteConfirmBlog(blog)}
-                        />
-                      ))}
-                    </div>
+                    <Card className="mb-8">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="px-4">
+                            <TableHead>标题</TableHead>
+                            <TableHead>分类</TableHead>
+                            <TableHead>状态</TableHead>
+                            <TableHead>标签</TableHead>
+                            <TableHead className="text-right">阅读量</TableHead>
+                            <TableHead>更新时间</TableHead>
+                            <TableHead>操作</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {currentBlogs.map((blog) => (
+                            <TableRow key={blog.id} className="px-4">
+                              <TableCell className="font-medium">
+                                <Link to={`/blog/${blog.id}`} className="hover:underline">
+                                  {blog.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell>{blog.category}</TableCell>
+                              <TableCell>
+                                <Badge variant={blog.status === 'published' ? 'default' : 'secondary'}>
+                                  {blog.status === 'published' ? '已发布' : '草稿'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
+                                  {blog.tags.slice(0, 3).map((tag) => (
+                                    <Badge key={tag} variant="outline">{tag}</Badge>
+                                  ))}
+                                  {blog.tags.length > 3 && <Badge variant="outline">...</Badge>}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">{blog.views}</TableCell>
+                              <TableCell>{new Date(blog.updateTime).toLocaleDateString()}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button onClick={() => handleEdit(blog.id)} variant="outline" size="sm">编辑</Button>
+                                  <Button 
+                                    onClick={() => handleToggleStatus(blog.id, blog.status === 'published' ? 'draft' : 'published')} 
+                                    variant="outline" 
+                                    size="sm"
+                                  >
+                                    {blog.status === 'published' ? '下架' : '发布'}
+                                  </Button>
+                                  <Button onClick={() => setDeleteConfirmBlog(blog)} variant="destructive" size="sm">删除</Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </Card>
 
                     {/* 分页 */}
                     {totalPages > 1 && (
@@ -382,69 +448,7 @@ export function Dashboard() {
             </Tabs>
           </CardContent>
         </Card>
-        {/* side */}
-        <div className="col-span-1 space-y-4">
-          {/* Admin Section - Only visible to admins */}
-          {user.role === 'admin' && (
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex flex-col gap-2">
-                  <Button 
-                    onClick={() => navigate('/settings')}
-                    className="justify-start"
-                    variant="outline"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    账户设置
-                  </Button>
-                  <Button 
-                    onClick={() => navigate('/file-manage')}
-                    className="justify-start"
-                    variant="outline"
-                  >
-                    <File className="w-4 h-4 mr-2" />
-                    文件管理
-                  </Button>
-                </div>
-                
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center font-bold text-xl">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                站点统计
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-muted-foreground">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">文章总数</span>
-                <span className="font-semibold text-blue-600">{stats.total}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">已发布</span>
-                <span className="font-semibold text-green-600">{stats.published}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">草稿</span>
-                <span className="font-semibold text-green-600">{stats.draft}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">总阅读量</span>
-                <span className="font-semibold text-purple-600">{stats.totalViews}</span>
-              </div>
-              {debouncedSearchQuery.trim() && (
-                <div className="flex items-center justify-between border-t border-border pt-3">
-                  <span className="text-sm">搜索结果</span>
-                  <span className="font-semibold text-orange-600">{filteredBlogs.length}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        
       </div>
     </div>
   );

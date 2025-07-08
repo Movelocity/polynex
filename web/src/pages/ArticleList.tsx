@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
 import { Button } from '@/components/x-ui/button';
 import { Card, CardContent } from '@/components/x-ui/card';
-import { BlogCard } from '@/components/common/blog/BlogCard';
 import { Input } from '@/components/x-ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/x-ui/table';
+import { Badge } from '@/components/x-ui/badge';
 import { 
   Search,
   Filter,
@@ -122,10 +124,7 @@ export function ArticleList() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 mb-4">所有文章</h1>
-        <p className="text-slate-600">
-          共有 {filteredAndSortedBlogs.length} 篇文章
-        </p>
+        <h1 className="text-3xl font-bold text-foreground mb-4">所有文章</h1>
       </div>
 
       {/* Filters */}
@@ -182,21 +181,50 @@ export function ArticleList() {
       {/* Article List */}
       {currentBlogs.length > 0 ? (
         <>
-          <div className="space-y-6 mb-8">
-            {currentBlogs.map((blog) => (
-              <BlogCard 
-                key={blog.id}
-                blog={blog}
-                layout="list"
-                summaryLines={2}
-                maxTags={3}
-              />
-            ))}
-          </div>
+          <Card className="p-4 pt-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>标题</TableHead>
+                  <TableHead>分类</TableHead>
+                  <TableHead>标签</TableHead>
+                  <TableHead className="text-right">阅读量</TableHead>
+                  <TableHead>发布时间</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentBlogs.map((blog) => (
+                  <TableRow key={blog.id}>
+                    <TableCell className="font-medium">
+                      <Link to={`/blog/${blog.id}`} className="hover:underline">
+                        {blog.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{blog.category}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        {blog.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary">{tag}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">{blog.views}</TableCell>
+                    <TableCell>{new Date(blog.createTime).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/blog/${blog.id}`}>查看</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center space-x-2">
+            <div className="flex justify-center space-x-2 mt-8">
               <Button
                 variant="outline"
                 disabled={currentPage === 1}
