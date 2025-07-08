@@ -16,23 +16,35 @@ export function TOC({ content }: TOCProps) {
   const [activeId, setActiveId] = useState<string>('');
   const [tocItems, setTocItems] = useState<TOCItem[]>([]);
 
-  // 从Markdown内容中提取标题
+  // 从Markdown内容中提取标题，并为重复标题生成唯一ID
   const extractHeadings = useMemo(() => {
     const headingRegex = /^(#{1,6})\s+(.+)$/gm;
     const items: TOCItem[] = [];
+    const existingIds = new Set<string>();
     let match;
 
     while ((match = headingRegex.exec(content)) !== null) {
       const level = match[1].length;
       const text = match[2].trim();
-      const id = text
+      let baseId = text
         .toLowerCase()
         .replace(/[^\w\s\u4e00-\u9fff]/g, '') // 保留中文字符
         .replace(/\s+/g, '-')
         .replace(/^-+|-+$/g, ''); // 去除首尾的短横线
 
+      baseId = baseId || `heading-${items.length}`;
+
+      let id = baseId;
+      let counter = 1;
+      while (existingIds.has(id)) {
+        id = `${baseId}-${counter}`;
+        counter++;
+      }
+      
+      existingIds.add(id);
+
       items.push({
-        id: id || `heading-${items.length}`,
+        id,
         text,
         level,
       });
@@ -130,7 +142,7 @@ export function TOC({ content }: TOCProps) {
             key={item.id}
             onClick={() => handleItemClick(item.id)}
             className={`
-              w-full text-left text-sm transition-colors duration-200 py-1.5 px-2 rounded-md
+              w-full text-left text-sm transition-colors duration-200 py-0.5 px-2 rounded-md
               hover:bg-theme-blue/5 hover:text-theme-blue 
               ${isActive 
                 ? 'text-theme-blue bg-theme-blue/5 border-l-2 border-theme-blue' 

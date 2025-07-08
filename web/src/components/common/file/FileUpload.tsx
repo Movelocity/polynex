@@ -67,12 +67,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setProgress(100);
 
       // 添加到已上传文件列表
-      setUploadedFiles(prev => [response.file, ...prev]);
+      // setUploadedFiles(prev => [response.file, ...prev]);
       
       // 调用回调函数
-      if (onUploadComplete) {
-        onUploadComplete(response.file);
-      }
+      // if (onUploadComplete) {
+      //   onUploadComplete(response);
+      // }
 
       // 重置文件输入
       if (fileInputRef.current) {

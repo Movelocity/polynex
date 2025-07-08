@@ -178,9 +178,6 @@ export function BlogManagement({ user }: BlogManagementProps) {
               <BarChart3 className="w-6 h-6 mr-2" />
               我的文章
             </CardTitle>
-            <CardDescription>
-              管理您发布的所有文章
-            </CardDescription>
           </div>
 
           {/* 搜索框 */}

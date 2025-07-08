@@ -1,4 +1,13 @@
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/x-ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/x-ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { FileUploadArea } from '@/components/common/file/FileUploadArea';
 import { FileList } from '@/components/common/FileList';
@@ -21,6 +30,7 @@ export function FileManagement() {
   // File upload state
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   // 加载用户文件列表
   const loadUserFiles = async (page: number = 1, pageSize: number = 10) => {
@@ -127,9 +137,8 @@ export function FileManagement() {
       try {
         const result = await fileService.uploadFile(file);
         
-        if (result.file) {
+        if (result.uniqueId) {
           // 添加到文件列表
-          setUserFiles(prev => [result.file, ...prev]);
           uploadedCount++;
         }
       } catch (err: any) {
@@ -145,6 +154,7 @@ export function FileManagement() {
     
     setUploadingFile(false);
     setUploadProgress(0);
+    setIsUploadDialogOpen(false);
     
     // 显示上传结果
     if (uploadedCount > 0) {
@@ -169,17 +179,31 @@ export function FileManagement() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>文件管理</CardTitle>
-        <CardDescription>上传、查看、下载和删除您的文件</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>文件管理</CardTitle>
+          <CardDescription>上传、查看、下载和删除您的文件</CardDescription>
+        </div>
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>上传文件</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>上传文件</DialogTitle>
+              <DialogDescription>
+                选择或拖拽文件进行上传。
+              </DialogDescription>
+            </DialogHeader>
+            <FileUploadArea
+              onFileUpload={handleFileUpload}
+              uploading={uploadingFile}
+              uploadProgress={uploadProgress}
+            />
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent>
-        <FileUploadArea
-          onFileUpload={handleFileUpload}
-          uploading={uploadingFile}
-          uploadProgress={uploadProgress}
-        />
-
         <FileList
           files={userFiles}
           loading={loadingFiles}

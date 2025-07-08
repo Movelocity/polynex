@@ -257,11 +257,6 @@ export function FileList({
                   <p className="text-xs text-muted-foreground">
                     {formatFileSize(file.size)} • {new Date(file.upload_time).toLocaleString('zh-CN')}
                   </p>
-                  {file.original_name && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      ID: {file.unique_id}
-                    </p>
-                  )}
                 </div>
               </div>
               

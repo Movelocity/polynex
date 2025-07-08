@@ -30,8 +30,10 @@ export interface FileInfo {
  * 文件上传响应接口
  */
 export interface UploadResponse {
-  message: string;
-  file: FileInfo;
+  uniqueId: string;
+  originalName: string;
+  extension: string;
+  size: number;
 }
 
 /**
@@ -183,12 +185,14 @@ export class FileApiService {
         body: formData
       });
 
+      const data = await response.json();
+      console.log('服务器返回的文件信息:', data);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Upload failed' }));
-        throw new ApiError(response.status, errorData.message || 'Upload failed');
+        throw new ApiError(response.status, data.message || 'Upload failed');
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
