@@ -10,25 +10,25 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
 import { Slider } from '@/components/x-ui/slider';
 import { Switch } from '@/components/x-ui/switch';
+import { Badge } from '@/components/x-ui/badge';
 import { AgentAvatarEditor } from '@/components/chat/AgentAvatarEditor';
+import { PromptEditor, ExtendedAgentMessage } from '@/components/chat/PromptEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useAIProviders } from '@/hooks/useAIProviders';
-import { AgentCreate, AgentUpdate, AgentMessage, AppPreset, AvatarConfig } from '@/types';
+import { AgentCreate, AgentUpdate, AppPreset, AvatarConfig } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { 
   Save, 
   Settings,
   Settings2,
-  Palette, 
-  MessageSquare, 
-  Plus, 
-  Trash2, 
   Bot,
   ArrowLeft,
   Globe,
   Star,
-  Lightbulb
+  Lightbulb,
+  Plus, 
+  Trash2
 } from 'lucide-react';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
 
@@ -53,7 +53,7 @@ export function AgentEditor() {
     temperature: number;
     top_p: number;
     max_tokens: number;
-    preset_messages: AgentMessage[];
+    preset_messages: ExtendedAgentMessage[];
     is_public: boolean;
     is_default: boolean;
   }>({
@@ -75,17 +75,20 @@ export function AgentEditor() {
     top_p: 1.0,
     max_tokens: 2048,
     preset_messages: [
-      { role: 'system', content: '你是一个友好且有用的AI助手。请用中文回答问题，保持礼貌和专业。' }
+      { 
+        role: 'system', 
+        content: '你是一个友好且有用的AI助手。请用中文回答问题，保持礼貌和专业。',
+        template_enabled: false,
+        token_count: 24
+      }
     ],
     is_public: false,
     is_default: false
   });
 
   // 模态框状态
-  const [showModelConfig, setShowModelConfig] = useState(false);
   const [showAppConfig, setShowAppConfig] = useState(false);
   const [showAvatarConfig, setShowAvatarConfig] = useState(false);
-  // const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
   const generateAgentId = useCallback(() => {
     return `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -107,9 +110,13 @@ export function AgentEditor() {
           temperature: agent.temperature || 0.7,
           top_p: agent.top_p || 1.0,
           max_tokens: agent.max_tokens || 2048,
-          preset_messages: agent.preset_messages || [
+          preset_messages: (agent.preset_messages || [
             { role: 'system', content: '你是一个友好且有用的AI助手。' }
-          ],
+          ]).map(msg => ({
+            ...msg,
+            template_enabled: (msg as any).template_enabled || false,
+            token_count: (msg as any).token_count || 0
+          })),
           is_public: agent.is_public,
           is_default: agent.is_default
         });
@@ -240,28 +247,7 @@ export function AgentEditor() {
     }));
   };
 
-  const updatePresetMessage = (index: number, field: 'role' | 'content', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      preset_messages: prev.preset_messages.map((msg, i) => 
-        i === index ? { ...msg, [field]: value } : msg
-      )
-    }));
-  };
 
-  const addPresetMessage = () => {
-    setFormData(prev => ({
-      ...prev,
-      preset_messages: [...prev.preset_messages, { role: 'system', content: '' }]
-    }));
-  };
-
-  const removePresetMessage = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      preset_messages: prev.preset_messages.filter((_, i) => i !== index)
-    }));
-  };
 
   const addSuggestedQuestion = () => {
     const questions = formData.app_preset.suggested_questions || [];
@@ -305,7 +291,7 @@ export function AgentEditor() {
   const availableModels = selectedProvider?.models || [];
 
   return (
-    <div className="w-full h-screen flex flex-col bg-background">
+    <div className="w-full h-[calc(100vh-65px)] flex flex-col bg-background">
       {/* 顶部导航栏 */}
       <div className="pt-2 px-4 flex items-center justify-between text-foreground">
         <div className="flex items-center space-x-4">
@@ -314,21 +300,6 @@ export function AgentEditor() {
             返回
           </Button>
           <div className="flex items-center space-x-3">
-            <AgentAvatar
-              avatar={formData.avatar}
-              name={formData.app_preset.name || 'New Agent'}
-              variant="square"
-              size="md"
-              onClick={() => setShowAvatarConfig(true)}
-            />
-            <div className="flex flex-col">
-              <span className="font-semibold text-foreground">
-                {formData.app_preset.name || '未命名 Agent'}
-              </span>
-              <span className="text-muted-foreground">
-                {formData.app_preset.description || ''}
-              </span>
-            </div>
             {/* 应用配置 */}
             <Dialog open={showAppConfig} onOpenChange={setShowAppConfig}>
               <DialogTrigger asChild>
@@ -405,6 +376,22 @@ export function AgentEditor() {
                 </div>
               </DialogContent>
             </Dialog>
+            <AgentAvatar
+              avatar={formData.avatar}
+              name={formData.app_preset.name || 'New Agent'}
+              variant="square"
+              size="md"
+              onClick={() => setShowAvatarConfig(true)}
+            />
+            <div className="flex gap-4">
+              <span className="font-semibold text-foreground">
+                {formData.app_preset.name || '未命名 Agent'}
+              </span>
+              <span className="text-muted-foreground">
+                {formData.app_preset.description || ''}
+              </span>
+            </div>
+            
             {/* 头像配置 */}
             <Dialog open={showAvatarConfig} onOpenChange={setShowAvatarConfig}>
               <DialogContent className="sm:max-w-md text-foreground" aria-describedby="">
@@ -424,214 +411,103 @@ export function AgentEditor() {
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* <Dialog open={showModelConfig} onOpenChange={setShowModelConfig}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                模型配置
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md text-foreground">
-              <DialogHeader>
-                <DialogTitle>模型配置</DialogTitle>
-                <DialogDescription>
-                  配置AI模型和参数
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>供应商 *</Label>
-                  <Select
-                    value={formData.provider}
-                    onValueChange={(value) => {
-                      updateFormData('provider', value);
-                      // 重置模型选择
-                      const provider = activeProviders.find(p => p.name === value);
-                      if (provider && provider.models && provider.models.length > 0) {
-                        updateFormData('model', provider.default_model || provider.models[0]);
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择供应商" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeProviders.map(provider => (
-                        <SelectItem key={provider.id} value={provider.name}>
-                          {provider.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>模型 *</Label>
-                  <Select
-                    value={formData.model}
-                    onValueChange={(value) => updateFormData('model', value)}
-                    disabled={!formData.provider}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择模型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableModels.map(model => (
-                        <SelectItem key={model} value={model}>
-                          {model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>温度 (Temperature): {formData.temperature}</Label>
-                  <Slider
-                    value={[formData.temperature]}
-                    onValueChange={([value]) => updateFormData('temperature', value)}
-                    max={2}
-                    min={0}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    控制回答的创造性，值越高回答越有创造性
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Top P: {formData.top_p}</Label>
-                  <Slider
-                    value={[formData.top_p]}
-                    onValueChange={([value]) => updateFormData('top_p', value)}
-                    max={1}
-                    min={0}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    控制词汇选择的多样性
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>最大Token数: {formData.max_tokens}</Label>
-                  <Slider
-                    value={[formData.max_tokens]}
-                    onValueChange={([value]) => updateFormData('max_tokens', value)}
-                    max={8192}
-                    min={256}
-                    step={256}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    限制单次回答的最大长度
-                  </p>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog> */}
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <Settings className="h-4 w-4 mr-2" />
-                模型配置
+                {formData.model || '选择模型'}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[300px]" align="end">
-              <div className="p-2 space-y-4">
-                <div className="space-y-2">
-                  <Label>供应商 *</Label>
-                  <Select
-                    value={formData.provider}
-                    onValueChange={(value) => {
-                      updateFormData('provider', value);
-                      // 重置模型选择
-                      const provider = activeProviders.find(p => p.name === value);
-                      if (provider && provider.models && provider.models.length > 0) {
-                        updateFormData('model', provider.default_model || provider.models[0]);
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择供应商" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeProviders.map(provider => (
-                        <SelectItem key={provider.id} value={provider.name}>
-                          {provider.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <DropdownMenuContent className="w-[300px] space-y-4 p-4" align="end">
+              <div className="space-y-2">
+                <Label>供应商 *</Label>
+                <Select
+                  value={formData.provider}
+                  onValueChange={(value) => {
+                    updateFormData('provider', value);
+                    // 重置模型选择
+                    const provider = activeProviders.find(p => p.name === value);
+                    if (provider && provider.models && provider.models.length > 0) {
+                      updateFormData('model', provider.default_model || provider.models[0]);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择供应商" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeProviders.map(provider => (
+                      <SelectItem key={provider.id} value={provider.name}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>模型 *</Label>
-                  <Select
-                    value={formData.model}
-                    onValueChange={(value) => updateFormData('model', value)}
-                    disabled={!formData.provider}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择模型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableModels.map(model => (
-                        <SelectItem key={model} value={model}>
-                          {model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label>模型 *</Label>
+                <Select
+                  value={formData.model}
+                  onValueChange={(value) => updateFormData('model', value)}
+                  disabled={!formData.provider}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择模型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map(model => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>温度 (Temperature): {formData.temperature}</Label>
-                  <Slider
-                    value={[formData.temperature]}
-                    onValueChange={([value]) => updateFormData('temperature', value)}
-                    max={2}
-                    min={0}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    控制回答的创造性，值越高回答越有创造性
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label>温度 (Temperature): {formData.temperature}</Label>
+                <Slider
+                  value={[formData.temperature]}
+                  onValueChange={([value]) => updateFormData('temperature', value)}
+                  max={2}
+                  min={0}
+                  step={0.1}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  控制回答的创造性，值越高回答越有创造性
+                </p>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>Top P: {formData.top_p}</Label>
-                  <Slider
-                    value={[formData.top_p]}
-                    onValueChange={([value]) => updateFormData('top_p', value)}
-                    max={1}
-                    min={0}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    控制词汇选择的多样性
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label>Top P: {formData.top_p}</Label>
+                <Slider
+                  value={[formData.top_p]}
+                  onValueChange={([value]) => updateFormData('top_p', value)}
+                  max={1}
+                  min={0}
+                  step={0.1}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  控制词汇选择的多样性
+                </p>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>最大Token数: {formData.max_tokens}</Label>
-                  <Slider
-                    value={[formData.max_tokens]}
-                    onValueChange={([value]) => updateFormData('max_tokens', value)}
-                    max={8192}
-                    min={256}
-                    step={256}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    限制单次回答的最大长度
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label>最大Token数: {formData.max_tokens}</Label>
+                <Slider
+                  value={[formData.max_tokens]}
+                  onValueChange={([value]) => updateFormData('max_tokens', value)}
+                  max={8192}
+                  min={256}
+                  step={256}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  限制单次回答的最大长度
+                </p>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -649,123 +525,65 @@ export function AgentEditor() {
       </div>
 
       {/* 主要内容区域 */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* 右侧主编辑区域 */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex flex-col md:flex-row gap-4 max-w-screen-2xl mx-auto">
-            {/* 提示词编辑 */}
-            <Card className="w-full md:w-1/2">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  系统提示词
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {formData.preset_messages.map((message, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>消息 {index + 1}</Label>
-                      <div className="flex items-center space-x-2">
-                        <Select
-                          value={message.role}
-                          onValueChange={(value) => updatePresetMessage(index, 'role', value as any)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="system">System</SelectItem>
-                            <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="assistant">Assistant</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {formData.preset_messages.length > 1 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removePresetMessage(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <Textarea
-                      placeholder="输入提示词内容..."
-                      value={message.content}
-                      onChange={(e) => updatePresetMessage(index, 'content', e.target.value)}
-                      rows={4}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  onClick={addPresetMessage}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加消息
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* 交互配置 */}
-            <Card className="w-full md:w-1/2">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Bot className="h-5 w-5 mr-2" />
-                  交互配置
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>欢迎消息</Label>
-                  <Textarea
-                    placeholder="Agent的欢迎消息..."
-                    value={formData.app_preset.greetings || ''}
-                    onChange={(e) => updateAppPreset('greetings', e.target.value)}
-                    rows={2}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden gap-4 py-4 px-12">
+        {/* 左侧主编辑区域 - 提示词编辑 */}
+        <div className="w-full md:w-1/2">
+          <PromptEditor
+            messages={formData.preset_messages}
+            onMessagesChange={(messages) => updateFormData('preset_messages', messages)}
+            className="h-full  overflow-y-auto"
+          />
+        </div>
+        {/* 右侧 - 交互配置 */}
+        <Card className="w-full md:w-1/2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Bot className="h-5 w-5 mr-2" />
+              交互配置
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>欢迎消息</Label>
+              <Textarea
+                placeholder="Agent的欢迎消息..."
+                value={formData.app_preset.greetings || ''}
+                onChange={(e) => updateAppPreset('greetings', e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center">
+                <Lightbulb className="h-4 w-4 mr-2" />
+                建议问题
+              </Label>
+              {(formData.app_preset.suggested_questions || []).map((question, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <Input
+                    placeholder="输入建议问题..."
+                    value={question}
+                    onChange={(e) => updateSuggestedQuestion(index, e.target.value)}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="flex items-center">
-                    <Lightbulb className="h-4 w-4 mr-2" />
-                    建议问题
-                  </Label>
-                  {(formData.app_preset.suggested_questions || []).map((question, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <Input
-                        placeholder="输入建议问题..."
-                        value={question}
-                        onChange={(e) => updateSuggestedQuestion(index, e.target.value)}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeSuggestedQuestion(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
                   <Button
                     variant="outline"
-                    onClick={addSuggestedQuestion}
-                    className="w-full"
+                    size="sm"
+                    onClick={() => removeSuggestedQuestion(index)}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    添加建议问题
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-
-                
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              ))}
+              <Button
+                variant="outline"
+                onClick={addSuggestedQuestion}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                添加建议问题
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

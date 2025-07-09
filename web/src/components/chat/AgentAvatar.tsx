@@ -85,7 +85,7 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({
         )}
         onClick={onClick}
       >
-        <span className="text-white">{avatar.emoji}</span>
+        <span className="text-white text-xl">{avatar.emoji}</span>
       </div>
     );
   }

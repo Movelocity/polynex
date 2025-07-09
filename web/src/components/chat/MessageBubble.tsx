@@ -133,7 +133,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div className={cn(
             'rounded-lg px-3 py-2 overflow-hidden',
             message.role === 'user' 
-              ? 'bg-theme-blue text-white' 
+              ? 'bg-theme-blue dark:bg-theme-blue/60 text-foreground' 
               : 'bg-muted/50 text-foreground border border-border'
           )}>
             {message.role === 'assistant' && message.reasoning_content && (

@@ -76,7 +76,7 @@ export const MessageEditDialog: React.FC<MessageEditDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[1024px]">
         <DialogHeader>
           <DialogTitle>修改{message?.role === 'user' ? '用户' : 'AI助手'}的消息内容</DialogTitle>
         </DialogHeader>
@@ -88,11 +88,11 @@ export const MessageEditDialog: React.FC<MessageEditDialogProps> = ({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="输入消息内容..."
-              className="min-h-[250px] resize-none"
-              maxLength={12800}
+              className="min-h-[400px] resize-none"
+              maxLength={128000}
             />
             <div className="text-sm text-muted-foreground text-right absolute bottom-2 right-4">
-              {content.length}/12800
+              {content.length}/128000
             </div>
           </div>
         </div>

@@ -206,7 +206,29 @@ export function useConversation(): UseConversationReturn {
   // 复制消息内容
   const copyMessage = async (content: string, index: number) => {
     try {
-      await navigator.clipboard.writeText(content);
+      const textArea = document.createElement("textarea");
+      textArea.value = content;
+      // 使文本区域在屏幕外，防止干扰视图
+      textArea.style.position = 'fixed';
+      textArea.style.top = '-9999px';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      let success = false;
+      try {
+        success = document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+      }
+
+      document.body.removeChild(textArea);
+
+      if (!success) {
+        throw new Error('Unable to copy content to clipboard');
+      }
+      
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
       toast({

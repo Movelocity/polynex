@@ -24,18 +24,18 @@ const PRESET_EMOJIS = [
 
 // 预设背景色集合
 const PRESET_COLORS = [
-  { name: '蓝色', value: 'bg-blue-500', color: '#3b82f6' },
-  { name: '紫色', value: 'bg-purple-500', color: '#8b5cf6' },
-  { name: '粉色', value: 'bg-pink-500', color: '#ec4899' },
-  { name: '红色', value: 'bg-red-500', color: '#ef4444' },
-  { name: '橙色', value: 'bg-orange-500', color: '#f97316' },
-  { name: '黄色', value: 'bg-yellow-500', color: '#eab308' },
-  { name: '绿色', value: 'bg-green-500', color: '#22c55e' },
-  { name: '青色', value: 'bg-cyan-500', color: '#06b6d4' },
-  { name: '靛色', value: 'bg-indigo-500', color: '#6366f1' },
-  { name: '灰色', value: 'bg-gray-500', color: '#6b7280' },
-  { name: '石色', value: 'bg-slate-500', color: '#64748b' },
-  { name: '锌色', value: 'bg-zinc-500', color: '#71717a' }
+  { name: '蓝色', value: 'bg-blue-400', color: '#60a5fa' },
+  { name: '紫色', value: 'bg-purple-400', color: '#c084fc' },
+  { name: '粉色', value: 'bg-pink-400', color: '#f472b6' },
+  { name: '红色', value: 'bg-red-400', color: '#f87171' },
+  { name: '橙色', value: 'bg-orange-400', color: '#fb923c' },
+  { name: '黄色', value: 'bg-yellow-400', color: '#facc15' },
+  { name: '绿色', value: 'bg-green-400', color: '#4ade80' },
+  { name: '青色', value: 'bg-cyan-400', color: '#22d3ee' },
+  { name: '靛色', value: 'bg-indigo-400', color: '#818cf8' },
+  { name: '灰色', value: 'bg-gray-400', color: '#9ca3af' },
+  { name: '石色', value: 'bg-slate-400', color: '#94a3b8' },
+  { name: '锌色', value: 'bg-zinc-400', color: '#a1a1aa' }
 ];
 
 interface AgentAvatarEditorProps {
@@ -326,12 +326,12 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
             </span>
             
 
-            <div className="grid grid-cols-8 gap-2 mt-2 max-h-40 overflow-y-auto p-2 border rounded-lg">
+            <div className="grid grid-cols-8 gap-2 mt-2 max-h-40 overflow-y-auto">
               {PRESET_EMOJIS.map((emoji, index) => (
                 <button
                   key={index}
                   className={cn(
-                    "w-8 h-8 rounded hover:border-2 flex items-center justify-center text-lg",
+                    "w-8 h-8 rounded hover:border flex items-center justify-center text-lg",
                     previewAvatar.emoji === emoji ? "border-primary bg-primary/10" : "border-gray-200"
                   )}
                   onClick={() => updatePreview({ emoji })}
@@ -406,12 +406,6 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
                     "mx-auto h-12 w-12 mb-4 transition-colors",
                     isDragOver ? "text-primary" : "text-gray-400"
                   )} />
-                  <p className={cn(
-                    "text-sm mb-1 transition-colors",
-                    isDragOver ? "text-primary" : "text-gray-600"
-                  )}>
-                    点击上传图片或拖拽图片到此处
-                  </p>
                 </div>
               )}
               
@@ -448,23 +442,20 @@ export const AgentAvatarEditor: React.FC<AgentAvatarEditorProps> = ({
             </div>
           </div>
 
-          <div>
-            <Label className="text-sm font-medium">图片链接</Label>
+          {/* <div>
+            <Label className="text-sm font-medium">也可以直接粘贴图片链接</Label>
             <Input
               placeholder="输入图片URL..."
               value={previewAvatar.link || ''}
               onChange={(e) => updatePreview({ link: e.target.value })}
               className="mt-1"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              也可以直接粘贴图片链接
-            </p>
-          </div>
+          </div> */}
         </TabsContent>
       </Tabs>
 
       {/* 操作按钮 */}
-      <div className="flex space-x-3 pt-2 border-t">
+      <div className="flex space-x-3 pt-2 border-t border-border">
         <Button 
           variant="outline" 
           onClick={handleCancel}

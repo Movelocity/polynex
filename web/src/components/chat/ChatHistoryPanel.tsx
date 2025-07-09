@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/x-ui/tabs"
 import { fileService } from '@/services';
 import { cn } from '@/lib/utils';
+import { AgentAvatar } from './AgentAvatar';
 
 interface ChatHistoryPanelProps {
   conversations: Conversation[];
@@ -125,7 +126,7 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
         </div>
         <TabsContent value="agents" className="flex-grow min-h-0">
           <ScrollArea className="h-full">
-            <div className="p-2">
+            <div className="px-2">
               {isLoadingAgents ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <p className="text-sm">正在加载助手...</p>
@@ -141,7 +142,8 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
                       )}
                       onClick={() => onAgentSwitch(agent.id)}
                     >
-                      <AgentAvatarDisplay avatar={agent.avatar} />
+                      {/* <AgentAvatarDisplay avatar={agent.avatar} /> */}
+                      <AgentAvatar avatar={agent.avatar} name={agent.name} size="md" />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-foreground">{agent.name}</div>
                         <div className="text-xs text-muted-foreground truncate">{agent.description}</div>
