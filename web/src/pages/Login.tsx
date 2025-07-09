@@ -60,22 +60,19 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
+        <div className="text-center flex items-center justify-center gap-4 mb-4">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
+            <BookOpen className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             欢迎回来
-          </h1>
-          <p className="text-slate-600 mt-2">登录您的博客账户</p>
+          </span>
+
         </div>
 
         <Card className="shadow-xl border-0 bg-background backdrop-blur-sm">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">登录</CardTitle>
-            <CardDescription className="text-center">
-              使用您的邮箱登录账户
-            </CardDescription>
+            <CardTitle className="text-2xl text-center">登 录</CardTitle>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
