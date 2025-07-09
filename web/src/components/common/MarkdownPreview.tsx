@@ -2,8 +2,8 @@ import React, { createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
-// import rehypeRaw from 'rehype-raw';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; // KaTeX CSS
 import { cn } from '@/lib/utils';
@@ -43,6 +43,24 @@ const globalMarkdownStyles = `
 
 .markdown-preview-container a {
   word-break: break-all;
+}
+
+.markdown-preview-container ul,
+.markdown-preview-container ol {
+  list-style-position: outside;
+  padding-left: 1.5rem;
+}
+
+.markdown-preview-container ul {
+  list-style-type: disc;
+}
+
+.markdown-preview-container ol {
+  list-style-type: decimal;
+}
+
+.markdown-preview-container li {
+  display: list-item;
 }
 `;
 
@@ -93,7 +111,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
     <>
       <style dangerouslySetInnerHTML={{ __html: globalMarkdownStyles }} />
       <div 
-        className={cn("prose prose-slate max-w-none w-full overflow-hidden break-words markdown-preview-container", className)}
+        className={cn("prose prose-slate max-w-none w-full overflow-hidden break-words markdown-preview-container text-foreground", className)}
         style={{ 
           width: '100%',
           maxWidth: '100%'
@@ -102,15 +120,16 @@ export function MarkdownPreview({ content, className }: { content: string, class
         <ReactMarkdown
           remarkPlugins={[
             remarkGfm, 
-            remarkMath
+            remarkMath,
+            remarkBreaks
           ]}
           rehypePlugins={[
-            rehypeHighlight, 
-            // rehypeRaw, 
-            [rehypeKatex, {
-              strict: false,
-              throwOnError: false,
-              trust: true
+            rehypeKatex, 
+            [rehypeHighlight, {
+              strict: false, // 禁用严格模式
+              throwOnError: false, // 禁用抛出错误
+              detect: false,  // 禁用自动检测语言
+              ignoreMissing: true // 忽略未找到的语法
             }]
           ]}
           components={{
@@ -118,7 +137,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h1 id={id} className="text-3xl font-bold text-foreground mb-6 mt-8 first:mt-0 border-b border-border pb-2 break-words overflow-hidden">
+                <h1 id={id} className="text-3xl font-bold mb-6 mt-8 first:mt-0 border-b border-border pb-2 break-words overflow-hidden">
                   {children}
                 </h1>
               );
@@ -127,7 +146,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h2 id={id} className="text-2xl font-bold text-foreground mb-4 mt-8 first:mt-0 break-words overflow-hidden">
+                <h2 id={id} className="text-2xl font-bold mb-4 mt-8 first:mt-0 break-words overflow-hidden">
                   {children}
                 </h2>
               );
@@ -136,7 +155,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h3 id={id} className="text-xl font-bold text-foreground mb-3 mt-6 break-words overflow-hidden">
+                <h3 id={id} className="text-xl font-bold mb-3 mt-6 break-words overflow-hidden">
                   {children}
                 </h3>
               );
@@ -145,7 +164,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h4 id={id} className="text-lg font-bold text-foreground mb-3 mt-6 break-words overflow-hidden">
+                <h4 id={id} className="text-lg font-bold mb-3 mt-6 break-words overflow-hidden">
                   {children}
                 </h4>
               );
@@ -154,7 +173,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h5 id={id} className="text-base font-bold text-foreground mb-2 mt-4 break-words overflow-hidden">
+                <h5 id={id} className="text-base font-bold mb-2 mt-4 break-words overflow-hidden">
                   {children}
                 </h5>
               );
@@ -163,13 +182,13 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h6 id={id} className="text-sm font-bold text-foreground mb-2 mt-4 break-words overflow-hidden">
+                <h6 id={id} className="text-sm font-bold mb-2 mt-4 break-words overflow-hidden">
                   {children}
                 </h6>
               );
             },
             p: ({ children, ...props }) => (
-              <p className="text-foreground leading-relaxed break-words overflow-hidden w-full" {...props}>
+              <p className="leading-relaxed break-words overflow-hidden w-full" {...props}>
                 {children}
               </p>
             ),
@@ -198,7 +217,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               if (!isInCodeBlock) {
                 // 内联代码样式 - 使用主题色
                 return (
-                  <code className="bg-gray-200 dark:bg-gray-700 text-foreground font-semibold px-1 rounded font-mono break-all">
+                  <code className="bg-gray-200 dark:bg-gray-700 font-semibold px-1 rounded font-mono break-all">
                     {children}
                   </code>
                 );
@@ -207,7 +226,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               // 代码块样式 - 使用主题色
               return (
                 <code 
-                  className={`block p-4 text-sm font-consolas leading-relaxed text-foreground overflow-x-auto break-words ${className || ''}`}
+                  className={`block p-4 text-sm font-consolas leading-relaxed overflow-x-auto break-words ${className || ''}`}
                   style={{ maxWidth: '100%' }}
                   {...props}
                 >
@@ -216,12 +235,12 @@ export function MarkdownPreview({ content, className }: { content: string, class
               );
             },
             ul: ({ children }) => (
-              <ul className="list-disc list-outside mb-4 ml-6 text-foreground break-words overflow-hidden">
+              <ul className="mb-4 break-words overflow-hidden">
                 {children}
               </ul>
             ),
             ol: ({ children }) => (
-              <ol className="list-decimal list-outside mb-4 ml-6 text-foreground break-words overflow-hidden">
+              <ol className="mb-4 break-words overflow-hidden">
                 {children}
               </ol>
             ),
@@ -254,7 +273,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               </tr>
             ),
             th: ({ children }) => (
-              <th className="border border-border px-4 py-2 text-left font-semibold text-foreground">
+              <th className="border border-border px-4 py-2 text-left font-semibold">
                 {children}
               </th>
             ),
@@ -281,13 +300,13 @@ export function MarkdownPreview({ content, className }: { content: string, class
             ),
             // 处理强调文本
             em: ({ children }) => (
-              <em className="italic text-foreground">
+              <em className="italic">
                 {children}
               </em>
             ),
             // 处理加粗文本
             strong: ({ children }) => (
-              <strong className="font-bold text-foreground">
+              <strong className="font-bold">
                 {children}
               </strong>
             ),

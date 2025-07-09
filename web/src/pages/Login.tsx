@@ -98,6 +98,7 @@ export function Login() {
                     onChange={handleChange}
                     className="pl-10"
                     required
+                    autoComplete="username email"
                   />
                 </div>
               </div>
@@ -115,6 +116,7 @@ export function Login() {
                     onChange={handleChange}
                     className="pl-10"
                     required
+                    autoComplete="current-password"
                   />
                 </div>
               </div>

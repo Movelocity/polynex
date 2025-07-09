@@ -88,10 +88,6 @@ export function BlogManagement({ user }: BlogManagementProps) {
     }
   };
 
-  const handleEdit = (blogId: string) => {
-    navigate(`/edit/${blogId}`);
-  };
-  
   const [deleteConfirmBlog, setDeleteConfirmBlog] = useState<Blog | null>(null);
 
   // 筛选博客 - 同时支持标签筛选和搜索
@@ -227,7 +223,7 @@ export function BlogManagement({ user }: BlogManagementProps) {
                       {currentBlogs.map((blog) => (
                         <TableRow key={blog.id} className="px-4">
                           <TableCell className="font-medium">
-                            <Link to={`/blog/${blog.id}`} className="hover:underline">
+                            <Link to={`/edit/${blog.id}`} className="hover:underline">
                               {blog.title}
                             </Link>
                           </TableCell>
@@ -249,7 +245,7 @@ export function BlogManagement({ user }: BlogManagementProps) {
                           <TableCell>{new Date(blog.updateTime).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button onClick={() => handleEdit(blog.id)} variant="outline" size="sm">编辑</Button>
+                              {/* <Button onClick={() => {navigate(`/blog/${blog.id}`)}} variant="outline" size="sm">View</Button> */}
                               <Button 
                                 onClick={() => handleToggleStatus(blog.id, blog.status === 'published' ? 'draft' : 'published')} 
                                 variant="outline" 
