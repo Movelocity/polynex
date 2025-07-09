@@ -62,7 +62,7 @@ export function HeadBanner({
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-theme-blue to-theme-purple bg-clip-text text-transparent">
-              Polynex
+              POLYNEX
             </h1>
           </Link>
 

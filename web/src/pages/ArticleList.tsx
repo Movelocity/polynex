@@ -190,7 +190,6 @@ export function ArticleList() {
                   <TableHead>标签</TableHead>
                   <TableHead className="text-right">阅读量</TableHead>
                   <TableHead>发布时间</TableHead>
-                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -211,11 +210,6 @@ export function ArticleList() {
                     </TableCell>
                     <TableCell className="text-right">{blog.views}</TableCell>
                     <TableCell>{new Date(blog.createTime).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Button asChild variant="outline" size="sm">
-                        <Link to={`/blog/${blog.id}`}>查看</Link>
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

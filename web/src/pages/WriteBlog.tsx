@@ -456,7 +456,7 @@ export function WriteBlog() {
 
         {/* Editor */}
         <div className="col-span-1 lg:col-span-4">
-          <Card className="">
+          <Card>
             <CardHeader>
               <input
                 id="title"
@@ -466,7 +466,7 @@ export function WriteBlog() {
                 className="text-3xl font-bold outline-none bg-secondary"
               />
             </CardHeader>
-            <CardContent className="border-t border-border p-4">
+            <CardContent className="border-t border-border py-4 px-0 md:px-4">
               {activeTab === 'write' && (
                 <div className="relative min-h-[600px] pb-4">
                   <TextareaAutosize

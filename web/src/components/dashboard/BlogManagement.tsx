@@ -245,7 +245,6 @@ export function BlogManagement({ user }: BlogManagementProps) {
                           <TableCell>{new Date(blog.updateTime).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {/* <Button onClick={() => {navigate(`/blog/${blog.id}`)}} variant="outline" size="sm">View</Button> */}
                               <Button 
                                 onClick={() => handleToggleStatus(blog.id, blog.status === 'published' ? 'draft' : 'published')} 
                                 variant="outline" 

@@ -5,7 +5,6 @@ import { Blog } from '@/types';
 import { MarkdownPreview } from '@/components/common/MarkdownPreview';
 import { Button } from '@/components/x-ui/button';
 import { Badge } from '@/components/x-ui/badge';
-
 import { useTitle } from '@/hooks/usePageTitle';
 import { 
   ArrowLeft, 
@@ -14,9 +13,11 @@ import {
   Clock, 
   Tag,
   BookOpen,
-  Share2
+  Share2,
+  Pencil
 } from 'lucide-react';
 import { TOC } from '@/components/common/TOC';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Temporary formatDate function until we move it to a proper utils file
 const formatDate = (dateString: string): string => {
@@ -35,6 +36,8 @@ export function BlogDetail() {
   const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const isAuthor = user?.id === blog?.authorId;
   
   // 动态设置页面标题 - 根据文章标题更新
   useTitle(blog ? blog.title : '文章详情');
@@ -171,19 +174,10 @@ export function BlogDetail() {
               {blog.title}
             </h1>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
-              <div className="flex items-center ">
+              <div className="flex items-center flex-wrap">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <p className="font-medium text-foreground">{blog.authorName}</p>
-                  <span className="mx-2">·</span>
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {formatDate(blog.createTime)}
-                  {blog.updateTime !== blog.createTime && (
-                    <>
-                      <span className="mx-2">·</span>
-                      <Clock className="w-4 h-4 mr-1" />
-                      更新于 {formatDate(blog.updateTime)}
-                    </>
-                  )}
+                  
                 </div>
                 <Badge variant="secondary" className="bg-theme-blue/10 text-theme-blue ml-2">
                   {blog.category}
@@ -198,6 +192,12 @@ export function BlogDetail() {
                   <Share2 className="w-4 h-4 mr-2" />
                   分享
                 </Button>
+                {isAuthor && (
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/edit/${blog.id}`)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    编辑
+                  </Button>
+                )}
               </div>
             </div>
             
@@ -214,9 +214,22 @@ export function BlogDetail() {
           </header>
           
           {/* 文章内容 */}
-          <article className="prose prose-slate max-w-none mb-16">
+          <article className="prose prose-slate max-w-none mb-16 min-h-[60vh]">
             <MarkdownPreview content={blog.content} />
           </article>
+
+          <div className="flex items-center text-sm text-muted-foreground gap-2">
+            <span className="flex items-center">
+              <Calendar className="w-4 h-4 mr-1" />
+              {formatDate(blog.createTime)}
+            </span>
+            {blog.updateTime !== blog.createTime && (
+              <span className="flex items-center">
+                <Clock className="w-4 h-4 mr-1" />
+                更新于 {formatDate(blog.updateTime)}
+              </span>
+            )}
+          </div>
         </main>
         
         {/* 右侧栏 - TOC */}
