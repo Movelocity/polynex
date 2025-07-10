@@ -110,11 +110,6 @@ export function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      <div className="mb-8">
-        <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-          Articles
-        </span>
-      </div>
 
       {/* Category Filter Tabs */}
       <div className="mb-8">
@@ -141,30 +136,6 @@ export function Home() {
             </Button>
           ))}
         </div>
-
-        {/* Tags Section */}
-        {/* <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <Tag className="w-5 h-5 mr-2 text-slate-600" />
-            <span className="text-sm font-medium text-slate-600">按标签筛选</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant="ghost"
-                size="sm"
-                className="text-xs h-8 px-3 rounded-full border border-slate-200 hover:border-blue-300 hover:bg-blue-50"
-                onClick={() => {
-                  setSelectedCategory(category.name);
-                  setCurrentPage(1);
-                }}
-              >
-                {category.name} ({category.count})
-              </Button>
-            ))}
-          </div>
-        </div> */}
       </div>
 
       {/* Blog Grid */}

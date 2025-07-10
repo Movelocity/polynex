@@ -9,22 +9,15 @@ import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/CustomSelect';
 import { Badge } from '@/components/x-ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/x-ui/tabs';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { useTitle } from '@/hooks/usePageTitle';
 import { toast } from '@/hooks/use-toast';
 
 import { 
   Save, 
-  Eye, 
-  Send, 
   X,
-  Tag,
-  FileText,
-  Loader2,
   Globe,
   Lock
 } from 'lucide-react';
@@ -475,6 +468,7 @@ export function WriteBlog() {
                     value={formData.content}
                     onChange={(e) => handleInputChange('content', e.target.value)}
                     className="w-full p-2 rounded-lg resize-none outline-none bg-secondary"
+                    spellCheck={false}
                     minRows={20}
                   />
                   <div className="text-xs text-muted-foreground absolute bottom-0">

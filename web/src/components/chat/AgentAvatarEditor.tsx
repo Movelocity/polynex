@@ -32,10 +32,10 @@ const PRESET_COLORS = [
   { name: '黄色', value: 'bg-yellow-400', color: '#facc15' },
   { name: '绿色', value: 'bg-green-400', color: '#4ade80' },
   { name: '青色', value: 'bg-cyan-400', color: '#22d3ee' },
-  { name: '靛色', value: 'bg-indigo-400', color: '#818cf8' },
+  { name: '透明', value: 'bg-transparent', color: '#00000000' },
   { name: '灰色', value: 'bg-gray-400', color: '#9ca3af' },
-  { name: '石色', value: 'bg-slate-400', color: '#94a3b8' },
-  { name: '锌色', value: 'bg-zinc-400', color: '#a1a1aa' }
+  { name: '白色', value: 'bg-white', color: '#ffffff' },
+  { name: '黑色', value: 'bg-black', color: '#000000' }
 ];
 
 interface AgentAvatarEditorProps {

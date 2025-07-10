@@ -259,6 +259,8 @@ export function Conversation() {
           </div>
         </ScrollArea>
 
+        <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-background to-transparent"></div>
+
         {/* 固定在屏幕底部的输入区域 */}
         <div className="flex-shrink-0">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">

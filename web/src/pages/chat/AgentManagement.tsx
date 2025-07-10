@@ -81,23 +81,12 @@ export function AgentManagement() {
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 页面标题 */}
       <div className="mb-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">AI Agent管理</h1>
           </div>
-          {/* 统计信息 */}
-          <div className="flex items-center gap-4 mb-4 text-foreground">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">private</span>
-              <span className="">{myAgents.length}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">public</span>
-              <span className="">{publicAgents.length}</span>
-            </div>
-          </div>
           {/** 编辑供应商 */}
-          <Button variant="outline" size="sm" onClick={() => {navigate('/chat/ai-provider-management')}}>
+          <Button variant="outline" size="default" onClick={() => {navigate('/chat/ai-provider-management')}}>
             <Settings2 className="h-6 w-6" />
             编辑供应商
           </Button>
@@ -106,8 +95,8 @@ export function AgentManagement() {
 
       {/* Agent列表 */}
       <div className="space-y-4">
-        <div className="flex flex-row gap-4 flex-wrap">
-          <Card className="w-[360px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <Card className="grid-cols-1">
             <CardContent className="flex flex-col justify-start gap-2 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
               <span className="text-md font-medium text-foreground mb-2">创建Agent</span>
@@ -123,7 +112,14 @@ export function AgentManagement() {
           </Card>
 
           {agents.map((agent) => (
-            <Card key={agent.id} className="relative w-[360px]">
+            <Card 
+              key={agent.id} 
+              className="relative grid-cols-1 cursor-pointer"
+              onClick={() => {
+                if(!canEditAgent(agent, user.id)) return;
+                handleEditAgent(agent.id);
+              }}
+            >
               <CardHeader className="p-4">
                 <div className="flex items-start space-x-3">
                   <AgentAvatar 
@@ -142,70 +138,41 @@ export function AgentManagement() {
                     <CardDescription className="flex items-center space-x-2">
                       <span>{agent.provider}</span>
                       <span>•</span>
-                      <span>{agent.model}</span>
+                      <span className="truncate">{agent.model}</span>
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="px-4 pb-4">
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                   {agent.description || '暂无描述'}
                 </p>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Badge variant={agent.is_public ? "default" : "secondary"} className="text-xs">
-                      {agent.is_public ? (
-                        <>
-                          <Users className="h-3 w-3 mr-1" />
-                          公开
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="h-3 w-3 mr-1" />
-                          私有
-                        </>
-                      )}
+                    <Badge variant="secondary" className="text-xs">
+                      {agent.is_public ? "public" : "private"}
                     </Badge>
                     {agent.is_default && (
-                      <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 text-xs">
+                      <Badge variant="secondary" className="text-xs">
                         默认
                       </Badge>
                     )}
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {canEditAgent(agent, user.id) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditAgent(agent.id)}
-                        className="text-xs px-2"
-                      >
-                        <Edit className="h-3 w-3" />
-                        编辑
-                      </Button>
-                    )}
                     <Button
-                      size="sm"
+                      size="default"
                       variant="outline"
-                      onClick={() => handleStartConversation(agent)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartConversation(agent);
+                      }}
                       className="text-xs px-2"
                     >
                       <MessageCircle className="h-3 w-3 mr-1" />
                       对话
                     </Button>
-                    {/* 到详情页面删除 */}
-                    {/* {isAgentOwner(agent, user.id) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setDeletingAgent(agent.id)}
-                        className="text-red-600 hover:text-red-700 text-xs px-2"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )} */}
                   </div>
                 </div>
               </CardContent>

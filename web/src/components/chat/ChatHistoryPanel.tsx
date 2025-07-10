@@ -107,20 +107,20 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
     return time.toLocaleDateString();
   };
 
-  const [activeTab, setActiveTab] = useState('history');
+  const [activeTab, setActiveTab] = useState('agents');
 
   return (
     <div className={cn("flex flex-col h-full bg-background border-r border-border", className)}>
       <Tabs className="flex flex-col h-full" value={activeTab} onValueChange={setActiveTab}>
         <div className="p-2 pb-0">
           <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="agents">
+              <Users className="h-4 w-4 mr-2"/>
+              Agents
+            </TabsTrigger>
             <TabsTrigger value="history">
               <History className="h-4 w-4 mr-2"/>
               历史
-            </TabsTrigger>
-            <TabsTrigger value="agents">
-              <Users className="h-4 w-4 mr-2"/>
-              助手
             </TabsTrigger>
           </TabsList>
         </div>
