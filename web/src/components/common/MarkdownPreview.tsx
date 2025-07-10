@@ -6,10 +6,23 @@ import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; // KaTeX CSS
+import { fileService } from '@/services';
 import { cn } from '@/lib/utils';
 
 // 创建Context来跟踪是否在代码块内部
 const CodeBlockContext = createContext(false);
+
+type CustomLiProps = React.ComponentProps<'li'> & {
+  checked?: boolean | null;
+  className?: string;
+};
+
+interface MarkdownNode {
+  type: string;
+  tagName?: string;
+  properties?: any;
+  children?: any[];
+}
 
 // 全局样式，确保内容不会溢出
 const globalMarkdownStyles = `
@@ -18,6 +31,7 @@ const globalMarkdownStyles = `
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+  font-family: Manrope, "Manrope Fallback", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, "noto sans sc", "hiragino sans gb", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji", "Not Color Emoji";
 }
 
 .markdown-preview-container pre {
@@ -28,6 +42,7 @@ const globalMarkdownStyles = `
 .markdown-preview-container code {
   white-space: pre-wrap;
   word-break: break-all;
+  font-family: consolas;
 }
 
 .markdown-preview-container table {
@@ -39,10 +54,6 @@ const globalMarkdownStyles = `
 .markdown-preview-container img {
   max-width: 100%;
   height: auto;
-}
-
-.markdown-preview-container a {
-  word-break: break-all;
 }
 
 .markdown-preview-container ul,
@@ -61,6 +72,15 @@ const globalMarkdownStyles = `
 
 .markdown-preview-container li {
   display: list-item;
+}
+
+.markdown-preview-container h1,
+.markdown-preview-container h2,
+.markdown-preview-container h3,
+.markdown-preview-container h4,
+.markdown-preview-container h5,
+.markdown-preview-container h6 {
+  color: hsl(var(--foreground));
 }
 `;
 
@@ -111,7 +131,11 @@ export function MarkdownPreview({ content, className }: { content: string, class
     <>
       <style dangerouslySetInnerHTML={{ __html: globalMarkdownStyles }} />
       <div 
-        className={cn("prose prose-slate max-w-none w-full overflow-hidden break-words markdown-preview-container text-foreground", className)}
+        className={cn(
+          "prose prose-slate max-w-none w-full overflow-hidden break-words markdown-preview-container", 
+          "text-[#000c] dark:text-[#fffc]",
+          className
+        )}
         style={{ 
           width: '100%',
           maxWidth: '100%'
@@ -226,7 +250,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               // 代码块样式 - 使用主题色
               return (
                 <code 
-                  className={`block p-4 text-sm font-consolas leading-relaxed overflow-x-auto break-words ${className || ''}`}
+                  className={`block p-2 text-sm font-consolas leading-relaxed overflow-x-auto break-words ${className || ''}`}
                   style={{ maxWidth: '100%' }}
                   {...props}
                 >
@@ -244,11 +268,45 @@ export function MarkdownPreview({ content, className }: { content: string, class
                 {children}
               </ol>
             ),
-            li: ({ children }) => (
-              <li className="mb-2 leading-relaxed">
-                {children}
-              </li>
-            ),
+            li: ({ children, className, ...props }: CustomLiProps & { node?: any }) => {
+              // Check if this is a task list item by examining className
+              const isTaskListItem = className?.includes('task-list-item');
+              
+              // If it's a task list item, we need to handle the checkbox
+              if (isTaskListItem && props.node) {
+                const node = props.node as MarkdownNode;
+                // Find the checkbox input in children
+                const checkbox = node.children?.find(
+                  (child: MarkdownNode) => child.tagName === 'input' && child.properties?.type === 'checkbox'
+                );
+                
+                const checked = checkbox?.properties?.checked || false;
+
+                // Filter out the checkbox input from children
+                const contentChildren = React.Children.toArray(children).filter(child => {
+                  if (React.isValidElement(child)) {
+                    return child.type !== 'input';
+                  }
+                  return true;
+                });
+                
+                return (
+                  <li className="list-none flex items-start leading-relaxed">
+                    {checked ? '✅' : '⬜'}
+                    <span className='flex-1'>
+                      {contentChildren}
+                    </span>
+                  </li>
+                );
+              }
+
+              // Regular list item
+              return (
+                <li className="leading-relaxed">
+                  {children}
+                </li>
+              );
+            },
             // 处理表格
             table: ({ children }) => (
               <div className="overflow-x-auto my-6 max-w-full" style={{ maxWidth: 'var(--markdown-max-width)' }}>
@@ -285,7 +343,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
             a: ({ href, children }) => (
               <a 
                 href={href} 
-                className="text-primary hover:text-primary/80 underline decoration-primary/30 hover:decoration-primary/50 transition-colors break-all"
+                className="text-theme-blue hover:text-theme-blue/80 underline decoration-theme-blue/30 hover:decoration-theme-blue/50 transition-colors break-all"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -316,7 +374,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
             ),
             img: ({ src, alt }) => (
               <img 
-                src={src} 
+                src={fileService.resolveFileUrl(src)} 
                 alt={alt || ''} 
                 className="max-w-full w-auto h-auto my-4 rounded-md object-contain"
                 style={{ maxWidth: 'var(--markdown-max-width)' }}

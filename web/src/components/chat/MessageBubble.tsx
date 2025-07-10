@@ -164,7 +164,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <MarkdownPreview content={message.content} className="max-w-full" />
               </div>
             ) : (
-              <p className="whitespace-pre-wrap m-0 break-words">{message.content}</p>
+              <p className="whitespace-pre-wrap m-0 break-words text-[#fffc]">{message.content}</p>
             )}
           </div>
           
