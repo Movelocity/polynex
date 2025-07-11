@@ -1,0 +1,178 @@
+:root {
+  --hljs-comment-meta: #6a737d;
+  --hljs-tag-red: #d73a49;
+  --hljs-variable-orange: #e36209;
+  --hljs-builtin-yellow: #b08800;
+  --hljs-title-blue: #005cc5;
+  --hljs-selector-tag-green: #22863a;
+  --hljs-string-green: #22863a;
+  --hljs-section-blue: #005cc5;
+  --hljs-keyword-purple: #a71d5d;
+  --hljs-punctuation-fg: #24292e;
+  --hljs-bg: #f6f8fa;
+  --hljs-fg: #24292e;
+}
+
+.dark {
+  --hljs-comment-meta: #565f89;
+  --hljs-tag-red: #f7768e;
+  --hljs-variable-orange: #ff9e64;
+  --hljs-builtin-yellow: #e0af68;
+  --hljs-title-blue: #7dcfff;
+  --hljs-selector-tag-green: #73daca;
+  --hljs-string-green: #9ece6a;
+  --hljs-section-blue: #7aa2f7;
+  --hljs-keyword-purple: #bb9af7;
+  --hljs-punctuation-fg: #c0caf5;
+  --hljs-bg: #1a1b26;
+  --hljs-fg: #c0caf5;
+}
+
+.prose * {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  font-family: Manrope, "Manrope Fallback", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, "noto sans sc", "hiragino sans gb", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji", "Not Color Emoji";
+}
+
+.prose pre {
+  background-color: var(--hljs-bg);
+  color: var(--hljs-fg);
+  max-width: calc(100% - 16px);
+  overflow-x: auto;
+}
+
+.prose code {
+  white-space: pre-wrap;
+  /* word-break: break-all; */
+  font-family: monospace;
+}
+
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+.prose ul,
+.prose ol {
+  list-style-position: outside;
+  padding-left: 1.5rem;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose li {
+  display: list-item;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: hsl(var(--foreground));
+}
+
+
+/*!
+Theme: Tokyo-night-Dark
+origin: https://github.com/enkia/tokyo-night-vscode-theme
+Description: Original highlight.js style
+Author: (c) Henri Vandersleyen <hvandersleyen@gmail.com>
+License: see project LICENSE
+Touched: 2022
+*/
+.prose .hljs-comment,
+.prose .hljs-meta {
+  color: var(--hljs-comment-meta);
+}
+
+.prose .hljs-deletion,
+.prose .hljs-doctag,
+.prose .hljs-regexp,
+.prose .hljs-selector-attr,
+.prose .hljs-selector-class,
+.prose .hljs-selector-id,
+.prose .hljs-selector-pseudo,
+.prose .hljs-tag,
+.prose .hljs-template-tag,
+.hljs-variable.language_ {
+  color: var(--hljs-tag-red);
+}
+
+.prose .hljs-link,
+.prose .hljs-literal,
+.prose .hljs-number,
+.prose .hljs-params,
+.prose .hljs-template-variable,
+.prose .hljs-type,
+.prose .hljs-variable {
+  color: var(--hljs-variable-orange);
+}
+
+.prose .hljs-attribute,
+.prose .hljs-built_in {
+  color: var(--hljs-builtin-yellow);
+}
+
+.prose .hljs-keyword,
+.prose .hljs-property,
+.prose .hljs-subst,
+.prose .hljs-title,
+.prose .hljs-title.class_,
+.prose .hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  color: var(--hljs-title-blue);
+}
+
+.prose .hljs-selector-tag {
+  color: var(--hljs-selector-tag-green);
+}
+
+.prose .hljs-addition,
+.prose .hljs-bullet,
+.prose .hljs-quote,
+.prose .hljs-string,
+.prose .hljs-symbol {
+  color: var(--hljs-string-green);
+}
+
+.prose .hljs-code,
+.prose .hljs-formula,
+.prose .hljs-section {
+  color: var(--hljs-section-blue);
+}
+
+.prose .hljs-attr,
+.prose .hljs-char.escape_,
+.prose .hljs-keyword,
+.prose .hljs-name,
+.prose .hljs-operator {
+  color: var(--hljs-keyword-purple);
+}
+
+.prose .hljs-punctuation {
+  color: var(--hljs-punctuation-fg);
+}
+
+.prose .hljs-emphasis {
+  font-style: italic;
+}
+
+.prose .hljs-strong {
+  font-weight: 700;
+}
