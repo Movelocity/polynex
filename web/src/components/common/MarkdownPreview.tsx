@@ -123,10 +123,16 @@ const preprocessMathContent = (content: string): string => {
   return processed;
 };
 
-export function MarkdownPreview({ content, className }: { content: string, className?: string }) {
+export function MarkdownPreview({ content, hardBreak = false, className }: { content: string, hardBreak?: boolean, className?: string }) {
   // 预处理内容以支持更多数学语法
   const processedContent = preprocessMathContent(content || '');
-  
+  const remarkPlugins = [
+    remarkGfm, 
+    remarkMath
+  ];
+  if (hardBreak) {
+    remarkPlugins.push(remarkBreaks as any);
+  }
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: globalMarkdownStyles }} />
@@ -142,11 +148,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
         }}
       >
         <ReactMarkdown
-          remarkPlugins={[
-            remarkGfm, 
-            remarkMath,
-            remarkBreaks
-          ]}
+          remarkPlugins={remarkPlugins}
           rehypePlugins={[
             rehypeKatex, 
             [rehypeHighlight, {
@@ -161,7 +163,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h1 id={id} className="text-3xl font-bold mb-6 mt-8 first:mt-0 border-b border-border pb-2 break-words overflow-hidden">
+                <h1 id={id} className="text-2xl font-bold mb-6 mt-8 first:mt-0 border-b border-border pb-2 break-words overflow-hidden">
                   {children}
                 </h1>
               );
@@ -170,7 +172,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h2 id={id} className="text-2xl font-bold mb-4 mt-8 first:mt-0 break-words overflow-hidden">
+                <h2 id={id} className="text-xl font-bold mb-4 mt-8 first:mt-0 break-words overflow-hidden">
                   {children}
                 </h2>
               );
@@ -179,7 +181,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h3 id={id} className="text-xl font-bold mb-3 mt-6 break-words overflow-hidden">
+                <h3 id={id} className="text-lg font-bold mb-3 mt-6 break-words overflow-hidden">
                   {children}
                 </h3>
               );
@@ -188,7 +190,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h4 id={id} className="text-lg font-bold mb-3 mt-6 break-words overflow-hidden">
+                <h4 id={id} className="text-base font-bold mb-3 mt-6 break-words overflow-hidden">
                   {children}
                 </h4>
               );
@@ -197,7 +199,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
               const text = extractText(children);
               const id = generateId(text);
               return (
-                <h5 id={id} className="text-base font-bold mb-2 mt-4 break-words overflow-hidden">
+                <h5 id={id} className="text-sm font-bold mb-2 mt-4 break-words overflow-hidden">
                   {children}
                 </h5>
               );
@@ -212,12 +214,12 @@ export function MarkdownPreview({ content, className }: { content: string, class
               );
             },
             p: ({ children, ...props }) => (
-              <p className="leading-relaxed break-words overflow-hidden w-full" {...props}>
+              <p className="my-2 leading-relaxed break-words overflow-hidden w-full" {...props}>
                 {children}
               </p>
             ),
             blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-primary pl-4 py-2 my-6 bg-muted/50 italic text-muted-foreground break-words overflow-hidden">
+              <blockquote className="border-l-4 border-primary pl-4 py-2 my-2 bg-muted/50 italic text-muted-foreground break-words overflow-hidden">
                 {children}
               </blockquote>
             ),
@@ -259,12 +261,12 @@ export function MarkdownPreview({ content, className }: { content: string, class
               );
             },
             ul: ({ children }) => (
-              <ul className="mb-4 break-words overflow-hidden">
+              <ul className="mb-2 break-words overflow-hidden">
                 {children}
               </ul>
             ),
             ol: ({ children }) => (
-              <ol className="mb-4 break-words overflow-hidden">
+              <ol className="mb-2 break-words overflow-hidden">
                 {children}
               </ol>
             ),
@@ -364,7 +366,7 @@ export function MarkdownPreview({ content, className }: { content: string, class
             ),
             // 处理加粗文本
             strong: ({ children }) => (
-              <strong className="font-bold">
+              <strong className="font-bold text-[#000d] dark:text-[#fffd]">
                 {children}
               </strong>
             ),

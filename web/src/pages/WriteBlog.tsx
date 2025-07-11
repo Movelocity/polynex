@@ -355,25 +355,15 @@ export function WriteBlog() {
                 >
                   <Save className="w-4 h-4 mr-2" />保存
                 </Button>
-
-                {isEdit && (
-                  <Button 
-                    onClick={handleTogglePublish}
-                    disabled={publishLoading || saveLoading}
-                    variant='outline'
-                  >
-                    {formData.status === 'published' ? (
-                      <>
-                        <Lock className="w-4 h-4 mr-2" />设为草稿
-                      </>
-                    ) : (
-                      <>
-                        <Globe className="w-4 h-4 mr-2" />发布
-                      </>
-                    )}
-                  </Button>
-                )}
-                
+                <Button className="" onClick={() => {
+                  if (activeTab === 'write') {
+                    setActiveTab('preview');
+                  } else {
+                    setActiveTab('write');
+                  }
+                }}>
+                  {activeTab === 'write' ? '预览' : '编辑'}
+                </Button>
               </div>
               <div className="space-y-3">
                 <div>
@@ -434,15 +424,24 @@ export function WriteBlog() {
                   </div>
                 )}
               </div>
-              <Button className="" onClick={() => {
-                if (activeTab === 'write') {
-                  setActiveTab('preview');
-                } else {
-                  setActiveTab('write');
-                }
-              }}>
-                {activeTab === 'write' ? '预览' : '编辑'}
-              </Button>
+              {isEdit && (
+                <Button 
+                  onClick={handleTogglePublish}
+                  disabled={publishLoading || saveLoading}
+                  variant='outline'
+                >
+                  {formData.status === 'published' ? (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />设为草稿
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="w-4 h-4 mr-2" />发布
+                    </>
+                  )}
+                </Button>
+              )}
+              
             </CardContent>
           </Card>
         </div>
@@ -467,7 +466,7 @@ export function WriteBlog() {
                     placeholder="开始编写您的文章..."
                     value={formData.content}
                     onChange={(e) => handleInputChange('content', e.target.value)}
-                    className="w-full p-2 rounded-lg resize-none outline-none bg-secondary"
+                    className="w-full p-2 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc]"
                     spellCheck={false}
                     minRows={20}
                   />

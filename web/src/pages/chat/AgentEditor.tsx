@@ -215,7 +215,7 @@ export function AgentEditor() {
             title: '创建成功',
             description: `Agent "${formData.app_preset.name}" 已成功创建`
           });
-          navigate(`/chat/agents/edit/${formData.agent_id}`);
+          navigate(`/chat/agent/edit/${formData.agent_id}`);
         }
       }
     } catch (error) {

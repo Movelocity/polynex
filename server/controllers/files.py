@@ -95,7 +95,8 @@ async def get_thumbnail(
     db: Session = Depends(get_db),
     file_service: FileService = Depends(get_file_service_singleton)
 ):
-    """获取文件缩略图. 如果缩略图不存在，会尝试从原图生成。"""
+    """获取文件缩略图. 如果缩略图不存在，会尝试从原图生成。
+    添加缓存控制以提高性能，缓存时间设置为7天。"""
     # 从file_id中提取unique_id (去除.jpg后缀)
     unique_id = file_id.replace('.jpg', '')
 
@@ -104,10 +105,18 @@ async def get_thumbnail(
     if not thumbnail_path or not thumbnail_path.exists():
         raise HTTPException(status_code=404, detail="缩略图不存在或无法生成")
 
-    return FileResponse(
+    response = FileResponse(
         path=thumbnail_path,
         media_type="image/jpeg"
     )
+    
+    # 添加缓存控制头
+    # max-age=604800 表示缓存7天
+    # public 表示可以被任何缓存服务器缓存
+    # immutable 表示在缓存有效期内资源不会改变
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    
+    return response
 
 @router.get("/download/{file_id}")
 async def download_file(
@@ -312,7 +321,8 @@ async def get_file_direct(
     db: Session = Depends(get_db),
     file_service: FileService = Depends(get_file_service_singleton)
 ):
-    """直接访问文件 - 格式: unique_id.extension"""
+    """直接访问文件 - 格式: unique_id.extension
+    对于图片类型的文件会添加缓存控制以提高性能，缓存时间设置为7天。"""
     # 解析文件ID和扩展名
     if '.' not in file_id:
         raise HTTPException(status_code=400, detail="无效的文件ID格式")
@@ -335,9 +345,18 @@ async def get_file_direct(
     if mime_type is None:
         mime_type = "application/octet-stream"
     
-    return FileResponse(
+    response = FileResponse(
         path=file_path,
         media_type=mime_type
     )
+
+    # 如果是图片类型，添加缓存控制头
+    if mime_type and mime_type.startswith('image/'):
+        # max-age=604800 表示缓存7天
+        # public 表示可以被任何缓存服务器缓存
+        # immutable 表示在缓存有效期内资源不会改变
+        response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    
+    return response
 
  
