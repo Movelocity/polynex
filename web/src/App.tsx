@@ -11,7 +11,7 @@ import { Register } from '@/pages/Register';
 import { BlogDetail } from '@/pages/BlogDetail';
 import { WriteBlog } from '@/pages/WriteBlog';
 import { Dashboard } from '@/pages/Dashboard';
-import { UserManagement } from '@/pages/UserManagement';
+// import { UserManagement } from '@/pages/UserManagement';
 import { Search } from '@/pages/Search';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ArticleList } from '@/pages/ArticleList';
@@ -110,7 +110,8 @@ function App() {
 
           <Route path="/chat" element={<Layout showFooter={false} />} >
             <Route path="ai-provider-management" element={
-              <ProtectedRoute requireAdmin>
+              // <ProtectedRoute requireAdmin> 现在每个用户都可以管理自己的AI供应商配置
+              <ProtectedRoute>
                 <AIProviderManagement />
               </ProtectedRoute>
             } />

@@ -52,13 +52,6 @@ class AgentService:
             if agent_data.model and provider_config.models and agent_data.model not in provider_config.models:
                 raise ValueError(f"Model '{agent_data.model}' is not supported by provider '{agent_data.provider}'")
             
-            # 如果设置为默认agent，需要先取消其他默认agent
-            if agent_data.is_default:
-                db.query(Agent).filter(
-                    Agent.is_default == True,
-                    Agent.user_id == user_id
-                ).update({"is_default": False})
-            
             # 创建Agent
             agent = Agent(
                 agent_id=agent_data.agent_id,
@@ -71,8 +64,7 @@ class AgentService:
                 preset_messages=agent_data.preset_messages,
                 app_preset=agent_data.app_preset,
                 avatar=agent_data.avatar,
-                is_public=agent_data.is_public,
-                is_default=agent_data.is_default
+                access_level=agent_data.access_level
             )
             
             db.add(agent)
@@ -91,7 +83,6 @@ class AgentService:
         self,
         db: Session,
         user_id: str,
-        include_public: bool = True,
         limit: int = 20,
         offset: int = 0
     ) -> List[Agent]:
@@ -110,16 +101,8 @@ class AgentService:
         """
         try:
             query = db.query(Agent)
-            
-            if include_public:
-                query = query.filter(
-                    (Agent.user_id == user_id) | (Agent.is_public == True)
-                )
-            else:
-                query = query.filter(Agent.user_id == user_id)
-            
+            query = query.filter(Agent.creator_id == user_id)
             agents = query.order_by(
-                Agent.is_default.desc(),
                 Agent.create_time.desc()
             ).offset(offset).limit(limit).all()
             
@@ -148,7 +131,7 @@ class AgentService:
         """
         try:
             agents = db.query(Agent).filter(
-                Agent.is_public == True
+                Agent.access_level >= 3
             ).order_by(
                 Agent.create_time.desc()
             ).offset(offset).limit(limit).all()
@@ -181,7 +164,7 @@ class AgentService:
             agent = db.query(Agent).filter(
                 and_(
                     Agent.agent_id == agent_id,
-                    (Agent.user_id == user_id) | (Agent.is_public == True)
+                    (Agent.creator_id == user_id) | (Agent.access_level >= 3)
                 )
             ).first()
             
@@ -237,7 +220,7 @@ class AgentService:
             agent = db.query(Agent).filter(
                 and_(
                     Agent.agent_id == agent_id,
-                    Agent.user_id == user_id
+                    Agent.creator_id == user_id
                 )
             ).first()
             
@@ -256,14 +239,6 @@ class AgentService:
                 model_to_check = agent_update.model or agent.model
                 if model_to_check and provider_config.models and model_to_check not in provider_config.models:
                     raise ValueError(f"Model '{model_to_check}' is not supported by provider '{agent_update.provider}'")
-            
-            # 如果设置为默认agent，需要先取消其他默认agent
-            if agent_update.is_default:
-                db.query(Agent).filter(
-                    Agent.is_default == True,
-                    Agent.user_id == user_id,
-                    Agent.agent_id != agent.agent_id
-                ).update({"is_default": False})
             
             # 更新字段
             update_data = agent_update.model_dump(exclude_unset=True)
@@ -305,7 +280,7 @@ class AgentService:
             agent = db.query(Agent).filter(
                 and_(
                     Agent.agent_id == agent_id,
-                    Agent.user_id == user_id
+                    Agent.creator_id == user_id
                 )
             ).first()
             
@@ -322,135 +297,50 @@ class AgentService:
             db.rollback()
             logger.error(f"Error deleting agent {agent_id}: {str(e)}")
             raise
+
     
-    async def get_default_agent(
-        self,
-        db: Session,
-        user_id: str
-    ) -> Optional[Agent]:
-        """
-        获取用户的默认Agent
-        
-        Args:
-            db: 数据库会话
-            user_id: 用户ID
-            
-        Returns:
-            Optional[Agent]: 默认Agent对象或None
-        """
-        try:
-            agent = db.query(Agent).filter(
-                and_(
-                    Agent.user_id == user_id,
-                    Agent.is_default == True
-                )
-            ).first()
-            
-            return agent
-            
-        except Exception as e:
-            logger.error(f"Error getting default agent for user {user_id}: {str(e)}")
-            raise
-    
-    async def set_default_agent(
-        self,
-        db: Session,
-        agent_id: str,
-        user_id: str
-    ) -> bool:
-        """
-        设置用户的默认Agent
-        
-        Args:
-            db: 数据库会话
-            agent_id: Agent ID
-            user_id: 用户ID
-            
-        Returns:
-            bool: 是否设置成功
-        """
-        try:
-            # 获取要设置为默认的Agent
-            agent = db.query(Agent).filter(
-                and_(
-                    Agent.agent_id == agent_id,
-                    Agent.user_id == user_id
-                )
-            ).first()
-            
-            if not agent:
-                return False
-            
-            # 先取消其他默认Agent
-            db.query(Agent).filter(
-                and_(
-                    Agent.user_id == user_id,
-                    Agent.is_default == True
-                )
-            ).update({"is_default": False})
-            
-            # 设置新的默认Agent
-            agent.is_default = True
-            agent.update_time = datetime.now()
-            
-            db.commit()
-            
-            logger.info(f"Set agent {agent_id} as default for user {user_id}")
-            return True
-            
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error setting default agent: {str(e)}")
-            raise
-    
-    async def search_agents(
-        self,
-        db: Session,
-        user_id: str,
-        query: str,
-        include_public: bool = True,
-        limit: int = 20,
-        offset: int = 0
-    ) -> List[Agent]:
-        """
-        搜索Agent
-        
-        Args:
-            db: 数据库会话
-            user_id: 用户ID
-            query: 搜索关键词
-            include_public: 是否包含公开的Agent
-            limit: 限制数量
-            offset: 偏移量
-            
-        Returns:
-            List[Agent]: 符合条件的Agent列表
-        """
-        try:
-            base_query = db.query(Agent)
-            
-            if include_public:
-                base_query = base_query.filter(
-                    (Agent.user_id == user_id) | (Agent.is_public == True)
-                )
-            else:
-                base_query = base_query.filter(Agent.user_id == user_id)
-            
-            # 在agent_id、model、provider中搜索
-            agents = base_query.filter(
-                (Agent.agent_id.contains(query)) |
-                (Agent.model.contains(query)) |
-                (Agent.provider.contains(query))
-            ).order_by(
-                Agent.is_default.desc(),
-                Agent.create_time.desc()
-            ).offset(offset).limit(limit).all()
-            
-            return agents
-            
-        except Exception as e:
-            logger.error(f"Error searching agents: {str(e)}")
-            raise
+    # async def search_agents(
+    #     self,
+    #     db: Session,
+    #     user_id: str,
+    #     query: str,
+    #     include_public: bool = True,
+    #     limit: int = 20,
+    #     offset: int = 0
+    # ) -> List[Agent]:
+    #     """
+    #     搜索Agent
+    #     Args:
+    #         db: 数据库会话
+    #         user_id: 用户ID
+    #         query: 搜索关键词
+    #         include_public: 是否包含公开的Agent
+    #         limit: 限制数量
+    #         offset: 偏移量
+    #     Returns:
+    #         List[Agent]: 符合条件的Agent列表
+    #     """
+    #     try:
+    #         base_query = db.query(Agent)
+    #         if include_public:
+    #             base_query = base_query.filter(
+    #                 (Agent.user_id == user_id) | (Agent.is_public == True)
+    #             )
+    #         else:
+    #             base_query = base_query.filter(Agent.user_id == user_id)
+    #         # 在agent_id、model、provider中搜索
+    #         agents = base_query.filter(
+    #             (Agent.agent_id.contains(query)) |
+    #             (Agent.model.contains(query)) |
+    #             (Agent.provider.contains(query))
+    #         ).order_by(
+    #             Agent.is_default.desc(),
+    #             Agent.create_time.desc()
+    #         ).offset(offset).limit(limit).all()
+    #         return agents
+    #     except Exception as e:
+    #         logger.error(f"Error searching agents: {str(e)}")
+    #         raise
 
 _agent_service = None
 # 单例获取函数

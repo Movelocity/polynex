@@ -57,6 +57,7 @@ export function AgentManagement() {
   };
 
   const handleEditAgent = (agentId: string) => {
+    console.log("edit "+agentId)
     navigate(`/chat/agent/edit/${agentId}`);
   };
 
@@ -151,13 +152,8 @@ export function AgentManagement() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Badge variant="secondary" className="text-xs">
-                      {agent.is_public ? "public" : "private"}
+                      {agent.access_level === 0 ? "admin" : agent.access_level === 1 ? "private" : agent.access_level === 2 ? "all_users" : "public"}
                     </Badge>
-                    {agent.is_default && (
-                      <Badge variant="secondary" className="text-xs">
-                        默认
-                      </Badge>
-                    )}
                   </div>
 
                   <div className="flex items-center space-x-2">

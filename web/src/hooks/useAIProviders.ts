@@ -200,9 +200,9 @@ export const useAIProviders = () => {
       // 先将其他供应商设为非默认
       const updates = providers.map(async (provider) => {
         if (provider.id === providerId) {
-          return updateProvider(providerId, { is_default: true });
-        } else if (provider.is_default) {
-          return updateProvider(provider.id, { is_default: false });
+          return updateProvider(providerId, { access_level: 3 });
+        } else if (provider.access_level === 3) {
+          return updateProvider(provider.id, { access_level: 2 });
         }
         return Promise.resolve(true);
       });
@@ -249,8 +249,8 @@ export const useAIProviders = () => {
     refresh,
     
     // 便捷方法
-    activeProviders: providers.filter(p => p.is_active),
-    defaultProvider: providers.find(p => p.is_default && p.is_active),
-    hasDefaultProvider: providers.some(p => p.is_default && p.is_active)
+    // activeProviders: providers.filter(p => p.access_level >= 2),
+    // defaultProvider: providers.find(p => p.access_level === 3),
+    // hasDefaultProvider: providers.some(p => p.access_level === 3)
   };
 }; 

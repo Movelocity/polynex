@@ -19,7 +19,7 @@ import {
   getProviderTypeDisplayName,
   getProviderTypeIcon,
   formatProviderDisplayName,
-  getProviderStatusText
+  // getProviderStatusText
 } from '@/utils/aiProviderUtils';
 import { 
   Plus, 
@@ -52,12 +52,11 @@ const statusConfig = {
 interface ProviderListProps {
   providers: AIProviderConfig[];
   selectedProvider: any;
-  defaultProvider: any;
   onProviderSelect: (provider: any) => void;
   onAddProvider: () => void;
 }
 
-function ProviderList({ providers, selectedProvider, defaultProvider, onProviderSelect, onAddProvider }: ProviderListProps) {
+function ProviderList({ providers, selectedProvider, onProviderSelect, onAddProvider }: ProviderListProps) {
   return (
     <div className="card-elevated">
       <div className="p-4 border-b border-border">
@@ -71,7 +70,7 @@ function ProviderList({ providers, selectedProvider, defaultProvider, onProvider
       </div>
       <div className="p-2 space-y-1">
         {providers.map((provider) => {
-          const status = provider.is_active ? 'active' : 'inactive';
+          const status = provider.access_level >= 2 ? 'active' : 'inactive';
           return (
             <div
               key={provider.id}
@@ -91,9 +90,6 @@ function ProviderList({ providers, selectedProvider, defaultProvider, onProvider
                     <Bot className="h-5 w-5 text-theme-blue" />
                   </div>
                   <span className="font-medium text-sm text-foreground truncate">{formatProviderDisplayName(provider)}</span>
-                  {provider.id === defaultProvider?.id && (
-                    <Star className="h-3 w-3 text-theme-yellow fill-current" />
-                  )}
                 </div>
                 <Circle className={`h-3 w-3 fill-current ${statusConfig[status].color}`} />
               </div>
@@ -104,16 +100,16 @@ function ProviderList({ providers, selectedProvider, defaultProvider, onProvider
                 <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground border-border">
                   {(provider.models || []).length} models
                 </Badge>
-                <Badge
+                {/* <Badge
                   variant="secondary"
                   className={`text-xs border ${
-                    provider.is_active
+                    provider.access_level >= 2
                       ? "bg-success/10 text-success border-success/20"
                       : "bg-muted text-muted-foreground border-border"
                   }`}
                 >
-                  {getProviderStatusText(provider.is_active)}
-                </Badge>
+                  {getProviderStatusText(provider.access_level >= 2)}
+                </Badge> */}
               </div>
             </div>
           );
@@ -126,7 +122,6 @@ function ProviderList({ providers, selectedProvider, defaultProvider, onProvider
 // Provider详情组件
 interface ProviderDetailProps {
   provider: any;
-  defaultProvider: any;
   isEditing: boolean;
   showApiKey: boolean;
   testingProvider: string | null;
@@ -142,7 +137,6 @@ interface ProviderDetailProps {
 
 function ProviderDetail({ 
   provider, 
-  defaultProvider, 
   isEditing, 
   showApiKey, 
   testingProvider,
@@ -166,7 +160,7 @@ function ProviderDetail({
     }
   }, [isEditing, provider]);
 
-  const status = provider.is_active ? 'active' : 'inactive';
+  // const status = provider.is_active ? 'active' : 'inactive';
 
   const maskApiKey = (key: string | undefined) => {
     if (!key) return "Not configured";
@@ -219,18 +213,8 @@ function ProviderDetail({
     <div className="card-elevated">
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* <div className="text-muted-foreground">
-              {getProviderTypeIcon(provider.provider_type)}
-            </div> */}
-            <div>
-              <h2 className="font-semibold text-foreground">{formatProviderDisplayName(provider)}</h2>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs text-muted-foreground capitalize">{getProviderTypeDisplayName(provider.provider_type)}</span>
-                <Circle className={`h-1.5 w-1.5 fill-current ${statusConfig[status].color}`} />
-                <span className="text-xs text-muted-foreground">{statusConfig[status].text}</span>
-              </div>
-            </div>
+          <div className="text-lg text-foreground">
+            编辑AI供应商配置
           </div>
           <div className="flex gap-2">
             <Button
@@ -248,7 +232,7 @@ function ProviderDetail({
               onClick={onDelete}
               className="h-8 border-destructive text-destructive hover:bg-destructive/10 hover:border-destructive"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3.5 w-3.5" /> Delete
             </Button>
           </div>
         </div>
@@ -257,10 +241,6 @@ function ProviderDetail({
       <div className="p-4 space-y-5">
         {/* 基础配置 */}
         <div>
-          {/* <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-            <Settings className="h-4 w-4 text-muted-foreground" />
-            Configuration
-          </h3> */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="name" className="text-xs text-muted-foreground">Provider Name</Label>
@@ -437,7 +417,7 @@ function ProviderDetail({
               <TestTube className="h-3.5 w-3.5 mr-1.5" />
               {testingProvider === provider.id ? 'Testing...' : 'Test Connection'}
             </Button>
-            {provider.id !== defaultProvider?.id && provider.is_active && (
+            {provider.access_level >= 2 && (
               <Button
                 size="sm"
                 variant="outline"
@@ -483,21 +463,21 @@ export function AIProviderManagement() {
     deleteProvider,
     testProvider,
     setDefaultProvider,
-    refresh,
-    activeProviders,
-    defaultProvider,
-    hasDefaultProvider
+    // refresh,
+    // activeProviders,
+    // defaultProvider,
+    // hasDefaultProvider
   } = useAIProviders();
 
   const [selectedProvider, setSelectedProvider] = useState<any>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<any>(null);
+  // const [editingProvider, setEditingProvider] = useState<any>(null);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
   const [isEditing, setIsEditing] = useState(false);
 
   // 检查用户权限
-  const isAdmin = user?.role === 'admin';
+  // const isAdmin = user?.role === 'admin';
 
   // 初始化选中第一个provider
   useEffect(() => {
@@ -542,8 +522,7 @@ export function AIProviderManagement() {
       base_url: providerData.base_url,
       api_key: providerData.api_key,
       models: providerData.models,
-      default_model: providerData.default_model,
-      is_active: providerData.is_active,
+      access_level: providerData.access_level,
       proxy: providerData.proxy
     };
     
@@ -625,18 +604,18 @@ export function AIProviderManagement() {
     }));
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            此功能需要管理员权限才能访问。
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  // if (!isAdmin) {
+  //   return (
+  //     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  //       <Alert>
+  //         <AlertCircle className="h-4 w-4" />
+  //         <AlertDescription>
+  //           此功能需要管理员权限才能访问。
+  //         </AlertDescription>
+  //       </Alert>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="bg-background text-foreground">
@@ -672,7 +651,6 @@ export function AIProviderManagement() {
               <ProviderList
                 providers={providers}
                 selectedProvider={selectedProvider}
-                defaultProvider={defaultProvider}
                 onProviderSelect={handleProviderSelect}
                 onAddProvider={() => setShowCreateDialog(true)}
               />
@@ -684,7 +662,6 @@ export function AIProviderManagement() {
             {selectedProvider ? (
               <ProviderDetail
                 provider={selectedProvider}
-                defaultProvider={defaultProvider}
                 isEditing={isEditing}
                 showApiKey={showApiKey[selectedProvider.id] || false}
                 testingProvider={testingProvider}
@@ -718,19 +695,19 @@ export function AIProviderManagement() {
       <AIProviderDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        mode="create"
+        // mode="create"
         loading={loading}
         onSubmit={handleCreateProvider}
       />
       
-      <AIProviderDialog
+      {/* <AIProviderDialog
         open={!!editingProvider}
         onOpenChange={(open) => !open && setEditingProvider(null)}
         mode="edit"
         initialData={editingProvider}
         loading={loading}
         onSubmit={handleUpdateProvider}
-      />
+      /> */}
     </div>
   );
 } 

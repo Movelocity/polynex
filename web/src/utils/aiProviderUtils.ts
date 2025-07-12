@@ -38,17 +38,17 @@ export const getProviderTypeIcon = (type: AIProviderType): string => {
  * 获取供应商状态的显示文本
  * @param isActive 是否激活
  */
-export const getProviderStatusText = (isActive: boolean): string => {
-  return isActive ? '已激活' : '已禁用';
-};
+// export const getProviderStatusText = (isActive: boolean): string => {
+//   return isActive ? '已激活' : '已禁用';
+// };
 
 /**
  * 获取供应商状态的颜色类名
  * @param isActive 是否激活
  */
-export const getProviderStatusColor = (isActive: boolean): string => {
-  return isActive ? 'text-green-600' : 'text-red-600';
-};
+// export const getProviderStatusColor = (isActive: boolean): string => {
+//   return isActive ? 'text-green-600' : 'text-red-600';
+// };
 
 /**
  * 格式化供应商显示名称
@@ -62,17 +62,19 @@ export const formatProviderDisplayName = (provider: AIProviderConfig): string =>
  * 验证供应商配置是否完整
  * @param provider 供应商配置
  */
-export const validateProviderConfig = (provider: Partial<AIProviderConfig>): string[] => {
+export const validateProviderConfig = (provider: Partial<AIProviderConfig>, strict: boolean = true): string[] => {
   const errors: string[] = [];
 
   if (!provider.name?.trim()) {
     errors.push('供应商名称不能为空');
   }
 
-
-
   if (!provider.provider_type) {
     errors.push('请选择供应商类型');
+  }
+
+  if (!strict) {
+    return errors;
   }
 
   if (!provider.base_url?.trim()) {
@@ -89,18 +91,6 @@ export const validateProviderConfig = (provider: Partial<AIProviderConfig>): str
     errors.push('至少需要配置一个模型');
   }
 
-  if (provider.default_temperature !== undefined) {
-    if (provider.default_temperature < 0 || provider.default_temperature > 2) {
-      errors.push('温度参数应在0-2之间');
-    }
-  }
-
-  if (provider.default_max_tokens !== undefined) {
-    if (provider.default_max_tokens < 1 || provider.default_max_tokens > 100000) {
-      errors.push('最大tokens应在1-100000之间');
-    }
-  }
-
   return errors;
 };
 
@@ -108,48 +98,48 @@ export const validateProviderConfig = (provider: Partial<AIProviderConfig>): str
  * 检查是否有默认供应商
  * @param providers 供应商列表
  */
-export const hasDefaultProvider = (providers: AIProviderConfig[]): boolean => {
-  return providers.some(provider => provider.is_default && provider.is_active);
-};
+// export const hasDefaultProvider = (providers: AIProviderConfig[]): boolean => {
+//   return providers.some(provider => provider.is_default && provider.is_active);
+// };
 
 /**
  * 获取默认供应商
  * @param providers 供应商列表
  */
-export const getDefaultProvider = (providers: AIProviderConfig[]): AIProviderConfig | undefined => {
-  return providers.find(provider => provider.is_default && provider.is_active);
-};
+// export const getDefaultProvider = (providers: AIProviderConfig[]): AIProviderConfig | undefined => {
+//   return providers.find(provider => provider.is_default && provider.is_active);
+// };
 
 /**
  * 按优先级排序供应商
  * @param providers 供应商列表
  */
-export const sortProvidersByPriority = (providers: AIProviderConfig[]): AIProviderConfig[] => {
-  return [...providers].sort((a, b) => {
-    // 优先级高的在前
-    if (a.priority !== b.priority) {
-      return b.priority - a.priority;
-    }
-    // 优先级相同时，默认供应商在前
-    if (a.is_default !== b.is_default) {
-      return a.is_default ? -1 : 1;
-    }
-    // 激活状态的在前
-    if (a.is_active !== b.is_active) {
-      return a.is_active ? -1 : 1;
-    }
-    // 最后按名称排序
-    return a.name.localeCompare(b.name);
-  });
-};
+// export const sortProvidersByPriority = (providers: AIProviderConfig[]): AIProviderConfig[] => {
+//   return [...providers].sort((a, b) => {
+//     // 优先级高的在前
+//     if (a.priority !== b.priority) {
+//       return b.priority - a.priority;
+//     }
+//     // 优先级相同时，默认供应商在前
+//     if (a.is_default !== b.is_default) {
+//       return a.is_default ? -1 : 1;
+//     }
+//     // 激活状态的在前
+//     if (a.is_active !== b.is_active) {
+//       return a.is_active ? -1 : 1;
+//     }
+//     // 最后按名称排序
+//     return a.name.localeCompare(b.name);
+//   });
+// };
 
 /**
  * 过滤激活的供应商
  * @param providers 供应商列表
  */
-export const getActiveProviders = (providers: AIProviderConfig[]): AIProviderConfig[] => {
-  return providers.filter(provider => provider.is_active);
-};
+// export const getActiveProviders = (providers: AIProviderConfig[]): AIProviderConfig[] => {
+//   return providers.filter(provider => provider.is_active);
+// };
 
 /**
  * 生成供应商配置的摘要信息
@@ -159,12 +149,12 @@ export const getProviderSummary = (provider: AIProviderConfig): string => {
   const parts = [
     getProviderTypeDisplayName(provider.provider_type),
     `${provider.models.length} 个模型`,
-    provider.is_active ? '已激活' : '已禁用'
+    // provider.is_active ? '已激活' : '已禁用'
   ];
   
-  if (provider.is_default) {
-    parts.push('默认');
-  }
+  // if (provider.is_default) {
+  //   parts.push('默认');
+  // }
 
   return parts.join(' • ');
 }; 

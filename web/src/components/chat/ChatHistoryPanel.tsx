@@ -69,19 +69,19 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
   // 添加快捷键支持 (Ctrl+F 打开搜索)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 'f') {
-        event.preventDefault();
-        setSearchDialogOpen(true);
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (event: KeyboardEvent) => {
+  //     if (event.ctrlKey && event.key === 'f') {
+  //       event.preventDefault();
+  //       setSearchDialogOpen(true);
+  //     }
+  //   };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
+  //   document.addEventListener('keydown', handleKeyDown);
+  //   return () => {
+  //     document.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, []);
 
   // 获取Agent名称
   const getAgentName = (agentId: string | null) => {

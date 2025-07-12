@@ -70,7 +70,6 @@ class User(Base):
     avatar = Column(String(500), nullable=True)
     role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.USER)
     register_time = Column(DateTime, nullable=False, default=datetime.now)
-    llm_request_logs = relationship("LLMRequestLog", back_populates="user", cascade="all, delete-orphan")
 
 class SiteConfig(Base):
     """网站配置表"""
@@ -132,11 +131,10 @@ class Conversation(Base):
     status = Column(SQLEnum(ConversationStatus), nullable=False, default=ConversationStatus.ACTIVE)
     create_time = Column(DateTime, nullable=False, default=datetime.now)
     update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
-    llm_request_logs = relationship("LLMRequestLog", back_populates="conversation", cascade="all, delete-orphan")
 
 class AIProviderConfig(Base):
     """AI供应商配置表"""
-    __tablename__ = "ai_provider_configs"
+    __tablename__ = "ai_providers"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(100), nullable=False, unique=True)  # 配置显示名称，如 "OpenAI主账户"，同时作为唯一标识符
@@ -145,25 +143,20 @@ class AIProviderConfig(Base):
     api_key = Column(String(500), nullable=False)  # API密钥（应该加密存储）
     proxy = Column(UnicodeJSON, nullable=True)  # 代理配置 {"url": "http://127.0.0.1:7890", "username": "", "password": ""}
     models = Column(UnicodeJSON, nullable=False, default=list)  # 支持的模型列表
-    default_model = Column(String(100), nullable=True)  # 默认模型
-    default_temperature = Column(Float, nullable=True, default=0.7)  # 默认温度
-    default_max_tokens = Column(Integer, nullable=True, default=2000)  # 默认最大tokens
-    is_active = Column(Boolean, nullable=False, default=True)  # 是否激活
-    is_default = Column(Boolean, nullable=False, default=False)  # 是否为默认供应商
-    priority = Column(Integer, nullable=False, default=0)  # 优先级（数字越大优先级越高）
-    rate_limit_per_minute = Column(Integer, nullable=True)  # 每分钟请求限制
+    rpm = Column(Integer, nullable=True)  # 每分钟请求限制
     extra_config = Column(UnicodeJSON, nullable=False, default=dict)  # 额外配置参数
     description = Column(Text, nullable=True)  # 配置描述
+    creator_id = Column(String, nullable=False)  # 创建者ID
+    access_level = Column(Integer, nullable=False, default=0)  # 访问级别. 0: 仅限管理员, 1: 仅限创建者, 2: 普通用户, >=3: 无需登录
     create_time = Column(DateTime, nullable=False, default=datetime.now)
     update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
-    llm_request_logs = relationship("LLMRequestLog", back_populates="provider_config")
 
 class Agent(Base):
     """AI Agent Table"""
     __tablename__ = "agents"
     
     agent_id = Column(String(100), primary_key=True)  # agent唯一标识作为主键
-    user_id = Column(String, nullable=False)  # 创建者ID
+    creator_id = Column(String, nullable=False)  # 创建者ID
     provider = Column(String(100), nullable=False)  # 关联的供应商名称（对应AIProviderConfig.name）
     model = Column(String(100), nullable=False)  # 使用的模型名称
     top_p = Column(Float, nullable=True)  # top_p参数
@@ -172,90 +165,10 @@ class Agent(Base):
     preset_messages = Column(UnicodeJSON, nullable=False, default=list)  # 预设消息（prompt）
     app_preset = Column(UnicodeJSON, nullable=False, default=dict)  # 应用配置：{name, description, greetings, suggested_questions, creation_date, ...}
     avatar = Column(UnicodeJSON, nullable=True)  # 头像配置：{variant, emoji, bg_color, link}
-    is_public = Column(Boolean, nullable=False, default=False)  # 是否公开
-    is_default = Column(Boolean, nullable=False, default=False)  # 是否为默认agent
+    access_level = Column(Integer, nullable=False, default=0)  # 访问级别. 0: 仅限管理员, 1: 仅限创建者, 2: 普通用户, >=3: 无需登录
     create_time = Column(DateTime, nullable=False, default=datetime.now)
     update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
-    llm_request_logs = relationship("LLMRequestLog", back_populates="agent")
 
-class LLMRequestLog(Base):
-    """LLM请求日志表"""
-    __tablename__ = "llm_request_logs"
-    
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    
-    # 关联信息
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
-    conversation_id = Column(String, ForeignKey("conversations.id"), nullable=True, index=True)
-    agent_id = Column(String, ForeignKey("agents.agent_id"), nullable=True)
-    provider_config_id = Column(String, ForeignKey("ai_provider_configs.id"), nullable=False)
-    
-    # 请求参数
-    model = Column(String, nullable=False)
-    temperature = Column(Float, nullable=True)
-    max_tokens = Column(Integer, nullable=True)
-    stream = Column(Boolean, default=False)
-    
-    # 请求内容 - 改为TEXT类型，手动进行JSON序列化以避免中文转义问题
-    request_params = Column(UnicodeJSON, nullable=True)  # 完整的请求参数
-    
-    # 响应内容
-    response_content = Column(Text, nullable=True)
-    finish_reason = Column(String, nullable=True)
-    
-    # 计费信息
-    prompt_tokens = Column(Integer, nullable=True)
-    completion_tokens = Column(Integer, nullable=True)
-    total_tokens = Column(Integer, nullable=True)
-    estimated_cost = Column(Numeric(precision=10, scale=6), nullable=True)  # 估算成本
-    
-    # 性能信息
-    start_time = Column(DateTime, nullable=False, default=datetime.now)
-    end_time = Column(DateTime, nullable=True)
-    duration_ms = Column(Integer, nullable=True)  # 请求持续时间（毫秒）
-    
-    # 状态和错误信息
-    status = Column(String, nullable=False, default="pending")  # pending, success, error
-    error_message = Column(Text, nullable=True)
-    
-    # 额外信息
-    extra_metadata = Column(UnicodeJSON, nullable=True)  # 其他元数据
-    
-    # 关系
-    user = relationship("User", back_populates="llm_request_logs")
-    conversation = relationship("Conversation", back_populates="llm_request_logs")
-    agent = relationship("Agent", back_populates="llm_request_logs")
-    provider_config = relationship("AIProviderConfig", back_populates="llm_request_logs")
-    
-    def __repr__(self):
-        return f"<LLMRequestLog(id={self.id}, model={self.model}, status={self.status})>"
-    
-    def to_dict(self):
-        # 手动解析JSON字符串为对象
-        return {
-            "id": self.id,
-            "user_id": self.user_id,
-            "conversation_id": self.conversation_id,
-            "agent_id": self.agent_id,
-            "provider_config_id": self.provider_config_id,
-            "model": self.model,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-            "stream": self.stream,
-            "request_params": self.request_params,  # 现在会正确显示中文
-            "response_content": self.response_content,
-            "finish_reason": self.finish_reason,
-            "prompt_tokens": self.prompt_tokens,
-            "completion_tokens": self.completion_tokens,
-            "total_tokens": self.total_tokens,
-            "estimated_cost": float(self.estimated_cost) if self.estimated_cost else None,
-            "start_time": self.start_time.isoformat() + 'Z' if self.start_time else None,
-            "end_time": self.end_time.isoformat() + 'Z' if self.end_time else None,
-            "duration_ms": self.duration_ms,
-            "status": self.status,
-            "error_message": self.error_message,
-            "extra_metadata": self.extra_metadata  # 现在会正确显示中文
-        }
 
 # 数据库配置
 database_url = get_settings().database_url

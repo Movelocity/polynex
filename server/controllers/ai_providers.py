@@ -3,90 +3,22 @@ AI供应商配置管理API控制器
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from typing import List
 from sqlalchemy.orm import Session
 import logging
 
-from models.database import AIProviderType, get_db
-from libs.auth import get_current_user_id, require_admin_permission
+from fields.schemas import AIProviderType
+from models.database import get_db
+from fields.schemas import AIProviderConfigCreate, AIProviderConfigUpdate, AIProviderConfigResponse, TestProviderRequest
+from libs.auth import get_current_user_id
 from services import get_ai_provider_service_singleton, AIProviderService
 from libs.prividers.OpenAIProvider import OpenAIProvider
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/ai", tags=["AI供应商管理"])
+router = APIRouter(prefix="/api/ai_providers", tags=["AI供应商管理"])
 
 
-# Pydantic 模型
-class ProxyConfig(BaseModel):
-    """代理配置模型"""
-    url: Optional[str] = None  # 代理URL，包含协议+IP/域名+端口，如: http://127.0.0.1:7890
-    username: Optional[str] = None
-    password: Optional[str] = None
-
-
-class AIProviderConfigCreate(BaseModel):
-    name: str
-    provider_type: AIProviderType  # 技术类型
-    base_url: str
-    api_key: str
-    proxy: Optional[ProxyConfig] = None  # 代理配置
-    models: List[str] = []
-    default_model: Optional[str] = None
-    default_temperature: Optional[float] = 0.7
-    default_max_tokens: Optional[int] = 2000
-    is_active: bool = True
-    is_default: bool = False
-    priority: int = 0
-    rate_limit_per_minute: Optional[int] = None
-    extra_config: dict = {}
-    description: Optional[str] = None
-
-
-class AIProviderConfigUpdate(BaseModel):
-    name: Optional[str] = None
-    provider_type: Optional[AIProviderType] = None  # 技术类型
-    base_url: Optional[str] = None
-    api_key: Optional[str] = None
-    proxy: Optional[ProxyConfig] = None  # 代理配置
-    models: Optional[List[str]] = None
-    default_model: Optional[str] = None
-    default_temperature: Optional[float] = None
-    default_max_tokens: Optional[int] = None
-    is_active: Optional[bool] = None
-    is_default: Optional[bool] = None
-    priority: Optional[int] = None
-    rate_limit_per_minute: Optional[int] = None
-    extra_config: Optional[dict] = None
-    description: Optional[str] = None
-
-
-class AIProviderConfigResponse(BaseModel):
-    id: str
-    name: str
-    provider_type: AIProviderType  # 技术类型
-    base_url: str
-    proxy: Optional[Dict[str, Any]] = None  # 代理配置
-    models: List[str]
-    default_model: Optional[str]
-    default_temperature: float
-    default_max_tokens: int
-    is_active: bool
-    is_default: bool
-    priority: int
-    rate_limit_per_minute: Optional[int]
-    extra_config: dict
-    description: Optional[str]
-    create_time: str
-    update_time: str
-
-
-class TestProviderRequest(BaseModel):
-    model: Optional[str] = None
-    message: str = "Hello, this is a test message."
-
-
-@router.get("/providers", response_model=List[AIProviderConfigResponse], summary="获取所有AI供应商配置")
+@router.get("/all", response_model=List[AIProviderConfigResponse], summary="获取所有AI供应商配置")
 async def get_all_providers(
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -98,7 +30,7 @@ async def get_all_providers(
     需要用户登录权限。返回系统中配置的所有AI供应商信息。
     """
     try:
-        providers = ai_provider_service.get_all_provider_configs(db)
+        providers = ai_provider_service.get_all_provider_configs(db, current_user_id)
         
         return [
             AIProviderConfigResponse(
@@ -106,17 +38,14 @@ async def get_all_providers(
                 name=provider.name,
                 provider_type=provider.provider_type,
                 base_url=provider.base_url,
+                api_key=provider.api_key,
                 proxy=provider.proxy,
                 models=provider.models,
-                default_model=provider.default_model,
-                default_temperature=provider.default_temperature,
-                default_max_tokens=provider.default_max_tokens,
-                is_active=provider.is_active,
-                is_default=provider.is_default,
-                priority=provider.priority,
-                rate_limit_per_minute=provider.rate_limit_per_minute,
+                rpm=provider.rpm,
                 extra_config=provider.extra_config,
                 description=provider.description,
+                creator_id=provider.creator_id,
+                access_level=provider.access_level,
                 create_time=provider.create_time.isoformat() + 'Z',
                 update_time=provider.update_time.isoformat() + 'Z'
             )
@@ -130,10 +59,10 @@ async def get_all_providers(
         )
 
 
-@router.post("/providers", response_model=AIProviderConfigResponse, summary="创建AI供应商配置")
+@router.post("/create", summary="创建AI供应商配置")
 async def create_provider(
     provider_data: AIProviderConfigCreate,
-    admin_user_id: str = Depends(require_admin_permission),
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
     ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
@@ -146,20 +75,16 @@ async def create_provider(
         provider = ai_provider_service.create_provider_config(
             db,
             name=provider_data.name,
-            provider_type=provider_data.provider_type,
+            provider_type=provider_data.provider_type.upper(),
             base_url=provider_data.base_url,
             api_key=provider_data.api_key,
             proxy=provider_data.proxy.model_dump() if provider_data.proxy else None,
             models=provider_data.models,
-            default_model=provider_data.default_model,
-            default_temperature=provider_data.default_temperature,
-            default_max_tokens=provider_data.default_max_tokens,
-            is_active=provider_data.is_active,
-            is_default=provider_data.is_default,
-            priority=provider_data.priority,
-            rate_limit_per_minute=provider_data.rate_limit_per_minute,
+            rpm=provider_data.rpm,
             extra_config=provider_data.extra_config,
-            description=provider_data.description
+            description=provider_data.description,
+            creator_id=user_id,
+            access_level=provider_data.access_level
         )
         
         return AIProviderConfigResponse(
@@ -167,17 +92,14 @@ async def create_provider(
             name=provider.name,
             provider_type=provider.provider_type,
             base_url=provider.base_url,
+            api_key=provider.api_key,
             proxy=provider.proxy,
             models=provider.models,
-            default_model=provider.default_model,
-            default_temperature=provider.default_temperature,
-            default_max_tokens=provider.default_max_tokens,
-            is_active=provider.is_active,
-            is_default=provider.is_default,
-            priority=provider.priority,
-            rate_limit_per_minute=provider.rate_limit_per_minute,
+            rpm=provider.rpm,
             extra_config=provider.extra_config,
             description=provider.description,
+            creator_id=provider.creator_id,
+            access_level=provider.access_level,
             create_time=provider.create_time.isoformat() + 'Z',
             update_time=provider.update_time.isoformat() + 'Z'
         )
@@ -194,7 +116,7 @@ async def create_provider(
         )
 
 
-@router.get("/providers/{provider_id}", response_model=AIProviderConfigResponse, summary="获取指定AI供应商配置")
+@router.get("/details/{provider_id}", response_model=AIProviderConfigResponse, summary="获取指定AI供应商配置")
 async def get_provider(
     provider_id: str,
     current_user_id: str = Depends(get_current_user_id),
@@ -207,7 +129,7 @@ async def get_provider(
     需要用户登录权限。根据提供商ID获取详细配置信息。
     """
     try:
-        provider = ai_provider_service.get_provider_config(db, provider_id)
+        provider = ai_provider_service.get_provider_config(db, provider_id, current_user_id)
         
         if not provider:
             raise HTTPException(
@@ -222,15 +144,11 @@ async def get_provider(
             base_url=provider.base_url,
             proxy=provider.proxy,
             models=provider.models,
-            default_model=provider.default_model,
-            default_temperature=provider.default_temperature,
-            default_max_tokens=provider.default_max_tokens,
-            is_active=provider.is_active,
-            is_default=provider.is_default,
-            priority=provider.priority,
-            rate_limit_per_minute=provider.rate_limit_per_minute,
+            rpm=provider.rpm,
             extra_config=provider.extra_config,
             description=provider.description,
+            creator_id=provider.creator_id,
+            access_level=provider.access_level,
             create_time=provider.create_time.isoformat() + 'Z',
             update_time=provider.update_time.isoformat() + 'Z'
         )
@@ -242,11 +160,11 @@ async def get_provider(
         )
 
 
-@router.put("/providers/{provider_id}", response_model=AIProviderConfigResponse, summary="更新AI供应商配置")
+@router.put("/update/{provider_id}", response_model=AIProviderConfigResponse, summary="更新AI供应商配置")
 async def update_provider(
     provider_id: str,
     provider_data: AIProviderConfigUpdate,
-    admin_user_id: str = Depends(require_admin_permission),
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
     ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
@@ -261,7 +179,7 @@ async def update_provider(
         if 'proxy' in update_data and update_data['proxy'] is not None:
             update_data['proxy'] = update_data['proxy'] if isinstance(update_data['proxy'], dict) else update_data['proxy'].model_dump()
 
-        provider = ai_provider_service.update_provider_config(db, provider_id, update_data)
+        provider = ai_provider_service.update_provider_config(db, user_id, provider_id, update_data)
         
         if not provider:
             raise HTTPException(
@@ -272,19 +190,15 @@ async def update_provider(
         return AIProviderConfigResponse(
             id=provider.id,
             name=provider.name,
-            provider_type=provider.provider_type,
+            provider_type=provider.provider_type.upper(),
             base_url=provider.base_url,
             proxy=provider.proxy,
             models=provider.models,
-            default_model=provider.default_model,
-            default_temperature=provider.default_temperature,
-            default_max_tokens=provider.default_max_tokens,
-            is_active=provider.is_active,
-            is_default=provider.is_default,
-            priority=provider.priority,
-            rate_limit_per_minute=provider.rate_limit_per_minute,
+            rpm=provider.rpm,
             extra_config=provider.extra_config,
             description=provider.description,
+            creator_id=provider.creator_id,
+            access_level=provider.access_level,
             create_time=provider.create_time.isoformat() + 'Z',
             update_time=provider.update_time.isoformat() + 'Z'
         )
@@ -303,10 +217,11 @@ async def update_provider(
         )
 
 
-@router.delete("/providers/{provider_id}", summary="删除AI供应商配置")
+@router.delete("/delete/{provider_id}", summary="删除AI供应商配置")
 async def delete_provider(
     provider_id: str,
-    admin_user_id: str = Depends(require_admin_permission),
+    # admin_user_id: str = Depends(require_admin_permission),
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
     ai_provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
@@ -316,7 +231,7 @@ async def delete_provider(
     **需要管理员权限**。删除指定的AI供应商配置。注意：删除配置可能会影响使用该配置的代理和会话。
     """
     try:
-        success = ai_provider_service.delete_provider_config(db, provider_id)
+        success = ai_provider_service.delete_provider_config(db, user_id, provider_id)
         
         if not success:
             raise HTTPException(
@@ -333,7 +248,7 @@ async def delete_provider(
         )
 
 
-@router.post("/providers/{provider_id}/test", summary="测试AI供应商配置")
+@router.post("/test/{provider_id}", summary="测试AI供应商配置")
 async def test_provider(
     provider_id: str,
     test_request: TestProviderRequest,
@@ -348,7 +263,7 @@ async def test_provider(
     支持的供应商类型：OpenAI兼容API、自定义API。
     """
     try:
-        provider_config = ai_provider_service.get_provider_config(db, provider_id)
+        provider_config = ai_provider_service.get_provider_config(db, provider_id, current_user_id)
         
         if not provider_config:
             raise HTTPException(
@@ -356,11 +271,11 @@ async def test_provider(
                 detail="Provider not found"
             )
         
-        if not provider_config.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Provider is not active"
-            )
+        # if not provider_config.is_active:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail="Provider is not active"
+        #     )
         
         # 目前只支持OpenAI兼容的API测试
         if provider_config.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:

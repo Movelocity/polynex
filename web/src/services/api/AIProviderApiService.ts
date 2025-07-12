@@ -21,7 +21,7 @@ export class AIProviderApiService implements IAIProviderService {
    */
   async getAllProviders(): Promise<AIProviderConfig[]> {
     try {
-      return await this.apiClient.get<AIProviderConfig[]>('/ai/providers');
+      return await this.apiClient.get<AIProviderConfig[]>('/ai_providers/all');
     } catch (error) {
       console.error('Failed to get AI providers:', error);
       throw error;
@@ -35,7 +35,7 @@ export class AIProviderApiService implements IAIProviderService {
    */
   async getProvider(providerId: string): Promise<AIProviderConfig> {
     try {
-      return await this.apiClient.get<AIProviderConfig>(`/ai/providers/${providerId}`);
+      return await this.apiClient.get<AIProviderConfig>(`/ai_providers/details/${providerId}`);
     } catch (error) {
       console.error(`Failed to get AI provider ${providerId}:`, error);
       throw error;
@@ -49,7 +49,7 @@ export class AIProviderApiService implements IAIProviderService {
    */
   async createProvider(providerData: AIProviderConfigCreate): Promise<AIProviderConfig> {
     try {
-      return await this.apiClient.post<AIProviderConfig>('/ai/providers', providerData);
+      return await this.apiClient.post<AIProviderConfig>('/ai_providers/create', providerData);
     } catch (error) {
       console.error('Failed to create AI provider:', error);
       throw error;
@@ -64,7 +64,7 @@ export class AIProviderApiService implements IAIProviderService {
    */
   async updateProvider(providerId: string, updateData: AIProviderConfigUpdate): Promise<AIProviderConfig> {
     try {
-      return await this.apiClient.put<AIProviderConfig>(`/ai/providers/${providerId}`, updateData);
+      return await this.apiClient.put<AIProviderConfig>(`/ai_providers/update/${providerId}`, updateData);
     } catch (error) {
       console.error(`Failed to update AI provider ${providerId}:`, error);
       throw error;
@@ -78,7 +78,7 @@ export class AIProviderApiService implements IAIProviderService {
    */
   async deleteProvider(providerId: string): Promise<boolean> {
     try {
-      await this.apiClient.delete(`/ai/providers/${providerId}`);
+      await this.apiClient.delete(`/ai_providers/delete/${providerId}`);
       return true;
     } catch (error) {
       console.error(`Failed to delete AI provider ${providerId}:`, error);
@@ -97,7 +97,7 @@ export class AIProviderApiService implements IAIProviderService {
    */
   async testProvider(providerId: string, testRequest: TestProviderRequest): Promise<TestProviderResponse> {
     try {
-      return await this.apiClient.post<TestProviderResponse>(`/ai/providers/${providerId}/test`, testRequest);
+      return await this.apiClient.post<TestProviderResponse>(`/ai_providers/test/${providerId}`, testRequest);
     } catch (error) {
       console.error(`Failed to test AI provider ${providerId}:`, error);
       throw error;

@@ -22,7 +22,7 @@ export class AgentApiService implements IAgentService {
    */
   async createAgent(agentData: AgentCreate): Promise<AgentSummary> {
     try {
-      return await this.apiClient.post<AgentSummary>('/agents/agents', agentData);
+      return await this.apiClient.post<AgentSummary>('/agents/create', agentData);
     } catch (error) {
       console.error('Failed to create agent:', error);
       throw error;
@@ -44,11 +44,8 @@ export class AgentApiService implements IAgentService {
       if (params?.offset !== undefined) {
         queryParams.offset = params.offset.toString();
       }
-      if (params?.include_public !== undefined) {
-        queryParams.include_public = params.include_public.toString();
-      }
 
-      return await this.apiClient.get<AgentSummary[]>('/agents/agents', queryParams);
+      return await this.apiClient.get<AgentSummary[]>('/agents/list', queryParams);
     } catch (error) {
       console.error('Failed to get agents:', error);
       throw error;
@@ -85,7 +82,7 @@ export class AgentApiService implements IAgentService {
    */
   async getAgent(agentId: string): Promise<AgentDetail> {
     try {
-      return await this.apiClient.get<AgentDetail>(`/agents/agents/${agentId}`);
+      return await this.apiClient.get<AgentDetail>(`/agents/details/${agentId}`);
     } catch (error) {
       console.error(`Failed to get agent ${agentId}:`, error);
       throw error;
@@ -100,7 +97,7 @@ export class AgentApiService implements IAgentService {
    */
   async updateAgent(agentId: string, updateData: AgentUpdate): Promise<AgentDetail> {
     try {
-      return await this.apiClient.put<AgentDetail>(`/agents/agents/${agentId}`, updateData);
+      return await this.apiClient.put<AgentDetail>(`/agents/update/${agentId}`, updateData);
     } catch (error) {
       console.error(`Failed to update agent ${agentId}:`, error);
       throw error;
@@ -114,7 +111,7 @@ export class AgentApiService implements IAgentService {
    */
   async deleteAgent(agentId: string): Promise<boolean> {
     try {
-      await this.apiClient.delete(`/agents/agents/${agentId}`);
+      await this.apiClient.delete(`/agents/delete/${agentId}`);
       return true;
     } catch (error) {
       console.error(`Failed to delete agent ${agentId}:`, error);

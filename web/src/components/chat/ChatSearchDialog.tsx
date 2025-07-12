@@ -186,7 +186,7 @@ export const ChatSearchDialog: React.FC<ChatSearchDialogProps> = ({
             </div>
           ) : searchResults.length === 0 && hasSearched && !isSearching ? (
             <div className="flex items-center justify-center h-40 text-muted-foreground">
-              <div className="text-center">
+              <div className="text-center"> 
                 <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">没有找到匹配的对话</p>
                 <p className="text-xs mt-1">尝试使用不同的关键词</p>
@@ -194,56 +194,51 @@ export const ChatSearchDialog: React.FC<ChatSearchDialogProps> = ({
             </div>
           ) : (
             <ScrollArea className="h-full">
-              <div className="space-y-2 p-1">
+              <div className="space-y-2 p-1 max-w-[600px]">
                 {searchResults.map((conversation, index) => (
-                  <div key={`${conversation.id}-${index}`}>
-                    <div
-                      className="group p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => handleSelectConversation(conversation)}
-                    >
-                      {/* 头部 */}
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-foreground truncate pr-2">
-                            {highlightText(conversation.title || '未命名对话', currentQuery)}
-                          </h4>
-                        </div>
-                        <div className="flex items-center space-x-2 flex-shrink-0">
-                          <Badge variant="secondary" className="text-xs">
-                            {conversation.match_count} 处匹配
-                          </Badge>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                        </div>
+                  <div
+                    key={`${conversation.id}-${index}`}
+                    className="group p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => handleSelectConversation(conversation)}
+                  >
+                    {/* 头部 */}
+                    <div className="flex items-start justify-between mb-2 break-words flex-wrap">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-foreground truncate pr-2 break-words">
+                          {highlightText(conversation.title || '未命名对话', currentQuery)}
+                        </h4>
                       </div>
-
-                      {/* 上下文预览 */}
-                      <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                        {highlightText(conversation.context, currentQuery)}
-                      </div>
-
-                      {/* 底部信息 */}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-3 w-3" />
-                          <span>更新于 {formatTime(conversation.update_time)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <span>会话ID:</span>
-                          <code className="text-xs bg-muted px-1 rounded">
-                            {conversation.session_id.slice(0, 8)}...
-                          </code>
-                        </div>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        <Badge variant="secondary" className="text-xs">
+                          {conversation.match_count} 处匹配
+                        </Badge>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                       </div>
                     </div>
-                    
-                    {index < searchResults.length - 1 && (
-                      <Separator className="my-2" />
-                    )}
+
+                    {/* 上下文预览 */}
+                    <div className="text-xs text-muted-foreground mb-2 line-clamp-2 break-words">
+                      {highlightText(conversation.context, currentQuery)}
+                    </div>
+
+                    {/* 底部信息 */}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-3 w-3" />
+                        <span>更新于 {formatTime(conversation.update_time)}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <span>会话ID:</span>
+                        <code className="text-xs bg-muted px-1 rounded">
+                          {conversation.session_id.slice(0, 8)}...
+                        </code>
+                      </div>
+                    </div>
                   </div>
                 ))}
 
                 {/* 加载更多按钮 */}
-                {searchResults.length > 0 && searchResults.length < totalCount && (
+                {/* {searchResults.length > 0 && searchResults.length < totalCount && (
                   <div className="flex justify-center pt-4">
                     <Button
                       variant="outline"
@@ -264,7 +259,7 @@ export const ChatSearchDialog: React.FC<ChatSearchDialogProps> = ({
                       )}
                     </Button>
                   </div>
-                )}
+                )} */}
               </div>
             </ScrollArea>
           )}

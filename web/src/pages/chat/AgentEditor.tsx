@@ -37,7 +37,8 @@ export function AgentEditor() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createAgent, updateAgent, getAgent } = useAgents();
-  const { activeProviders } = useAIProviders();
+  // const { activeProviders } = useAIProviders();
+  const { providers } = useAIProviders();
 
   const isEditMode = !!agentId && agentId !== 'create';
   const [loading, setLoading] = useState(false);
@@ -54,8 +55,7 @@ export function AgentEditor() {
     top_p: number;
     max_tokens: number;
     preset_messages: ExtendedAgentMessage[];
-    is_public: boolean;
-    is_default: boolean;
+    access_level: number;
   }>({
     agent_id: '',
     app_preset: {
@@ -82,8 +82,7 @@ export function AgentEditor() {
         token_count: 24
       }
     ],
-    is_public: false,
-    is_default: false
+    access_level: 1
   });
 
   // 模态框状态
@@ -117,8 +116,7 @@ export function AgentEditor() {
             template_enabled: (msg as any).template_enabled || false,
             token_count: (msg as any).token_count || 0
           })),
-          is_public: agent.is_public,
-          is_default: agent.is_default
+          access_level: agent.access_level || 1
         });
       }
     } catch (error) {
@@ -142,16 +140,16 @@ export function AgentEditor() {
 
   // 初始化创建模式的默认值
   useEffect(() => {
-    if (!isEditMode && activeProviders.length > 0 && !formData.provider) {
-      const defaultProvider = activeProviders.find(p => p.is_default) || activeProviders[0];
+    if (!isEditMode && providers.length > 0 && !formData.provider) {
+      const defaultProvider = providers.find(p => p.access_level === 3) || providers[0];
       setFormData(prev => ({
         ...prev,
         provider: defaultProvider.name,
-        model: defaultProvider.default_model || (defaultProvider.models?.[0] || ''),
+        model: defaultProvider.models?.[0] || '',
         agent_id: generateAgentId()
       }));
     }
-  }, [isEditMode, activeProviders.length, formData.provider, generateAgentId]);
+  }, [isEditMode, providers.length, formData.provider, generateAgentId]);
 
   const handleSave = async () => {
     if (!formData.app_preset.name.trim()) {
@@ -184,8 +182,7 @@ export function AgentEditor() {
           preset_messages: formData.preset_messages,
           app_preset: formData.app_preset,
           avatar: formData.avatar,
-          is_public: formData.is_public,
-          is_default: formData.is_default
+          access_level: formData.access_level
         };
         const success = await updateAgent(agentId!, updateData);
         if (success) {
@@ -206,8 +203,7 @@ export function AgentEditor() {
           preset_messages: formData.preset_messages,
           app_preset: formData.app_preset,
           avatar: formData.avatar,
-          is_public: formData.is_public,
-          is_default: formData.is_default
+          access_level: formData.access_level
         };
         const success = await createAgent(createData);
         if (success) {
@@ -276,7 +272,7 @@ export function AgentEditor() {
     );
   }
 
-  const selectedProvider = activeProviders.find(p => p.name === formData.provider);
+  const selectedProvider = providers.find(p => p.name === formData.provider);
   const availableModels = selectedProvider?.models || [];
 
   return (
@@ -342,8 +338,8 @@ export function AgentEditor() {
                       </p>
                     </div>
                     <Switch
-                      checked={formData.is_public}
-                      onCheckedChange={(checked) => updateFormData('is_public', checked)}
+                      checked={formData.access_level === 3}
+                      onCheckedChange={(checked) => updateFormData('access_level', checked ? 3 : 1)}
                     />
                   </div>
 
@@ -358,8 +354,8 @@ export function AgentEditor() {
                       </p>
                     </div>
                     <Switch
-                      checked={formData.is_default}
-                      onCheckedChange={(checked) => updateFormData('is_default', checked)}
+                      checked={formData.access_level === 3}
+                      onCheckedChange={(checked) => updateFormData('access_level', checked ? 3 : 1)}
                     />
                   </div>
                 </div>
@@ -415,9 +411,9 @@ export function AgentEditor() {
                   onValueChange={(value) => {
                     updateFormData('provider', value);
                     // 重置模型选择
-                    const provider = activeProviders.find(p => p.name === value);
+                    const provider = providers.find(p => p.name === value);
                     if (provider && provider.models && provider.models.length > 0) {
-                      updateFormData('model', provider.default_model || provider.models[0]);
+                      updateFormData('model', provider.models[0]);
                     }
                   }}
                 >
@@ -425,7 +421,7 @@ export function AgentEditor() {
                     <SelectValue placeholder="选择供应商" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeProviders.map(provider => (
+                    {providers.map(provider => (
                       <SelectItem key={provider.id} value={provider.name}>
                         {provider.name}
                       </SelectItem>

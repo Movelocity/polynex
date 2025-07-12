@@ -131,15 +131,11 @@ export interface AIProviderConfig {
   base_url: string;
   proxy?: ProxyConfig;
   models: string[];
-  default_model?: string;
-  default_temperature: number;
-  default_max_tokens: number;
-  is_active: boolean;
-  is_default: boolean;
-  priority: number;
-  rate_limit_per_minute?: number;
+  rpm?: number;
   extra_config: Record<string, any>;
   description?: string;
+  creator_id: string;
+  access_level: number;
   create_time: string;
   update_time: string;
 }
@@ -152,15 +148,10 @@ export interface AIProviderConfigCreate {
   api_key: string;
   proxy?: ProxyConfig;
   models?: string[];
-  default_model?: string;
-  default_temperature?: number;
-  default_max_tokens?: number;
-  is_active?: boolean;
-  is_default?: boolean;
-  priority?: number;
-  rate_limit_per_minute?: number;
+  rpm?: number;
   extra_config?: Record<string, any>;
   description?: string;
+  access_level?: number;
 }
 
 // AI供应商配置更新类型
@@ -171,15 +162,10 @@ export interface AIProviderConfigUpdate {
   api_key?: string;
   proxy?: ProxyConfig;
   models?: string[];
-  default_model?: string;
-  default_temperature?: number;
-  default_max_tokens?: number;
-  is_active?: boolean;
-  is_default?: boolean;
-  priority?: number;
-  rate_limit_per_minute?: number;
+  rpm?: number;
   extra_config?: Record<string, any>;
   description?: string;
+  access_level?: number;
 }
 
 // 供应商测试请求类型
@@ -225,14 +211,13 @@ export interface AppPreset {
 export interface AgentSummary {
   id: string;
   agent_id: string;
-  user_id: string;
+  creator_id: string;
   provider: string;
   model: string;
   name: string;
   description: string;
   avatar: AvatarConfig;
-  is_public: boolean;
-  is_default: boolean;
+  access_level: number;
   create_time: string;
   update_time: string;
 }
@@ -241,7 +226,7 @@ export interface AgentSummary {
 export interface AgentDetail {
   id: string;
   agent_id: string;
-  user_id: string;
+  creator_id: string;
   provider: string;
   model: string;
   top_p?: number;
@@ -250,8 +235,7 @@ export interface AgentDetail {
   preset_messages: AgentMessage[];
   app_preset: AppPreset;
   avatar: AvatarConfig;
-  is_public: boolean;
-  is_default: boolean;
+  access_level: number;
   create_time: string;
   update_time: string;
 }
@@ -267,8 +251,7 @@ export interface AgentCreate {
   preset_messages?: AgentMessage[];
   app_preset: AppPreset;
   avatar: AvatarConfig;
-  is_public?: boolean;
-  is_default?: boolean;
+  access_level?: number;
 }
 
 // AI代理更新类型
@@ -281,8 +264,7 @@ export interface AgentUpdate {
   preset_messages?: AgentMessage[];
   app_preset?: AppPreset;
   avatar?: AvatarConfig;
-  is_public?: boolean;
-  is_default?: boolean;
+  access_level?: number;
 }
 
 // ===== 对话相关类型 =====

@@ -118,13 +118,13 @@ export const getAgentSummary = (agent: AgentSummary | AgentDetail): string => {
     agent.model
   ];
 
-  if (agent.is_default) {
-    parts.push('默认');
-  }
+  // if (agent.is_default) {
+  //   parts.push('默认');
+  // }
 
-  if (agent.is_public) {
-    parts.push('公开');
-  }
+  // if (agent.is_public) {
+  //   parts.push('公开');
+  // }
 
   return parts.join(' • ');
 };
@@ -185,14 +185,14 @@ export const filterAgents = (
     }
 
     // 可见性过滤
-    if (filter.isPublic !== undefined && agent.is_public !== filter.isPublic) {
-      return false;
-    }
+    // if (filter.isPublic !== undefined && agent.is_public !== filter.isPublic) {
+    //   return false;
+    // }
 
     // 默认代理过滤
-    if (filter.isDefault !== undefined && agent.is_default !== filter.isDefault) {
-      return false;
-    }
+    // if (filter.isDefault !== undefined && agent.is_default !== filter.isDefault) {
+    //   return false;
+    // }
 
     return true;
   });
@@ -204,7 +204,7 @@ export const filterAgents = (
  * @param currentUserId 当前用户ID
  */
 export const isAgentOwner = (agent: AgentSummary | AgentDetail, currentUserId: string): boolean => {
-  return agent.user_id === currentUserId;
+  return agent.creator_id === currentUserId;
 };
 
 /**

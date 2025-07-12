@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/agents", tags=["AI代理管理"])
 
 
-@router.post("/agents", response_model=AgentSummary, summary="创建AI代理")
+@router.post("/create", response_model=AgentSummary, summary="创建AI代理")
 async def create_agent(
     agent_data: AgentCreate,
     current_user_id: str = Depends(get_current_user_id),
@@ -37,14 +37,13 @@ async def create_agent(
         return AgentSummary(
             id=agent.agent_id,
             agent_id=agent.agent_id,
-            user_id=agent.user_id,
+            creator_id=agent.creator_id,
             provider=agent.provider,
             model=agent.model,
             name=agent.app_preset.get('name', 'Unnamed Agent'),
             description=agent.app_preset.get('description', ''),
             avatar=agent.avatar,
-            is_public=agent.is_public,
-            is_default=agent.is_default,
+            access_level=agent.access_level,
             create_time=agent.create_time.isoformat() + 'Z',
             update_time=agent.update_time.isoformat() + 'Z'
         )
@@ -56,9 +55,8 @@ async def create_agent(
         )
 
 
-@router.get("/agents", response_model=List[AgentSummary], summary="获取AI代理列表")
+@router.get("/list", response_model=List[AgentSummary], summary="获取AI代理列表")
 async def get_agents(
-    include_public: bool = True,
     limit: int = 20,
     offset: int = 0,
     current_user_id: str = Depends(get_current_user_id),
@@ -79,7 +77,6 @@ async def get_agents(
         agents = await agent_service.get_user_agents(
             db,
             current_user_id,
-            include_public,
             limit,
             offset
         )
@@ -88,14 +85,13 @@ async def get_agents(
             AgentSummary(
                 id=agent.agent_id,
                 agent_id=agent.agent_id,
-                user_id=agent.user_id,
+                creator_id=agent.creator_id,
                 provider=agent.provider,
                 model=agent.model,
                 name=agent.app_preset.get('name', 'Unnamed Agent'),
                 description=agent.app_preset.get('description', ''),
                 avatar=agent.avatar,
-                is_public=agent.is_public,
-                is_default=agent.is_default,
+                access_level=agent.access_level,
                 create_time=agent.create_time.isoformat() + 'Z',
                 update_time=agent.update_time.isoformat() + 'Z'
             )
@@ -109,7 +105,7 @@ async def get_agents(
         )
 
 
-@router.get("/agents/{agent_id}", response_model=AgentDetail, summary="获取AI代理详情")
+@router.get("/details/{agent_id}", response_model=AgentDetail, summary="获取AI代理详情")
 async def get_agent(
     agent_id: str,
     current_user_id: str = Depends(get_current_user_id),
@@ -140,7 +136,7 @@ async def get_agent(
         return AgentDetail(
             id=agent.agent_id,
             agent_id=agent.agent_id,
-            user_id=agent.user_id,
+            creator_id=agent.creator_id,
             provider=agent.provider,
             model=agent.model,
             top_p=agent.top_p,
@@ -149,8 +145,7 @@ async def get_agent(
             preset_messages=agent.preset_messages,
             app_preset=agent.app_preset,
             avatar=agent.avatar,
-            is_public=agent.is_public,
-            is_default=agent.is_default,
+            access_level=agent.access_level,
             create_time=agent.create_time.isoformat() + 'Z',
             update_time=agent.update_time.isoformat() + 'Z'
         )
@@ -164,7 +159,7 @@ async def get_agent(
         )
 
 
-@router.put("/agents/{agent_id}", response_model=AgentDetail, summary="更新AI代理")
+@router.put("/update/{agent_id}", response_model=AgentDetail, summary="更新AI代理")
 async def update_agent(
     agent_id: str,
     agent_update: AgentUpdate,
@@ -198,7 +193,7 @@ async def update_agent(
         return AgentDetail(
             id=agent.agent_id,
             agent_id=agent.agent_id,
-            user_id=agent.user_id,
+            creator_id=agent.creator_id,
             provider=agent.provider,
             model=agent.model,
             top_p=agent.top_p,
@@ -207,8 +202,7 @@ async def update_agent(
             preset_messages=agent.preset_messages,
             app_preset=agent.app_preset,
             avatar=agent.avatar,
-            is_public=agent.is_public,
-            is_default=agent.is_default,
+            access_level=agent.access_level,
             create_time=agent.create_time.isoformat() + 'Z',
             update_time=agent.update_time.isoformat() + 'Z'
         )
@@ -222,7 +216,7 @@ async def update_agent(
         )
 
 
-@router.delete("/agents/{agent_id}", summary="删除AI代理")
+@router.delete("/delete/{agent_id}", summary="删除AI代理")
 async def delete_agent(
     agent_id: str,
     current_user_id: str = Depends(get_current_user_id),
@@ -288,14 +282,13 @@ async def get_public_agents(
             AgentSummary(
                 id=agent.agent_id,
                 agent_id=agent.agent_id,
-                user_id=agent.user_id,
+                creator_id=agent.creator_id,
                 provider=agent.provider,
                 model=agent.model,
                 name=agent.app_preset.get('name', 'Unnamed Agent'),
                 description=agent.app_preset.get('description', ''),
                 avatar=agent.avatar,
-                is_public=agent.is_public,
-                is_default=agent.is_default,
+                access_level=agent.access_level,
                 create_time=agent.create_time.isoformat() + 'Z',
                 update_time=agent.update_time.isoformat() + 'Z'
             )

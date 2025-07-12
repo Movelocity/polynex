@@ -69,7 +69,7 @@ export function Conversation() {
   useEffect(() => {
     if (!agentId && !isLoadingAgents && agents.length > 0 && !selectedAgent) {
       // 优先选择默认agent，否则选择第一个可用的agent
-      const targetAgent = agents.find(agent => agent.is_default) || agents[0];
+      const targetAgent = agents.find(agent => agent.access_level > 0) || agents[0];
       if (targetAgent) {
         // 使用hash设置agent参数
         setAgentHash(targetAgent.id);

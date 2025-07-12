@@ -319,14 +319,16 @@ class Agent(BaseModel):
     """AI代理模型"""
     id: str
     agentId: str
-    userId: str
-    provider: AIProvider
-    baseUrl: Optional[str] = None
-    apiKey: Optional[str] = None  # 前端不返回实际密钥
+    creatorId: str
+    provider: str  # 供应商名称
+    model: str  # 模型名称
+    topP: Optional[float] = None
+    temperature: Optional[float] = None
+    maxTokens: Optional[int] = None
     presetMessages: List[Message]
     appPreset: Dict[str, Any]
-    isPublic: bool
-    isDefault: bool
+    avatar: Optional[Dict[str, Any]] = None  # 头像配置
+    accessLevel: int = 1
     createTime: str
     updateTime: str
 
@@ -335,14 +337,13 @@ class AgentSummary(BaseModel):
     """Agent摘要模型（不包含敏感信息）"""
     id: str
     agent_id: str
-    user_id: str
+    creator_id: str
     provider: str  # 供应商名称
     model: str  # 模型名称
     name: str
     description: str
     avatar: Optional[Dict[str, Any]] = None  # 头像配置
-    is_public: bool
-    is_default: bool
+    access_level: int = 1
     create_time: str
     update_time: str
 
@@ -351,7 +352,7 @@ class AgentDetail(BaseModel):
     """Agent详细信息模型"""
     id: str
     agent_id: str
-    user_id: str
+    creator_id: str
     provider: str  # 供应商名称
     model: str  # 模型名称
     top_p: Optional[float] = None
@@ -360,8 +361,7 @@ class AgentDetail(BaseModel):
     preset_messages: List[Dict[str, Any]] = []
     app_preset: Dict[str, Any] = {}
     avatar: Optional[Dict[str, Any]] = None  # 头像配置
-    is_public: bool
-    is_default: bool
+    access_level: int = 1
     create_time: str
     update_time: str
 
@@ -377,8 +377,7 @@ class AgentCreate(BaseModel):
     preset_messages: List[Dict[str, Any]] = []
     app_preset: Dict[str, Any] = {}
     avatar: Optional[Dict[str, Any]] = None  # 头像配置
-    is_public: bool = False
-    is_default: bool = False
+    access_level: int = 1
 
 
 class AgentUpdate(BaseModel):
@@ -391,8 +390,7 @@ class AgentUpdate(BaseModel):
     preset_messages: Optional[List[Dict[str, Any]]] = None
     app_preset: Optional[Dict[str, Any]] = None
     avatar: Optional[Dict[str, Any]] = None  # 头像配置
-    is_public: Optional[bool] = None
-    is_default: Optional[bool] = None
+    access_level: Optional[int] = None
 
 
 class ChatRequest(BaseModel):
@@ -477,4 +475,65 @@ class SearchResponse(BaseModel):
     results: List[ConversationSearchResult]
     total_count: int
     query: str
+
+
+# ===== AI Provider 相关模型 =====
+
+class ProxyConfig(BaseModel):
+    """代理配置模型"""
+    url: Optional[str] = None  # 代理URL，包含协议+IP/域名+端口，如: http://127.0.0.1:7890
+    username: Optional[str] = None
+    password: Optional[str] = None
+
+
+class AIProviderConfigCreate(BaseModel):
+    """创建AI供应商配置模型"""
+    name: str
+    provider_type: AIProviderType  # 技术类型
+    base_url: str
+    api_key: str
+    proxy: Optional[ProxyConfig] = None  # 代理配置
+    models: List[str] = []
+    rpm: Optional[int] = None
+    extra_config: dict = {}
+    description: Optional[str] = None
+    access_level: int = 1
+
+
+class AIProviderConfigUpdate(BaseModel):
+    """更新AI供应商配置模型"""
+    name: Optional[str] = None
+    provider_type: Optional[AIProviderType] = None  # 技术类型
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    proxy: Optional[ProxyConfig] = None  # 代理配置
+    models: Optional[List[str]] = None
+    rpm: Optional[int] = None
+    extra_config: Optional[dict] = None
+    description: Optional[str] = None
+    access_level: Optional[int] = None
+
+
+class AIProviderConfigResponse(BaseModel):
+    """AI供应商配置响应模型"""
+    id: str
+    name: str
+    provider_type: AIProviderType  # 技术类型
+    base_url: str
+    api_key: str
+    proxy: Optional[Dict[str, Any]] = None  # 代理配置
+    models: List[str]
+    rpm: Optional[int]
+    extra_config: dict
+    description: Optional[str]
+    creator_id: str
+    access_level: int
+    create_time: str
+    update_time: str
+
+
+class TestProviderRequest(BaseModel):
+    """测试供应商请求模型"""
+    model: Optional[str] = None
+    message: str = "Hello, this is a test message."
 
