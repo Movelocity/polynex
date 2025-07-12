@@ -122,53 +122,38 @@ function ProviderList({ providers, selectedProvider, onProviderSelect, onAddProv
 // Provider详情组件
 interface ProviderDetailProps {
   provider: any;
-  isEditing: boolean;
-  showApiKey: boolean;
   testingProvider: string | null;
-  onEdit: () => void;
   onSave: (updatedData: any) => void;
-  onCancel: () => void;
   onDelete: () => void;
   onTest: () => void;
-  onSetDefault: () => void;
-  onToggleApiKey: () => void;
   onProviderUpdate: (updatedProvider: any) => void;
 }
 
 function ProviderDetail({ 
   provider, 
-  isEditing, 
-  showApiKey, 
   testingProvider,
-  onEdit, 
   onSave, 
-  onCancel, 
   onDelete, 
-  onTest, 
-  onSetDefault, 
-  onToggleApiKey,
+  onTest,  
   onProviderUpdate
 }: ProviderDetailProps) {
   const [editData, setEditData] = useState<any>(null);
-  
+  const [showApiKey, setShowApiKey] = useState<boolean>(false);
+
   // 当开始编辑时，初始化编辑数据
   useEffect(() => {
-    if (isEditing && !editData) {
-      setEditData({ ...provider });
-    } else if (!isEditing) {
-      setEditData(null);
-    }
-  }, [isEditing, provider]);
+    setShowApiKey(false);
+    setEditData({ ...provider });
+  }, [provider]);
 
   // const status = provider.is_active ? 'active' : 'inactive';
 
-  const maskApiKey = (key: string | undefined) => {
-    if (!key) return "Not configured";
-    return key.substring(0, 6) + "•".repeat(Math.max(0, key.length - 6));
-  };
+  // const maskApiKey = (key: string | undefined) => {
+  //   if (!key) return "Not configured";
+  //   return key.substring(0, 6) + "•".repeat(Math.max(0, key.length - 6));
+  // };
 
   const handleFieldChange = (field: string, value: any) => {
-    if (!isEditing) return;
     setEditData((prev: any) => ({
       ...prev,
       [field]: value
@@ -176,7 +161,6 @@ function ProviderDetail({
   };
 
   const handleProxyFieldChange = (field: string, value: string) => {
-    if (!isEditing) return;
     setEditData((prev: any) => ({
       ...prev,
       proxy: {
@@ -187,7 +171,7 @@ function ProviderDetail({
   };
 
   const handleUpdateModels = (models: string[]) => {
-    if (isEditing) {
+    if (editData) {
       setEditData((prev: any) => ({
         ...prev,
         models
@@ -206,8 +190,9 @@ function ProviderDetail({
   };
 
   const getCurrentData = () => {
-    return isEditing ? editData || provider : provider;
+    return editData || provider;
   };
+
 
   return (
     <div className="card-elevated">
@@ -218,13 +203,13 @@ function ProviderDetail({
           </div>
           <div className="flex gap-2">
             <Button
-              variant="outline"
               size="sm"
-              onClick={isEditing ? onCancel : onEdit}
-              className=""
+              variant="outline"
+              onClick={onTest}
+              disabled={testingProvider === provider.id}
+              className="flex-1 h-8 bg-muted border-border hover:bg-muted/80 text-muted-foreground"
             >
-              <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-              {isEditing ? "Cancel" : "Edit"}
+              {testingProvider === provider.id ? '测试中...' : '测试'}
             </Button>
             <Button
               variant="outline"
@@ -232,7 +217,17 @@ function ProviderDetail({
               onClick={onDelete}
               className="h-8 border-destructive text-destructive hover:bg-destructive/10 hover:border-destructive"
             >
-              <Trash2 className="h-3.5 w-3.5" /> Delete
+              <Trash2 className="h-3.5 w-3.5" /> 删除
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSave}
+              className="h-8 border-primary text-primary hover:bg-primary/10 hover:border-primary"
+            >
+              <Shield className="h-3.5 w-3.5 mr-1.5" />
+              保存
             </Button>
           </div>
         </div>
@@ -248,7 +243,6 @@ function ProviderDetail({
                 id="name"
                 value={getCurrentData().name || ''}
                 onChange={(e) => handleFieldChange('name', e.target.value)}
-                disabled={!isEditing}
                 className="mt-1 h-8 bg-background border-border text-foreground text-sm"
               />
             </div>
@@ -267,127 +261,55 @@ function ProviderDetail({
                 id="base_url"
                 value={getCurrentData().base_url || ''}
                 onChange={(e) => handleFieldChange('base_url', e.target.value)}
-                disabled={!isEditing}
                 className="mt-1 h-8 bg-background border-border text-foreground text-sm"
+                autoComplete="new-password"
               />
             </div>
           </div>
         </div>
-
-        <Separator className="bg-border" />
-
         {/* API配置 */}
         <div>
-          <div>
-            <Label htmlFor="api_key" className="text-xs text-muted-foreground">API Key</Label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                id="api_key"
-                type={showApiKey ? "text" : "password"}
-                value={isEditing ? (getCurrentData().api_key || '') : maskApiKey(getCurrentData().api_key || '')}
-                onChange={(e) => handleFieldChange('api_key', e.target.value)}
-                disabled={!isEditing}
-                className="flex-1 h-8 bg-background border-border text-foreground text-sm"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onToggleApiKey}
-                className="h-8 w-8 p-0 bg-muted border-border hover:bg-muted/80"
-              >
-                {showApiKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              </Button>
-            </div>
+          <Label htmlFor="api_key" className="text-xs text-muted-foreground">API Key</Label>
+          <div className="flex gap-2 mt-1">
+            <Input
+              id="api_key"
+              type={showApiKey ? "text" : "password"}
+              value={getCurrentData().api_key || ''}
+              onChange={(e) => handleFieldChange('api_key', e.target.value)}
+              className="flex-1 h-8 bg-background border-border text-foreground text-sm"
+              autoComplete="new-password"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowApiKey(!showApiKey)}
+              className="h-8 w-8 p-0 bg-muted border-border hover:bg-muted/80"
+            >
+              {showApiKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            </Button>
           </div>
         </div>
-
-        {/* 代理配置 */}
-        {(getCurrentData().proxy?.url || isEditing) && (
-          <>
-            <Separator className="bg-border" />
-            <div>
-              {/* <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                Proxy
-              </h3> */}
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="proxy_url" className="text-xs text-muted-foreground">Proxy URL</Label>
-                  <Input
-                    id="proxy_url"
-                    value={(getCurrentData().proxy?.url || '')}
-                    onChange={(e) => handleProxyFieldChange('url', e.target.value)}
-                    disabled={!isEditing}
-                    placeholder="http://localhost:7890"
-                    className="mt-1 h-8 bg-background border-border text-foreground text-sm"
-                  />
-                </div>
-                {getCurrentData().proxy?.url && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="proxy_username" className="text-xs text-muted-foreground">Username</Label>
-                      <Input
-                        id="proxy_username"
-                        value={(getCurrentData().proxy?.username || '')}
-                        onChange={(e) => handleProxyFieldChange('username', e.target.value)}
-                        disabled={!isEditing}
-                        className="mt-1 h-8 bg-background border-border text-foreground text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="proxy_password" className="text-xs text-muted-foreground">Password</Label>
-                      <Input
-                        id="proxy_password"
-                        type="password"
-                        value={(getCurrentData().proxy?.password || '')}
-                        onChange={(e) => handleProxyFieldChange('password', e.target.value)}
-                        disabled={!isEditing}
-                        className="mt-1 h-8 bg-background border-border text-foreground text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
 
         <Separator className="bg-border" />
 
         {/* 模型配置 */}
         <div>
-          {/* <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-            <Brain className="h-4 w-4 text-muted-foreground" />
-            Models
-          </h3> */}
           <div className="space-y-3">
             <div>
               <Label htmlFor="models" className="text-xs text-muted-foreground">Available Models</Label>
               <div className="mt-1">
-                {isEditing ? (
-                  <Textarea
-                    id="models"
-                    value={(getCurrentData().models || []).join(", ")}
-                    onChange={(e) => {
-                      const models = e.target.value.split(",").map(model => model.trim()).filter(model => model);
-                      handleUpdateModels(models);
-                    }}
-                    className="bg-background border-border text-foreground text-sm resize-none"
-                    rows={2}
-                  />
-                ) : (
-                  <div className="flex flex-wrap gap-1">
-                    {(getCurrentData().models || []).map((model: string) => (
-                      <Badge
-                        key={model}
-                        variant="secondary"
-                        className="text-xs bg-muted text-muted-foreground border-border"
-                      >
-                        {model}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                
+                <Textarea
+                  id="models"
+                  value={(getCurrentData().models || []).join(", ")}
+                  onChange={(e) => {
+                    const models = e.target.value.split(",").map(model => model.trim()).filter(model => model);
+                    handleUpdateModels(models);
+                  }}
+                  className="bg-background border-border text-foreground text-sm resize-none"
+                  rows={2}
+                />
+                
               </div>
             </div>
             <div>
@@ -396,56 +318,52 @@ function ProviderDetail({
                 id="default_model"
                 value={getCurrentData().default_model || ''}
                 onChange={(e) => handleFieldChange('default_model', e.target.value)}
-                disabled={!isEditing}
                 className="mt-1 h-8 bg-background border-border text-foreground text-sm"
               />
             </div>
           </div>
         </div>
 
-        {/* 操作按钮 */}
-        <Separator className="bg-border" />
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onTest}
-              disabled={testingProvider === provider.id || !provider.is_active}
-              className="flex-1 h-8 bg-muted border-border hover:bg-muted/80 text-muted-foreground"
-            >
-              <TestTube className="h-3.5 w-3.5 mr-1.5" />
-              {testingProvider === provider.id ? 'Testing...' : 'Test Connection'}
-            </Button>
-            {provider.access_level >= 2 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onSetDefault}
-                className="flex-1 h-8 bg-muted border-border hover:bg-muted/80 text-muted-foreground"
-              >
-                <Star className="h-3.5 w-3.5 mr-1.5" />
-                Set Default
-              </Button>
+        {/* 代理配置 */}
+        {true && (
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="proxy_url" className="text-xs text-muted-foreground">Proxy URL</Label>
+              <Input
+                id="proxy_url"
+                value={(getCurrentData().proxy?.url || '')}
+                onChange={(e) => handleProxyFieldChange('url', e.target.value)}
+                placeholder="http://localhost:7890"
+                className="mt-1 h-8 bg-background border-border text-foreground text-sm"
+              />
+            </div>
+            {getCurrentData().proxy?.url && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="proxy_username" className="text-xs text-muted-foreground">Username</Label>
+                  <Input
+                    id="proxy_username"
+                    value={(getCurrentData().proxy?.username || '')}
+                    onChange={(e) => handleProxyFieldChange('username', e.target.value)}
+                    className="mt-1 h-8 bg-background border-border text-foreground text-sm"
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="proxy_password" className="text-xs text-muted-foreground">Password</Label>
+                  <Input
+                    id="proxy_password"
+                    type="password"
+                    value={(getCurrentData().proxy?.password || '')}
+                    onChange={(e) => handleProxyFieldChange('password', e.target.value)}
+                    className="mt-1 h-8 bg-background border-border text-foreground text-sm"
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
             )}
           </div>
-
-          {isEditing && (
-            <div className="flex gap-2 pt-2">
-              <Button onClick={handleSave} className="flex-1 h-8 bg-theme-blue hover:bg-theme-blue/90 text-theme-blue-foreground">
-                <Shield className="h-3.5 w-3.5 mr-1.5" />
-                Save Changes
-              </Button>
-              <Button
-                variant="outline"
-                onClick={onCancel}
-                className="h-8 bg-muted border-border hover:bg-muted/80 text-muted-foreground"
-              >
-                Cancel
-              </Button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
@@ -453,7 +371,6 @@ function ProviderDetail({
 
 // 主组件
 export function AIProviderManagement() {
-  const { user } = useAuth();
   const {
     providers,
     loading,
@@ -463,18 +380,14 @@ export function AIProviderManagement() {
     deleteProvider,
     testProvider,
     setDefaultProvider,
-    // refresh,
-    // activeProviders,
-    // defaultProvider,
-    // hasDefaultProvider
   } = useAIProviders();
 
   const [selectedProvider, setSelectedProvider] = useState<any>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   // const [editingProvider, setEditingProvider] = useState<any>(null);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
-  const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
-  const [isEditing, setIsEditing] = useState(false);
+  
+  const [isEditing, setIsEditing] = useState(true); // Default to editing mode
 
   // 检查用户权限
   // const isAdmin = user?.role === 'admin';
@@ -498,8 +411,8 @@ export function AIProviderManagement() {
 
   const handleProviderSelect = (provider: any) => {
     setSelectedProvider(provider);
-    setIsEditing(false);
-    setShowApiKey(prev => ({ ...prev, [provider.id]: false }));
+    setIsEditing(true); // Keep edit mode when switching providers
+    // setShowApiKey(prev => ({ ...prev, [provider.id]: false }));
   };
 
   const handleCreateProvider = async (data: AIProviderConfigCreate) => {
@@ -596,13 +509,7 @@ export function AIProviderManagement() {
     }
   };
 
-  const toggleApiKeyVisibility = () => {
-    if (!selectedProvider) return;
-    setShowApiKey(prev => ({
-      ...prev,
-      [selectedProvider.id]: !prev[selectedProvider.id]
-    }));
-  };
+  
 
   // if (!isAdmin) {
   //   return (
@@ -662,21 +569,15 @@ export function AIProviderManagement() {
             {selectedProvider ? (
               <ProviderDetail
                 provider={selectedProvider}
-                isEditing={isEditing}
-                showApiKey={showApiKey[selectedProvider.id] || false}
                 testingProvider={testingProvider}
-                onEdit={() => setIsEditing(true)}
                 onSave={async (updatedData) => {
                   const success = await handleUpdateProvider(updatedData);
                   if (success) {
                     setSelectedProvider(updatedData);
                   }
                 }}
-                onCancel={() => setIsEditing(false)}
                 onDelete={handleDeleteProvider}
                 onTest={handleTestProvider}
-                onSetDefault={handleSetDefaultProvider}
-                onToggleApiKey={toggleApiKeyVisibility}
                 onProviderUpdate={(updatedProvider) => setSelectedProvider(updatedProvider)}
               />
             ) : (

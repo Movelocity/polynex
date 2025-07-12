@@ -142,6 +142,7 @@ async def get_provider(
             name=provider.name,
             provider_type=provider.provider_type,
             base_url=provider.base_url,
+            api_key=provider.api_key,
             proxy=provider.proxy,
             models=provider.models,
             rpm=provider.rpm,
@@ -190,8 +191,9 @@ async def update_provider(
         return AIProviderConfigResponse(
             id=provider.id,
             name=provider.name,
-            provider_type=provider.provider_type.upper(),
+            provider_type=provider.provider_type,
             base_url=provider.base_url,
+            api_key=provider.api_key,
             proxy=provider.proxy,
             models=provider.models,
             rpm=provider.rpm,
@@ -270,12 +272,6 @@ async def test_provider(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Provider not found"
             )
-        
-        # if not provider_config.is_active:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail="Provider is not active"
-        #     )
         
         # 目前只支持OpenAI兼容的API测试
         if provider_config.provider_type in [AIProviderType.OPENAI, AIProviderType.CUSTOM]:
