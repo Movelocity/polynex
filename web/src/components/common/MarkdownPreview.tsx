@@ -195,11 +195,8 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
               // 代码块样式 - 使用主题色
               return (
                 <code 
-                  className={cn(
-                    'block p-2 leading-relaxed overflow-x-auto',
-                    'hljs',
-                    className
-                  )}
+                  data-coding-language={language}
+                  className={cn('block p-2 leading-relaxed overflow-x-auto hljs', className)}
                   style={{ maxWidth: '100%' }}
                   {...props}
                 >

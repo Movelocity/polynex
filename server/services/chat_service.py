@@ -63,10 +63,10 @@ class ChatService:
         session_lock = None
         
         try:
-            # 首先获取 Agent
+            # 首先获取单例服务
             agent_srv = get_agent_service_singleton()
             agent = await agent_srv.get_agent(db, agent_id, user_id)
-            conversation_srv = get_conversation_service_singleton()
+            
             if not agent:
                 yield {
                     "type": "error",
@@ -74,13 +74,22 @@ class ChatService:
                 }
                 return
             
+            # 获取Agent对应的AI服务
+            provider = provider_service.get_provider_by_name(db, agent.provider)
+            if not provider:
+                yield {
+                    "type": "error",
+                    "data": {"error": f"Agent provider '{agent.provider}' not found or not supported"}
+                }
+                return
+            
+            conversation_srv = get_conversation_service_singleton()
             # 获取或创建对话
             if conversation_id:
                  # 获取现有对话
                 conversation = await conversation_srv.get_conversation(
                     db, conversation_id, user_id
                 )
-                
                 if not conversation or conversation.status != ConversationStatus.ACTIVE:
                     yield {
                         "type": "error",
@@ -88,8 +97,6 @@ class ChatService:
                     }
                     return
             else:
-                # 创建新对话
-                conversation_srv = get_conversation_service_singleton()
                 conversation = await conversation_srv.create_conversation(
                     user_id=user_id,
                     agent_id=agent_id,
@@ -125,47 +132,51 @@ class ChatService:
             
             # 准备消息历史
             messages = conversation.messages.copy() if conversation.messages else []
-            
-            # 添加用户消息
-            user_message = {
-                "role": "user",
-                "content": message,
-                "timestamp": datetime.now().isoformat()
-            }
-            messages.append(user_message)
-            
-            # 获取Agent对应的AI服务
-            provider = provider_service.get_provider_by_name(db, agent.provider)
-            
-            if not provider:
-                yield {
-                    "type": "error",
-                    "data": {"error": f"Agent provider '{agent.provider}' not found or not supported"}
-                }
-                return
-            
-            # 使用Agent的特定配置覆盖默认值
-            model = agent.model
-            temperature = agent.temperature
-            max_tokens = agent.max_tokens
-            
+            is_new_conversation = len(messages) == 0
+
             # 添加预设消息到消息历史开头
             if agent.preset_messages:
                 preset_msgs = [
                     {"role": msg.get("role", "system"), "content": msg.get("content", "")}
                     for msg in agent.preset_messages
                 ]
-                # 将预设消息插入到消息列表的开头
-                messages[:-1] = preset_msgs + messages[:-1]  # 保留最后一条用户消息
+                messages = preset_msgs + messages
+                # preset_messages 不写入对话记录，仅使用时拼接
+
+            # 使用Agent的特定配置覆盖默认值
+            model = agent.model
+            temperature = agent.temperature
+            max_tokens = agent.max_tokens
             
-            # 第一次存储：保存用户消息
             async with session_lock:
                 try:
+                    save_messages = []
+                    # Agent配置了发送欢迎消息给AI，则添加欢迎消息
+                    if agent.app_preset.get("send_greetings_to_ai", False) and is_new_conversation:
+                        welcome_msg = {
+                            "role": "assistant",
+                            "content": agent.app_preset.get("greetings", ""),
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        messages.append(welcome_msg)
+                        # 保存欢迎消息
+                        logger.info(f"Saved welcome message to conversation {conversation.id}")
+                        save_messages.append(welcome_msg)
+
+                    # 添加用户消息
+                    user_message = {
+                        "role": "user",
+                        "content": message,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    messages.append(user_message)
+                    save_messages.append(user_message)
+                    # 保存消息
                     await conversation_srv.add_messages_to_conversation(
+                        db=db,
                         conversation_id=conversation.id,
                         user_id=user_id,
-                        messages=[user_message],
-                        db=db
+                        messages=save_messages,
                     )
                     logger.info(f"Saved user message to conversation {conversation.id}")
                 except Exception as e:
@@ -221,8 +232,6 @@ class ChatService:
                             "timestamp": datetime.now().isoformat(),
                         }
                     }
-                
-
 
                 # 处理完成事件 - 第二次存储：保存AI回复
                 async with session_lock:

@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 # 移除默认的处理器
 logger.handlers = []
-# 创建文件处理器
-file_handler = logging.FileHandler(f"{log_dir}/openai_provider.log", encoding='utf-8')
+# 创建文件处理器（以日期命名）
+file_handler = logging.FileHandler(f"{log_dir}/openai_provider_{datetime.now().strftime('%Y-%m-%d')}.log", encoding='utf-8')
 file_handler.setLevel(logging.INFO)
 # 创建日志格式
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -206,7 +206,7 @@ class OpenAIProvider:
                         }
 
                     # 检查是否完成
-                    if data.get("choices") and data["choices"][0].get("finish_reason"):
+                    if data.get("choices") and data["choices"][0] and data["choices"][0].get("finish_reason"):
                         finish_reason = data["choices"][0]["finish_reason"]
                         usage = data.get("usage", {})
                         

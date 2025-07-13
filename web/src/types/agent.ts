@@ -28,6 +28,7 @@ export interface AppPreset {
   name: string;
   description: string;
   greetings?: string;
+  send_greetings_to_ai?: boolean;
   suggested_questions?: string[];
   creation_date?: string;
   [key: string]: any;

@@ -526,3 +526,33 @@ img {
   visibility: visible;
   transform: scaleX(1);
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.styled_scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary)) hsl(var(--secondary));
+}
+
+.styled_scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.styled_scrollbar::-webkit-scrollbar-track {  
+  background: hsl(var(--secondary));
+}
+
+.styled_scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+}
+
+.styled_scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
 import { AgentInfoEditor } from '@/components/chat/AgentInfoEditor';
+import { Checkbox } from '@/components/x-ui/checkbox';
 
 
 export function AgentEditor() {
@@ -389,7 +390,7 @@ export function AgentEditor() {
           <PromptEditor
             messages={formData.preset_messages}
             onMessagesChange={(messages) => updateFormData('preset_messages', messages)}
-            className="h-full  overflow-y-auto"
+            className="h-[calc(100vh-150px)] overflow-y-auto no-scrollbar"
           />
         </div>
         {/* 右侧 - 交互配置 */}
@@ -407,8 +408,16 @@ export function AgentEditor() {
                 placeholder="Agent的欢迎消息..."
                 value={formData.app_preset.greetings || ''}
                 onChange={(e) => updateAppPreset('greetings', e.target.value)}
-                rows={2}
+                rows={7}
+                className="styled_scrollbar"
               />
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={formData.app_preset.send_greetings_to_ai || false}
+                  onCheckedChange={(checked) => updateAppPreset('send_greetings_to_ai', checked)}
+                />
+                <span className="text-xs text-muted-foreground">欢迎消息一并发送给AI</span>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="flex items-center">

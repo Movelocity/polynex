@@ -41,21 +41,21 @@ export function MessageBlock({
 }: MessageBlockProps) {
   return (
     <div className={cn(
-      "border-2 border-transparent rounded-lg bg-muted overflow-hidden",
+      "border-2 border-transparent rounded-lg bg-muted overflow-hidden min-h-[116px]",
       isSelected && "bg-gradient-to-r from-blue-500 to-indigo-500"
     )}>
       {/* Message Block Header */}
-      <div>
+      <div className="flex flex-col">
         <div className="flex items-center justify-between bg-secondary px-1 py-0.5">
           {/* Role Selector with Dropdown */}
           <div className="flex items-center space-x-2">
             {isSystemMessage ? (
-              <span className="text-sm font-bold ml-2 text-foreground">System Message</span>
+              <span className="text-sm font-bold ml-2 text-foreground">系统提示词</span>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant="ghost" 
+                    variant="outline" 
                     size="sm" 
                     className="h-8 px-3"
                     disabled={isSystemMessage}
@@ -68,15 +68,13 @@ export function MessageBlock({
                 <DropdownMenuContent align="start" className="w-32">
                   <div className="p-1 space-y-1">
                     {['user', 'assistant', 'system'].map((role) => (
-                      <Button
+                      <div
                         key={role}
-                        variant={message.role === role ? "secondary" : "ghost"}
-                        size="sm"
-                        className="w-full justify-start h-8"
+                        className="w-full justify-start text-sm h-8 px-2 py-1 hover:bg-muted cursor-pointer"
                         onClick={() => onUpdateMessage(index, 'role', role)}
                       >
                         {role.toUpperCase()}
-                      </Button>
+                      </div>
                     ))}
                   </div>
                 </DropdownMenuContent>
@@ -114,7 +112,7 @@ export function MessageBlock({
         </div>
 
         {/* Message Content Area */}
-        <div className="space-y-2">
+        <div className="space-y-2 flex-1">
           <Textarea
             placeholder={isSystemMessage ? "输入系统提示词..." : "输入消息内容..."}
             value={message.content}
@@ -123,7 +121,7 @@ export function MessageBlock({
             onBlur={onBlur}
             rows={isSystemMessage ? 16 : 4}
             className={cn(
-              isSystemMessage ? 'min-h-[320px]' : 'min-h-[80px]', 
+              'min-h-[80px] styled_scrollbar', 
               "border-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
             )}
           />

@@ -4,7 +4,7 @@ import {
   AgentCreate,
   AgentUpdate,
   AgentQueryParams
-} from '@/types';
+} from '@/types/agent';
 
 /**
  * AI代理服务接口
