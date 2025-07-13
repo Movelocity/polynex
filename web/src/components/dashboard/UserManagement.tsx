@@ -16,6 +16,7 @@ import {
   Save
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { UserAvatar } from '@/components/common/user/UserAvatar';
 
 export function UserManagement() {
   const [users, setUsers] = useState<ClientUser[]>([]);
@@ -244,7 +245,7 @@ export function UserManagement() {
               />
             </div>
           </div>
-          <div className="rounded-md border">
+          <div className="rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -260,15 +261,7 @@ export function UserManagement() {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <img
-                            src={fileService.resolveFileUrl(user.avatar)}
-                            alt={user.username}
-                            className="w-10 h-10 rounded-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = 'https://avatars.githubusercontent.com/u/124599?v=4';
-                            }}
-                          />
+                          <UserAvatar user={user} size="md" />
                           <div>
                             <div className="font-medium">{user.username}</div>
                             <div className="text-sm text-muted-foreground">{user.email}</div>

@@ -154,7 +154,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
               );
             },
             p: ({ children, ...props }) => (
-              <p className="my-2 leading-relaxed break-words overflow-hidden w-full" {...props}>
+              <p className="mt-2 leading-relaxed break-words overflow-hidden w-full" {...props}>
                 {children}
               </p>
             ),
@@ -183,7 +183,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
               if (!isInCodeBlock) {
                 // 内联代码样式 - 使用主题色
                 return (
-                  <code className="bg-gray-200 dark:bg-gray-700 font-semibold px-1 rounded font-mono break-all">
+                  <code className="bg-gray-200 dark:bg-gray-700 font-bold px-1 mx-0.5 py-0.5 rounded break-all" style={{fontSize: '16px'}}>
                     {children}
                   </code>
                 );

@@ -449,7 +449,7 @@ export function WriteBlog() {
         {/* Editor */}
         <div className="col-span-1 lg:col-span-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="py-3">
               <input
                 id="title"
                 placeholder="Title..."

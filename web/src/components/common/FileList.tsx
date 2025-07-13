@@ -208,14 +208,14 @@ export function FileList({
         </Button>
       </div>
 
-      <div className="space-y-2">
+      <div>
         {files.map((file) => {
           const fileTypeInfo = fileService.getFileTypeInfo(`${file.unique_id}${file.extension}`);
           const thumbnailUrl = getThumbnailUrl(file);
           const isDeleting = deletingFile === file.unique_id;
           
           return (
-            <div key={file.unique_id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+            <div key={file.unique_id} className="flex items-center justify-between p-4 border-b border-border hover:bg-accent">
               <div className="flex items-center space-x-4">
                 {/* 文件图标或缩略图 */}
                 <div className="flex-shrink-0">

@@ -82,45 +82,47 @@ export function ProfileManagement() {
         <CardDescription>管理您的头像和基本信息</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex flex-row gap-4">
-            <div className="flex-shrink-0">
-              <AvatarUpload
-                user={user}
-                onAvatarUpload={handleAvatarUpload}
-                uploading={uploadingAvatar}
-                onError={(error) => {
-                  toast({
-                    title: "头像上传失败",
-                    description: error,
-                    variant: "destructive",
-                  });
-                }}
-              />
-            </div>
-            <div className="space-y-2 mb-4">
-              <h3 className="text-lg font-semibold">{user.username}</h3>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-            </div>
+        <div className="grid gap-x-20 gap-y-4" style={{ gridTemplateColumns: 'max-content 1fr' }}>
+          <div className="font-medium">头像</div>
+          <div className="flex items-center gap-2">
+            <AvatarUpload
+              user={user}
+              onAvatarUpload={handleAvatarUpload}
+              uploading={uploadingAvatar}
+              onError={(error) => {
+                toast({
+                  title: "头像上传失败",
+                  description: error,
+                  variant: "destructive",
+                });
+              }}
+            />
           </div>
-          
-          <div className="flex-1 min-w-0 grid grid-cols-1 gap-4 text-foreground">
-            <div>
-              <Label>用户ID</Label>
-              <p className="mt-1 text-sm text-muted-foreground">{user.id}</p>
-            </div>
-            <div>
-              <Label>账户类型</Label>
-              <div className="mt-1 text-sm text-muted-foreground">
-                {user.role === 'admin' ? '管理员' : '普通用户'}
-              </div>
-            </div>
+
+          <div className="font-medium">用户名</div>
+          <div className="text-muted-foreground">{user.username}</div>
+
+          <div className="font-medium">邮箱</div>
+          <div className="text-muted-foreground">{user.email}</div>
+
+          <div className="font-medium">用户ID</div>
+          <div className="text-muted-foreground">{user.id}</div>
+
+          <div className="font-medium">账户类型</div>
+          <div className="text-muted-foreground">
+            {user.role === 'admin' ? '管理员' : '普通用户'}
           </div>
-          <div className="flex flex-row sm:flex-col items-center gap-2">
+
+          <div className="font-medium">基本资料编辑</div>
+          <div>
             <UserProfileEditDialog 
               user={user} 
               onUpdate={updateUserProfile}
             />
+          </div>
+
+          <div className="font-medium">修改密码</div>
+          <div>
             <PasswordChangeDialog
               open={isPasswordDialogOpen}
               onOpenChange={setIsPasswordDialogOpen}
