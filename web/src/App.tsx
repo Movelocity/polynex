@@ -120,11 +120,6 @@ function App() {
                 <AgentManagement />
               </ProtectedRoute>
             } />
-            <Route path="agent/create" element={
-              <ProtectedRoute>
-                <AgentEditor />
-              </ProtectedRoute>
-            } />
             <Route path="agent/edit/:agentId" element={
               <ProtectedRoute>
                 <AgentEditor />

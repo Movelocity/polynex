@@ -13,10 +13,12 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   Bot, 
   ArrowDown,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Plus
 } from 'lucide-react';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatInput, SuggestedQuestions } from '@/components/chat/ChatInput';
+import { CreateAgentDialog } from '@/components/chat';
 
 // 主组件
 export function Conversation() {

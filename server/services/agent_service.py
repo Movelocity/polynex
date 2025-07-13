@@ -55,7 +55,7 @@ class AgentService:
             # 创建Agent
             agent = Agent(
                 agent_id=agent_data.agent_id,
-                user_id=user_id,
+                creator_id=user_id,
                 provider=agent_data.provider,
                 model=agent_data.model,
                 top_p=agent_data.top_p,
@@ -164,7 +164,7 @@ class AgentService:
             agent = db.query(Agent).filter(
                 and_(
                     Agent.agent_id == agent_id,
-                    (Agent.creator_id == user_id) | (Agent.access_level >= 3)
+                    (Agent.creator_id == user_id) | (Agent.access_level > 1)
                 )
             ).first()
             

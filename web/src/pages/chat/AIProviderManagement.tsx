@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/x-ui/button';
 import { Label } from '@/components/x-ui/label';
 import { Badge } from '@/components/x-ui/badge';
-import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { Input } from '@/components/x-ui/input';
 import { Textarea } from '@/components/x-ui/textarea';
 import { Separator } from '@/components/x-ui/separator';
 
 import { useAIProviders } from '@/hooks/useAIProviders';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   AIProviderConfigCreate, 
   AIProviderConfigUpdate,
@@ -23,23 +21,18 @@ import {
 } from '@/utils/aiProviderUtils';
 import { 
   Plus, 
-  Edit3, 
   Trash2, 
-  TestTube, 
-  Star,
   Eye,
   EyeOff,
   Settings,
-  AlertCircle,
-  Key,
-  Globe,
-  Brain,
+  User,
   Circle,
   Shield,
   Bot
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AIProviderDialog } from '@/components/chat/AIProviderDialog';
+import { cn } from '@/lib/utils';
 
 // Provider状态配置
 const statusConfig = {
@@ -61,12 +54,11 @@ function ProviderList({ providers, selectedProvider, onProviderSelect, onAddProv
     <div className="card-elevated">
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
-          <h2 className="font-medium text-foreground">Providers</h2>
+          <h2 className="font-medium text-foreground">供应商列表 ({providers.length})</h2>
           <Button size="sm" variant="outline" className="h-7 w-7 p-0 border border-border" onClick={onAddProvider}>
             <Plus className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">{providers.length} configured</p>
       </div>
       <div className="p-2 space-y-1">
         {providers.map((provider) => {
@@ -74,11 +66,10 @@ function ProviderList({ providers, selectedProvider, onProviderSelect, onAddProv
           return (
             <div
               key={provider.id}
-              className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                selectedProvider?.id === provider.id
-                  ? "bg-theme-blue/10 border border-theme-blue/30"
-                  : "hover:bg-muted/50 border border-transparent"
-              }`}
+              className={cn(
+                "p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-theme-blue/20 border border-transparent",
+                selectedProvider?.id === provider.id && "bg-theme-blue/10 border border-theme-blue/30"
+              )}
               onClick={() => onProviderSelect(provider)}
             >
               <div className="flex items-center justify-between mb-2">
@@ -145,13 +136,6 @@ function ProviderDetail({
     setShowApiKey(false);
     setEditData({ ...provider });
   }, [provider]);
-
-  // const status = provider.is_active ? 'active' : 'inactive';
-
-  // const maskApiKey = (key: string | undefined) => {
-  //   if (!key) return "Not configured";
-  //   return key.substring(0, 6) + "•".repeat(Math.max(0, key.length - 6));
-  // };
 
   const handleFieldChange = (field: string, value: any) => {
     setEditData((prev: any) => ({
@@ -497,39 +481,12 @@ export function AIProviderManagement() {
     }
   };
 
-  const handleSetDefaultProvider = async () => {
-    if (!selectedProvider) return;
-    
-    const success = await setDefaultProvider(selectedProvider.id);
-    if (success) {
-      toast({
-        title: "成功",
-        description: "默认供应商设置成功",
-      });
-    }
-  };
-
-  
-
-  // if (!isAdmin) {
-  //   return (
-  //     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  //       <Alert>
-  //         <AlertCircle className="h-4 w-4" />
-  //         <AlertDescription>
-  //           此功能需要管理员权限才能访问。
-  //         </AlertDescription>
-  //       </Alert>
-  //     </div>
-  //   );
-  // }
-
   return (
     <div className="bg-background text-foreground">
       <div className="mx-auto max-w-7xl p-4">
         {/* 页面标题 */}
         <div className=" pb-4">
-          <h1 className="text-2xl font-semibold text-foreground mb-1">LLM Providers</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-1">配置 LLM API 供应商</h1>
           {/* <p className="text-sm text-muted-foreground">Configure and manage your AI model providers</p> */}
         </div>
 
@@ -546,11 +503,11 @@ export function AIProviderManagement() {
             ) : providers.length === 0 ? (
               <div className="card-elevated h-96 flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
-                  <Settings className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                  <User className="h-8 w-8 mx-auto mb-3 opacity-80" />
                   <p className="text-sm mb-4">No providers configured</p>
                   <Button onClick={() => setShowCreateDialog(true)} size="sm">
-                    <Plus className="h-3.5 w-3.5 mr-2" />
-                    Add Provider
+                    <Plus className="h-3.5 w-3.5" />
+                    点击创建
                   </Button>
                 </div>
               </div>

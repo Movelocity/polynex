@@ -49,7 +49,7 @@ class OpenAIProvider:
         # 处理代理配置
         self.client = None
         proxy_info = ""
-        if self.config.proxy:
+        if self.config.proxy and self.config.proxy.get('url'):
             self.client = httpx.AsyncClient(
                 proxies=self._get_proxy_url(),
                 timeout=httpx.Timeout(30.0),  # 30秒超时

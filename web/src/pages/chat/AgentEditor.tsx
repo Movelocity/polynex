@@ -6,57 +6,40 @@ import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
 import { Textarea } from '@/components/x-ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/x-ui/dropdown-menu';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/x-ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/x-ui/select';
 import { Slider } from '@/components/x-ui/slider';
-import { Switch } from '@/components/x-ui/switch';
-import { Badge } from '@/components/x-ui/badge';
-import { AgentAvatarEditor } from '@/components/chat/AgentAvatarEditor';
-import { PromptEditor, ExtendedAgentMessage } from '@/components/chat/PromptEditor';
+import { PromptEditor } from '@/components/chat/PromptEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useAIProviders } from '@/hooks/useAIProviders';
-import { AgentCreate, AgentUpdate, AppPreset, AvatarConfig } from '@/types';
+import { AgentUpdate } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { 
   Save, 
   Settings,
-  Settings2,
   Bot,
   ArrowLeft,
-  Globe,
-  Star,
   Lightbulb,
   Plus, 
   Trash2
 } from 'lucide-react';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
+import { Agent, AgentInfo } from '@/components/chat/types';
+import { AgentInfoEditor } from '@/components/chat/AgentInfoEditor';
+
 
 export function AgentEditor() {
   const { agentId } = useParams<{ agentId?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { createAgent, updateAgent, getAgent } = useAgents();
-  // const { activeProviders } = useAIProviders();
+  const { updateAgent, getAgent } = useAgents();
   const { providers } = useAIProviders();
 
-  const isEditMode = !!agentId && agentId !== 'create';
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // 表单数据状态
-  const [formData, setFormData] = useState<{
-    agent_id: string;
-    app_preset: AppPreset;
-    avatar: AvatarConfig;
-    provider: string;
-    model: string;
-    temperature: number;
-    top_p: number;
-    max_tokens: number;
-    preset_messages: ExtendedAgentMessage[];
-    access_level: number;
-  }>({
+  const [formData, setFormData] = useState<Agent>({
     agent_id: '',
     app_preset: {
       name: '',
@@ -85,16 +68,13 @@ export function AgentEditor() {
     access_level: 1
   });
 
-  // 模态框状态
-  const [showAppConfig, setShowAppConfig] = useState(false);
-  const [showAvatarConfig, setShowAvatarConfig] = useState(false);
-
-  const generateAgentId = useCallback(() => {
-    return `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }, []);
+  const [showAgentInfo, setShowAgentInfo] = useState(false);
 
   const loadAgentData = useCallback(async () => {
-    if (!agentId) return;
+    if (!agentId) {
+      navigate('/chat/agents');
+      return;
+    }
     
     setLoading(true);
     try {
@@ -129,27 +109,12 @@ export function AgentEditor() {
     } finally {
       setLoading(false);
     }
-  }, [agentId, getAgent, navigate, toast]);
+  }, [agentId, getAgent, navigate]);
 
   // 加载代理数据
   useEffect(() => {
-    if (isEditMode) {
-      loadAgentData();
-    }
-  }, [isEditMode, loadAgentData]);
-
-  // 初始化创建模式的默认值
-  useEffect(() => {
-    if (!isEditMode && providers.length > 0 && !formData.provider) {
-      const defaultProvider = providers.find(p => p.access_level === 3) || providers[0];
-      setFormData(prev => ({
-        ...prev,
-        provider: defaultProvider.name,
-        model: defaultProvider.models?.[0] || '',
-        agent_id: generateAgentId()
-      }));
-    }
-  }, [isEditMode, providers.length, formData.provider, generateAgentId]);
+    loadAgentData();
+  }, [loadAgentData]);
 
   const handleSave = async () => {
     if (!formData.app_preset.name.trim()) {
@@ -172,47 +137,23 @@ export function AgentEditor() {
 
     setSaving(true);
     try {
-      if (isEditMode) {
-        const updateData: AgentUpdate = {
-          provider: formData.provider,
-          model: formData.model,
-          temperature: formData.temperature,
-          top_p: formData.top_p,
-          max_tokens: formData.max_tokens,
-          preset_messages: formData.preset_messages,
-          app_preset: formData.app_preset,
-          avatar: formData.avatar,
-          access_level: formData.access_level
-        };
-        const success = await updateAgent(agentId!, updateData);
-        if (success) {
-          toast({
-            title: '更新成功',
-            description: `Agent "${formData.app_preset.name}" 已成功更新`
-          });
-          // navigate('/chat/agents');
-        }
-      } else {
-        const createData: AgentCreate = {
-          agent_id: formData.agent_id,
-          provider: formData.provider,
-          model: formData.model,
-          temperature: formData.temperature,
-          top_p: formData.top_p,
-          max_tokens: formData.max_tokens,
-          preset_messages: formData.preset_messages,
-          app_preset: formData.app_preset,
-          avatar: formData.avatar,
-          access_level: formData.access_level
-        };
-        const success = await createAgent(createData);
-        if (success) {
-          toast({
-            title: '创建成功',
-            description: `Agent "${formData.app_preset.name}" 已成功创建`
-          });
-          navigate(`/chat/agent/edit/${formData.agent_id}`);
-        }
+      const updateData: AgentUpdate = {
+        provider: formData.provider,
+        model: formData.model,
+        temperature: formData.temperature,
+        top_p: formData.top_p,
+        max_tokens: formData.max_tokens,
+        preset_messages: formData.preset_messages,
+        app_preset: formData.app_preset,
+        avatar: formData.avatar,
+        access_level: formData.access_level,
+      };
+      const success = await updateAgent(agentId!, updateData);
+      if (success) {
+        toast({
+          title: '更新成功',
+          description: `Agent "${formData.app_preset.name}" 已成功更新`
+        });
       }
     } catch (error) {
       // Error handling is done in the hook
@@ -233,7 +174,6 @@ export function AgentEditor() {
   };
 
   const updateAppPreset = (field: string, value: any) => {
-    console.log('updateAppPreset', field, value);
     setFormData(prev => ({
       ...prev,
       app_preset: {
@@ -242,8 +182,6 @@ export function AgentEditor() {
       }
     }));
   };
-
-
 
   const addSuggestedQuestion = () => {
     const questions = formData.app_preset.suggested_questions || [];
@@ -261,12 +199,30 @@ export function AgentEditor() {
     updateAppPreset('suggested_questions', questions.filter((_, i) => i !== index));
   };
 
+  const handleAgentInfoSave = (agentInfo: AgentInfo) => {
+    updateAppPreset('name', agentInfo.name);
+    updateAppPreset('description', agentInfo.description);
+    updateFormData('avatar', agentInfo.avatar);
+    updateFormData('access_level', agentInfo.access_level);
+  };
+
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">请先登录</h1>
           <Button onClick={() => navigate('/login')}>前往登录</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>加载中...</p>
         </div>
       </div>
     );
@@ -285,88 +241,13 @@ export function AgentEditor() {
             返回
           </Button>
           <div className="flex items-center space-x-3">
-            {/* 应用配置 */}
-            <Dialog open={showAppConfig} onOpenChange={setShowAppConfig}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" onClick={() => setShowAppConfig(true)}>
-                  <Settings2 className="h-6 w-6" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md text-foreground">
-                <DialogHeader>
-                  <DialogTitle>应用配置</DialogTitle>
-                  <DialogDescription>
-                    配置Agent的基本信息和外观
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <Label>Agent名称 *</Label>
-                    <div className="flex items-center gap-2">
-                      <AgentAvatar
-                        avatar={formData.avatar}
-                        name={formData.app_preset.name || 'New Agent'}
-                        variant="square"
-                        size="md"
-                        onClick={() => {setShowAvatarConfig(true);}}
-                      />
-                      <Input
-                        className="flex-1"
-                        placeholder="输入Agent名称..."
-                        value={formData.app_preset.name}
-                        onChange={(e) => updateAppPreset('name', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>描述</Label>
-                    <Textarea
-                      placeholder="描述这个Agent的功能..."
-                      value={formData.app_preset.description}
-                      onChange={(e) => updateAppPreset('description', e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="flex items-center">
-                        <Globe className="h-4 w-4 mr-2" />
-                        公开Agent
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        允许其他用户使用此Agent
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formData.access_level === 3}
-                      onCheckedChange={(checked) => updateFormData('access_level', checked ? 3 : 1)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="flex items-center">
-                        <Star className="h-4 w-4 mr-2" />
-                        设为默认
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        将此Agent设为默认使用
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formData.access_level === 3}
-                      onCheckedChange={(checked) => updateFormData('access_level', checked ? 3 : 1)}
-                    />
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            
             <AgentAvatar
               avatar={formData.avatar}
-              name={formData.app_preset.name || 'New Agent'}
+              name={formData.app_preset.name || 'Agent'}
               variant="square"
               size="md"
-              onClick={() => setShowAvatarConfig(true)}
+              onClick={() => setShowAgentInfo(true)}
             />
             <div className="flex gap-4">
               <span className="font-semibold text-foreground">
@@ -377,21 +258,7 @@ export function AgentEditor() {
               </span>
             </div>
             
-            {/* 头像配置 */}
-            <Dialog open={showAvatarConfig} onOpenChange={setShowAvatarConfig}>
-              <DialogContent className="sm:max-w-md text-foreground" aria-describedby="">
-                <DialogTitle className="text-lg font-semibold">头像配置</DialogTitle>
-                <AgentAvatarEditor
-                  avatar={formData.avatar}
-                  name={formData.app_preset.name || 'Agent'}
-                  onChange={(avatar) => {
-                    updateFormData('avatar', avatar);
-                    setShowAvatarConfig(false);
-                  }}
-                  onCancel={() => setShowAvatarConfig(false)}
-                />
-              </DialogContent>
-            </Dialog>
+            
           </div>
         </div>
 
@@ -504,7 +371,7 @@ export function AgentEditor() {
           >
             {saving && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />}
             <Save className="h-4 w-4 mr-2" />
-            {isEditMode ? '更新' : '创建'}
+            更新
           </Button>
         </div>
       </div>
@@ -570,6 +437,14 @@ export function AgentEditor() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Agent Info Editor */}
+      <AgentInfoEditor
+        agent={formData}
+        show={showAgentInfo}
+        onShowChange={setShowAgentInfo}
+        onSave={handleAgentInfoSave}
+      />
     </div>
   );
 } 

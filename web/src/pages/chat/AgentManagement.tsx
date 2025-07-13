@@ -15,6 +15,7 @@ import { Plus, Edit,  Star, AlertCircle, Users, Lock, MessageCircle, FileUp, Set
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
+import { CreateAgentDialog } from '@/components/chat/CreateAgentDialog';
 
 export function AgentManagement() {
   const navigate = useNavigate();
@@ -23,10 +24,6 @@ export function AgentManagement() {
     agents,
     loading,
     error,
-    // myAgents,
-    // publicAgents,
-    // defaultAgent,
-    // hasDefaultAgent,
     deleteAgent,
     refresh
   } = useAgents();
@@ -43,6 +40,10 @@ export function AgentManagement() {
     }
   }, [error]);
 
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
   const handleDeleteAgent = async () => {
     if (!deletingAgent) return;
 
@@ -52,12 +53,12 @@ export function AgentManagement() {
     }
   };
 
-  const handleCreateAgent = () => {
-    navigate('/chat/agent/create');
+  const handleAgentCreated = (agentId: string) => {
+    refresh();
+    navigate(`/chat/agent/edit/${agentId}`);
   };
 
   const handleEditAgent = (agentId: string) => {
-    console.log("edit "+agentId)
     navigate(`/chat/agent/edit/${agentId}`);
   };
 
@@ -101,10 +102,15 @@ export function AgentManagement() {
             <CardContent className="flex flex-col justify-start gap-2 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
               <span className="text-md font-medium text-foreground mb-2">创建Agent</span>
-              <Button onClick={handleCreateAgent} variant="outline" className="flex justify-start">
-                <Plus className="h-4 w-4" />
-                创建 Agent
-              </Button>
+              <CreateAgentDialog 
+                trigger={
+                  <Button variant="outline" className="flex justify-start">
+                    <Plus className="h-4 w-4" />
+                    创建 Agent
+                  </Button>
+                }
+                onAgentCreated={handleAgentCreated}
+              />
               <Button onClick={()=>{}} variant="outline" className="flex justify-start">
                 <FileUp className="h-4 w-4" />
                 导入 Agent

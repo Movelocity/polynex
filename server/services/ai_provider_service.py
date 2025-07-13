@@ -159,52 +159,6 @@ class AIProviderService:
             AIProviderConfig.create_time.asc()
         ).all()
     
-    # def list_provider_configs(
-    #     self,
-    #     db: Session,
-    #     provider_type: AIProviderType = None,
-    #     user_id: str = None,
-    #     limit: int = None,
-    #     offset: int = 0
-    # ) -> List[AIProviderConfig]:
-    #     """
-    #     列出供应商配置
-        
-    #     Args:
-    #         db: 数据库会话
-    #         provider_type: 过滤指定供应商技术类型
-    #         is_active: 过滤激活状态
-    #         limit: 限制返回数量
-    #         offset: 偏移量
-            
-    #     Returns:
-    #         List[AIProviderConfig]: 配置列表
-    #     """
-    #     query = db.query(AIProviderConfig)
-        
-    #     if provider_type:
-    #         query = query.filter(AIProviderConfig.provider_type == provider_type)
-        
-    #     query = query.order_by(
-    #         AIProviderConfig.create_time.asc()
-    #     )
-
-    #     if user_id:
-    #         query = query.filter(
-    #             or_(
-    #                 AIProviderConfig.creator_id == user_id,
-    #                 AIProviderConfig.access_level >= 3
-    #             )
-    #         )
-        
-    #     if limit:
-    #         query = query.limit(limit)
-        
-    #     if offset:
-    #         query = query.offset(offset)
-        
-    #     return query.all()
-    
     def update_provider_config(
         self,
         db: Session,

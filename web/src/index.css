@@ -317,11 +317,11 @@
 
   /* 卡片样式扩展 */
   .card-elevated {
-    @apply bg-card text-card-foreground shadow-lg border border-border rounded-lg;
+    @apply bg-secondary text-card-foreground shadow-lg border border-border rounded-lg;
   }
   
   .card-subtle {
-    @apply bg-card text-card-foreground shadow-sm border border-border rounded-md;
+    @apply bg-secondary text-card-foreground shadow-sm border border-border rounded-md;
   }
   
   .card-flat {
