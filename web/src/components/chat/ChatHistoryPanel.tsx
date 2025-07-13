@@ -110,7 +110,7 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
   const [activeTab, setActiveTab] = useState('agents');
 
   return (
-    <div className={cn("flex flex-col h-full bg-background border-r border-border", className)}>
+    <div className={cn("flex flex-col bg-background border-r border-border", className)}>
       <Tabs className="flex flex-col h-full" value={activeTab} onValueChange={setActiveTab}>
         <div className="p-2 pb-0">
           <TabsList className="grid w-full grid-cols-2">

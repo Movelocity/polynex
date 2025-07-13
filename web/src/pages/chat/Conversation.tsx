@@ -20,7 +20,7 @@ import { ChatInput, SuggestedQuestions } from '@/components/chat/ChatInput';
 
 // 主组件
 export function Conversation() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   
@@ -63,7 +63,7 @@ export function Conversation() {
   const { agents, loading: isLoadingAgents } = useAgents();
 
   // 使用自动滚动hook
-  const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse, currentAIReasoning]);
+  // const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse, currentAIReasoning]);
 
   // 自动选择可用的agent（当hash中没有agent参数时）
   useEffect(() => {
@@ -188,7 +188,7 @@ export function Conversation() {
           currentConversationId={conversationId}
           onConversationSelect={handleMobileConversationSelect}
           onNewConversation={handleMobileNewConversation}
-          className={isMobile ? 'h-full shadow-lg' : 'h-full'}
+          className="h-full"
           // Agent props
           availableAgents={agents}
           selectedAgent={selectedAgent}
@@ -203,7 +203,7 @@ export function Conversation() {
         <ScrollArea className="flex-1">
           <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             {/* 移动端汉堡菜单 */}
-            {isMobile && (
+            {isMobile && !isSidebarOpen && (
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -217,12 +217,12 @@ export function Conversation() {
             {/* 消息列表 */}
             <div className="h-full py-8">
               <div className="">
-                {messages.length === 0 && selectedAgent && !selectedAgent.app_preset?.greetings && (
+                {/* {messages.length === 0 && selectedAgent && !selectedAgent.app_preset?.greetings && (
                   <div className="text-center text-muted-foreground py-16">
                     <Bot className="h-16 w-16 mx-auto mb-4 opacity-50" />
                     <p className="text-lg">开始与 {selectedAgent.app_preset.name} 对话吧</p>
                   </div>
-                )}
+                )} */}
                 
                 {messages.map((message, index) => (
                   <MessageBubble
@@ -253,38 +253,38 @@ export function Conversation() {
                   />
                 )}
                 
-                <div ref={endRef} />
+                {/* <div ref={endRef} /> */}
               </div>
             </div>
           </div>
         </ScrollArea>
 
-        <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-background to-transparent"></div>
+        {/* <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-background to-transparent"></div> */}
 
-        {/* 固定在屏幕底部的输入区域 */}
-        <div className="flex-shrink-0">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
-            {/* 建议问题区域 */}
-            {shouldShowSuggestedQuestions && (
-              <div className="p-2">
-                <SuggestedQuestions
-                  questions={selectedAgent.app_preset.suggested_questions}
-                  onQuestionClick={handleSuggestedQuestion}
-                />
-              </div>
-            )}
-
-            {/* 输入区域 */}
-            <ChatInput
-              value={inputMessage}
-              onChange={setInputMessage}
-              onSend={handleSendMessage}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading || isStreaming || !selectedAgent}
-              isLoading={isLoading || isStreaming}
-              isStreaming={isStreaming}
+        {/* 建议问题区域 */}
+        <div className="w-full flex justify-center mb-2">
+          {shouldShowSuggestedQuestions && (
+            <SuggestedQuestions
+              questions={selectedAgent.app_preset.suggested_questions}
+              onQuestionClick={handleSuggestedQuestion}
+              className={isMobile ? 'w-screen px-4' : 'w-full mx-2 max-w-3xl'}
             />
-          </div>
+          )}
+        </div>
+        {/* 固定在屏幕底部的输入区域 */}
+        <div className="w-full flex justify-center mb-3">
+          {/* 输入区域 */}
+          <ChatInput
+            value={inputMessage}
+            onChange={setInputMessage}
+            onSend={handleSendMessage}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading || isStreaming || !selectedAgent}
+            isLoading={isLoading || isStreaming}
+            isStreaming={isStreaming}
+            // className={isMobile ? 'w-full' : 'w-full'}
+            className="w-full mx-2 max-w-3xl"
+          />
         </div>
       </div>
 

@@ -186,10 +186,10 @@ export function HeadBanner({
               </DropdownMenu>
             ) : (
               <div className="hidden md:flex items-center space-x-2">
-                <Button variant="ghost" onClick={() => navigate('/login')}>
+                <Button onClick={() => navigate('/login')}>
                   登录
                 </Button>
-                <Button onClick={() => navigate('/register')}>
+                <Button variant="outline" onClick={() => navigate('/register')}>
                   注册
                 </Button>
               </div>
@@ -288,8 +288,8 @@ export function HeadBanner({
               ) : (
                 <div className="space-y-2 pt-2 border-t border-border">
                   <Button 
-                    variant="ghost" 
-                    className="w-full justify-start"
+                    variant="default" 
+                    className="w-full"
                     onClick={() => {
                       navigate('/login');
                       setIsMobileMenuOpen(false);
@@ -298,6 +298,7 @@ export function HeadBanner({
                     登录
                   </Button>
                   <Button 
+                    variant="outline" 
                     className="w-full"
                     onClick={() => {
                       navigate('/register');

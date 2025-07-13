@@ -23,10 +23,10 @@ export function AgentManagement() {
     agents,
     loading,
     error,
-    myAgents,
-    publicAgents,
-    defaultAgent,
-    hasDefaultAgent,
+    // myAgents,
+    // publicAgents,
+    // defaultAgent,
+    // hasDefaultAgent,
     deleteAgent,
     refresh
   } = useAgents();
@@ -132,9 +132,9 @@ export function AgentManagement() {
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-md flex items-center space-x-2">
                       <span className="truncate">{formatAgentDisplayName(agent)}</span>
-                      {agent.id === defaultAgent?.id && (
+                      {/* {agent.id === defaultAgent?.id && (
                         <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
-                      )}
+                      )} */}
                     </CardTitle>
                     <CardDescription className="flex items-center space-x-2">
                       <span>{agent.provider}</span>

@@ -114,8 +114,6 @@ export const useAgents = () => {
             description: updatedAgent.app_preset.description,
             provider: updatedAgent.provider,
             model: updatedAgent.model,
-            is_public: updatedAgent.is_public,
-            is_default: updatedAgent.is_default,
             update_time: updatedAgent.update_time
           };
         }
@@ -195,34 +193,6 @@ export const useAgents = () => {
     }
   }, [toast]);
 
-  /**
-   * 设置默认代理
-   */
-  const setDefaultAgent = useCallback(async (agentId: string): Promise<boolean> => {
-    try {
-      // 先将其他代理设为非默认，再将指定代理设为默认
-      const updates = agents.map(async (agent) => {
-        if (agent.id === agentId) {
-          return updateAgent(agentId, { is_default: true });
-        } else if (agent.is_default) {
-          return updateAgent(agent.id, { is_default: false });
-        }
-        return Promise.resolve(true);
-      });
-      
-      await Promise.all(updates);
-      return true;
-    } catch (err: any) {
-      const errorMessage = err.message || '设置默认代理失败';
-      setError(errorMessage);
-      toast({
-        title: '设置失败',
-        description: errorMessage,
-        variant: 'destructive'
-      });
-      return false;
-    }
-  }, [agents, updateAgent, toast]);
 
   /**
    * 刷新代理列表
@@ -235,7 +205,7 @@ export const useAgents = () => {
    * 检查用户是否拥有指定代理
    */
   const isOwner = useCallback((agent: AgentSummary): boolean => {
-    return user?.id === agent.user_id;
+    return user?.id === agent.creator_id;
   }, [user]);
 
   /**
@@ -270,7 +240,6 @@ export const useAgents = () => {
     updateAgent,
     deleteAgent,
     getAgent,
-    setDefaultAgent,
     refresh,
     loadPublicAgents,
     
@@ -280,9 +249,9 @@ export const useAgents = () => {
     canDelete,
     
     // 便捷属性
-    myAgents: agents.filter(agent => user?.id === agent.user_id),
-    publicAgents: agents.filter(agent => agent.is_public),
-    defaultAgent: agents.find(agent => agent.is_default && user?.id === agent.user_id),
-    hasDefaultAgent: agents.some(agent => agent.is_default && user?.id === agent.user_id)
+    // myAgents: agents.filter(agent => user?.id === agent.user_id),
+    // publicAgents: agents.filter(agent => agent.is_public),
+    // defaultAgent: agents.find(agent => agent.is_default && user?.id === agent.user_id),
+    // hasDefaultAgent: agents.some(agent => agent.is_default && user?.id === agent.user_id)
   };
 }; 

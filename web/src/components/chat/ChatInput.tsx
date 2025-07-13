@@ -10,17 +10,18 @@ import cn from 'classnames';
 interface SuggestedQuestionsProps {
   questions: string[];
   onQuestionClick: (question: string) => void;
+  className?: string;
 }
 
-export const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({ questions, onQuestionClick }) => (
-  <div className="flex items-center space-x-3">
-    <div className="flex items-center space-x-2 flex-shrink-0">
+export const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({ questions, onQuestionClick, className }) => (
+  <div className={cn("flex items-center gap-1", className)}>
+    <div className="flex items-center gap-2">
       <div className="w-4 h-4 rounded-full bg-gradient-to-r from-theme-blue to-theme-indigo flex items-center justify-center">
         <span className="text-white text-xs">💡</span>
       </div>
-      <p className="text-sm font-medium text-foreground">试试这样问</p>
+      <p className="text-sm font-medium text-foreground hidden md:block">试试这样问</p>
     </div>
-    <div className="flex gap-2 overflow-x-auto" style={{scrollbarWidth: 'none'}}>
+    <div className="flex flex-1 gap-2 overflow-x-scroll" style={{scrollbarWidth: 'none'}}>
       {questions.map((question: string, index: number) => (
         <Button
           key={index}
@@ -50,6 +51,7 @@ interface ChatInputProps {
   disabled: boolean;
   isLoading: boolean;
   isStreaming?: boolean;
+  className?: string;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -59,7 +61,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onKeyPress,
   disabled,
   isLoading,
-  isStreaming
+  isStreaming,
+  className
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -102,7 +105,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const isOverLimit = charCount > maxChars;
 
   return (
-    <div className="flex-shrink-0">
+    <div className={cn("", className)}>
       <div className={cn(
         'relative bg-card border border-border rounded-2xl shadow-lg transition-all duration-200',
         isFocused ? 'ring-2 ring-theme-blue/70 shadow-xl' : 'hover:shadow-xl',
