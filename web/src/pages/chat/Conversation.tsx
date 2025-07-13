@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
 import { Button } from '@/components/x-ui/button';
-import { ChatHistoryPanel } from '@/components/chat/ChatHistoryPanel';
-import { MessageEditDialog } from '@/components/chat/MessageEditDialog';
+import { ChatHistoryPanel, MessageEditDialog } from '@/components/chat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversation } from '@/hooks/useConversation';
 import { useAgents } from '@/hooks/useAgents';
@@ -11,14 +9,11 @@ import { useAutoScroll } from '@/hooks/useAutoScroll';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import { 
-  Bot, 
-  ArrowDown,
   PanelLeftOpen,
-  Plus
 } from 'lucide-react';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatInput, SuggestedQuestions } from '@/components/chat/ChatInput';
-import { CreateAgentDialog } from '@/components/chat';
+// import { CreateAgentDialog } from '@/components/chat';
 
 // 主组件
 export function Conversation() {
@@ -219,13 +214,6 @@ export function Conversation() {
             {/* 消息列表 */}
             <div className="h-full py-8">
               <div className="">
-                {/* {messages.length === 0 && selectedAgent && !selectedAgent.app_preset?.greetings && (
-                  <div className="text-center text-muted-foreground py-16">
-                    <Bot className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">开始与 {selectedAgent.app_preset.name} 对话吧</p>
-                  </div>
-                )} */}
-                
                 {messages.map((message, index) => (
                   <MessageBubble
                     key={index}

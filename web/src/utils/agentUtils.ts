@@ -1,4 +1,4 @@
-import { AgentSummary, AgentDetail, AgentCreate, AppPreset } from '@/types';
+import { AgentSummary, AgentDetail, AgentCreate, AppPreset } from '@/types/agent';
 
 /**
  * AI代理相关工具函数

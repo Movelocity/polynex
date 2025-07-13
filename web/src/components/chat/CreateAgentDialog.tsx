@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAgents } from '@/hooks/useAgents';
 import { useAIProviders } from '@/hooks/useAIProviders';
 import { toast } from '@/hooks/use-toast';
-import { AgentInfo } from '@/components/chat/types';
+import { AgentInfo, AgentCreate, ExtendedAgentMessage } from '@/types/agent';
 import { AgentInfoEditor } from '@/components/chat/AgentInfoEditor';  
-import { ExtendedAgentMessage } from '@/components/chat/PromptEditor';
-import { AgentCreate } from '@/types';
 
 /**
  * 用于在任意页面创建新的Agent
@@ -68,7 +66,7 @@ export function CreateAgentDialog({ trigger, onAgentCreated }: CreateAgentDialog
         model: defaultProvider.models?.[0] || '',
         temperature: 0.7,
         top_p: 1.0,
-        max_tokens: 2048,
+        max_tokens: 112048,
         preset_messages: [
           { 
             role: 'system', 

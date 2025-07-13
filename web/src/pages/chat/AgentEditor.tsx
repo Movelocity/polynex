@@ -12,7 +12,7 @@ import { PromptEditor } from '@/components/chat/PromptEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useAIProviders } from '@/hooks/useAIProviders';
-import { AgentUpdate } from '@/types';
+import { Agent, AgentUpdate, AgentInfo } from '@/types/agent';
 import { toast } from '@/hooks/use-toast';
 import { 
   Save, 
@@ -24,7 +24,6 @@ import {
   Trash2
 } from 'lucide-react';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
-import { Agent, AgentInfo } from '@/components/chat/types';
 import { AgentInfoEditor } from '@/components/chat/AgentInfoEditor';
 
 
@@ -32,7 +31,7 @@ export function AgentEditor() {
   const { agentId } = useParams<{ agentId?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { updateAgent, getAgent } = useAgents();
+  const { updateAgent, getAgent, deleteAgent } = useAgents();
   const { providers } = useAIProviders();
 
   const [loading, setLoading] = useState(false);
@@ -56,7 +55,7 @@ export function AgentEditor() {
     model: '',
     temperature: 0.7,
     top_p: 1.0,
-    max_tokens: 2048,
+    max_tokens: 112048,
     preset_messages: [
       { 
         role: 'system', 
@@ -88,7 +87,7 @@ export function AgentEditor() {
           model: agent.model,
           temperature: agent.temperature || 0.7,
           top_p: agent.top_p || 1.0,
-          max_tokens: agent.max_tokens || 2048,
+          max_tokens: agent.max_tokens || 12048,
           preset_messages: (agent.preset_messages || [
             { role: 'system', content: '你是一个友好且有用的AI助手。' }
           ]).map(msg => ({
@@ -162,10 +161,6 @@ export function AgentEditor() {
     }
   };
 
-  const handleBack = () => {
-    navigate('/chat/agents');
-  };
-
   const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
@@ -206,6 +201,14 @@ export function AgentEditor() {
     updateFormData('access_level', agentInfo.access_level);
   };
 
+  const handleAgentDelete = () => {
+    const confirm = window.confirm(`是否删除 Agent (${formData.app_preset.name}) ?`);
+    if (confirm) {
+      deleteAgent(agentId!);
+      navigate('/chat/agents');
+    }
+  };
+
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -236,12 +239,15 @@ export function AgentEditor() {
       {/* 顶部导航栏 */}
       <div className="pt-2 px-4 flex items-center justify-between text-foreground">
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            返回
-          </Button>
           <div className="flex items-center space-x-3">
-            
+            {/* Agent Info Editor */}
+            <AgentInfoEditor
+              agent={formData}
+              show={showAgentInfo}
+              onShowChange={setShowAgentInfo}
+              onSave={handleAgentInfoSave}
+              onDelete={handleAgentDelete}
+            />
             <AgentAvatar
               avatar={formData.avatar}
               name={formData.app_preset.name || 'Agent'}
@@ -438,13 +444,7 @@ export function AgentEditor() {
         </Card>
       </div>
 
-      {/* Agent Info Editor */}
-      <AgentInfoEditor
-        agent={formData}
-        show={showAgentInfo}
-        onShowChange={setShowAgentInfo}
-        onSave={handleAgentInfoSave}
-      />
+      
     </div>
   );
 } 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AvatarConfig } from '@/types';
+import { AvatarConfig } from '@/types/agent';
 import { fileService } from '@/services';
 import cn from "classnames"
 

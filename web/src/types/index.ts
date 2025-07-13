@@ -181,92 +181,6 @@ export interface TestProviderResponse {
   response?: any;
 }
 
-// ===== AI代理相关类型 =====
-
-// 消息类型
-export interface AgentMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-// 头像配置
-export interface AvatarConfig {
-  emoji?: string;
-  bg_color?: string;
-  variant: 'emoji' | 'link';
-  link?: string;
-}
-
-// 应用预设配置
-export interface AppPreset {
-  name: string;
-  description: string;
-  greetings?: string;
-  suggested_questions?: string[];
-  creation_date?: string;
-  [key: string]: any;
-}
-
-// AI代理摘要信息
-export interface AgentSummary {
-  id: string;
-  agent_id: string;
-  creator_id: string;
-  provider: string;
-  model: string;
-  name: string;
-  description: string;
-  avatar: AvatarConfig;
-  access_level: number;
-  create_time: string;
-  update_time: string;
-}
-
-// AI代理详细信息
-export interface AgentDetail {
-  id: string;
-  agent_id: string;
-  creator_id: string;
-  provider: string;
-  model: string;
-  top_p?: number;
-  temperature?: number;
-  max_tokens?: number;
-  preset_messages: AgentMessage[];
-  app_preset: AppPreset;
-  avatar: AvatarConfig;
-  access_level: number;
-  create_time: string;
-  update_time: string;
-}
-
-// AI代理创建类型
-export interface AgentCreate {
-  agent_id: string;
-  provider: string;
-  model: string;
-  top_p?: number;
-  temperature?: number;
-  max_tokens?: number;
-  preset_messages?: AgentMessage[];
-  app_preset: AppPreset;
-  avatar: AvatarConfig;
-  access_level?: number;
-}
-
-// AI代理更新类型
-export interface AgentUpdate {
-  provider?: string;
-  model?: string;
-  top_p?: number;
-  temperature?: number;
-  max_tokens?: number;
-  preset_messages?: AgentMessage[];
-  app_preset?: AppPreset;
-  avatar?: AvatarConfig;
-  access_level?: number;
-}
-
 // ===== 对话相关类型 =====
 
 // 对话状态枚举
@@ -354,9 +268,4 @@ export interface ApiResponse<T = any> {
 export interface PaginationParams {
   limit?: number;
   offset?: number;
-}
-
-// 代理查询参数
-export interface AgentQueryParams extends PaginationParams {
-  include_public?: boolean;
 }

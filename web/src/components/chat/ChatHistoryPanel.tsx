@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/x-ui/button';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
 import { useAgents } from '@/hooks/useAgents';
-import { Conversation, AgentSummary, AgentDetail, AvatarConfig } from '@/types';
+import { Conversation } from '@/types';
+import { AgentSummary, AgentDetail, AvatarConfig } from '@/types/agent';
 import { ChatSearchDialog } from './ChatSearchDialog';
 import { 
   MessageCircle, 

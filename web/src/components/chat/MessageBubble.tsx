@@ -13,7 +13,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import cn from 'classnames';
-import { AvatarConfig } from '@/types';
+import { AvatarConfig } from '@/types/agent';
 import { AgentAvatar } from './AgentAvatar';
 
 // 消息操作栏组件

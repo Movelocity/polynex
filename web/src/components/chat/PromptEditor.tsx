@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/x-ui/button';
-import { AgentMessage } from '@/types';
+import { ExtendedAgentMessage } from '@/types/agent';
 import { toast } from '@/hooks/use-toast';
 import { 
   Plus, 
@@ -133,11 +133,7 @@ export function MessageBlock({
   );
 } 
 
-// 扩展AgentMessage类型以支持模板功能
-export interface ExtendedAgentMessage extends AgentMessage {
-  template_enabled?: boolean;
-  token_count?: number;
-}
+
 
 interface PromptEditorProps {
   messages: ExtendedAgentMessage[];

@@ -5,7 +5,8 @@ import {
   AgentCreate, 
   AgentUpdate,
   AgentQueryParams 
-} from '@/types';
+} from '@/types/agent';
+
 import { agentService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';

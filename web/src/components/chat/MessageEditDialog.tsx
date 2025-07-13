@@ -9,7 +9,6 @@ import {
 } from '@/components/x-ui/dialog';
 import { Button } from '@/components/x-ui/button';
 import { Textarea } from '@/components/x-ui/textarea';
-import { Label } from '@/components/x-ui/label';
 import { ConversationMessage } from '@/types';
 import { Save, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';

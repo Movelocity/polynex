@@ -6,25 +6,26 @@ import { Textarea } from '@/components/x-ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/x-ui/dialog';
 import { Switch } from '@/components/x-ui/switch';
 import { AgentAvatarEditor } from '@/components/chat/AgentAvatarEditor';
-import { AvatarConfig } from '@/types';
+import { AvatarConfig } from '@/types/agent';
 import { toast } from '@/hooks/use-toast';
 import { 
   Settings2,
   Globe,
 } from 'lucide-react';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
-import { Agent, AgentInfo } from '@/components/chat/types';
+import { Agent, AgentInfo } from '@/types/agent';
 
 interface AgentInfoEditorProps {
   agent?: Agent;
   show: boolean;
   onShowChange: (show: boolean) => void;
   onSave: (agent: AgentInfo) => void;
+  onDelete?: () => void;
   isCreateMode?: boolean;
   triggerButton?: React.ReactNode;
 }
 /** 编辑Agent基本信息 */
-export function AgentInfoEditor({ agent, show, onShowChange, onSave, isCreateMode = false, triggerButton }: AgentInfoEditorProps) {
+export function AgentInfoEditor({ agent, show, onShowChange, onSave, onDelete, isCreateMode = false, triggerButton }: AgentInfoEditorProps) {
   const defaultAvatar: AvatarConfig = {
     variant: 'emoji',
     emoji: '🤖',
@@ -113,21 +114,26 @@ export function AgentInfoEditor({ agent, show, onShowChange, onSave, isCreateMod
                 </p>
               </div>
               <Switch
-                checked={formData.access_level === 3}
-                onCheckedChange={(checked) => setFormData({...formData, access_level: checked ? 3 : 1})}
+                checked={formData.access_level > 1}
+                onCheckedChange={(checked) => setFormData({...formData, access_level: checked ? 2 : 1})}
               />
             </div>
-
           </div>
 
-          <div className="flex justify-end space-x-2 mt-4">
+          <div className="flex justify-between space-x-2 mt-4">
+            {!isCreateMode && (
+              <Button variant="outline" onClick={onDelete}>
+                删除 Agent
+              </Button>
+            )}
+            <span className="flex-1">{/* 占位符 */}</span>
             <Button variant="outline" onClick={() => onShowChange(false)}>
               取消
             </Button>
             <Button onClick={() => {
               if (!formData.name.trim()) {
                 toast({
-                  title: '保存失败',
+                  title: '无法应用配置',
                   description: 'Agent名称不能为空',
                   variant: 'destructive'
                 });
@@ -142,7 +148,7 @@ export function AgentInfoEditor({ agent, show, onShowChange, onSave, isCreateMod
               });
               onShowChange(false);
             }}>
-              {isCreateMode ? '创建' : '保存'}
+              {isCreateMode ? '创建' : '确定'}
             </Button>
           </div>
         </DialogContent>
