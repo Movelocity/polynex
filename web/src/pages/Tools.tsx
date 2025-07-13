@@ -67,19 +67,21 @@ export function Tools() {
           const IconComponent = tool.icon;
           return (
             <Link key={tool.path} to={tool.path} className="group">
-              <Card className="h-full duration-300 hover:shadow-lg border-border group-hover:border-border">
-                <CardHeader className="pb-4">
-                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <IconComponent className="w-6 h-6 text-white" />
+              <Card className="h-full duration-300 hover:shadow-lg border-border group-hover:border-blue-500">
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${tool.color} flex items-center justify-center flex-shrink-0`}>
+                      <IconComponent className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="mb-2">
+                        {tool.title}
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground leading-relaxed">
+                        {tool.description}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardTitle className="">
-                    {tool.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-muted-foreground leading-relaxed">
-                    {tool.description}
-                  </CardDescription>
                 </CardContent>
               </Card>
             </Link>
