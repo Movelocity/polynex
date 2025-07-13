@@ -60,7 +60,11 @@ export function Conversation() {
   const { agents, loading: isLoadingAgents } = useAgents();
 
   // 使用自动滚动hook
-  // const { endRef, scrollToBottom, isUserScrolling, isAtBottom } = useAutoScroll([messages, currentAIResponse, currentAIReasoning]);
+  const { endRef } = useAutoScroll(
+    messages, 
+    currentAIResponse, 
+    currentAIReasoning
+  );
 
   // 自动选择可用的agent（当hash中没有agent参数时）
   useEffect(() => {
@@ -213,38 +217,36 @@ export function Conversation() {
             
             {/* 消息列表 */}
             <div className="h-full py-8">
-              <div className="">
-                {messages.map((message, index) => (
-                  <MessageBubble
-                    key={index}
-                    message={message}
-                    index={index}
-                    agentName={selectedAgent?.app_preset?.name}
-                    avatar={message.role === 'user' ? undefined : selectedAgent?.avatar}
-                    onCopy={copyMessage}
-                    onEdit={handleEditMessage}
-                    copiedIndex={copiedIndex}
-                  />
-                ))}
-                
-                {/* 显示当前流式AI响应 */}
-                {isStreaming && (currentAIResponse || currentAIReasoning) && (
-                  <MessageBubble
-                    message={{
-                      role: 'assistant',
-                      content: currentAIResponse,
-                      reasoning_content: currentAIReasoning,
-                    }}
-                    index={messages.length}
-                    onCopy={() => {}}
-                    onEdit={() => {}}
-                    copiedIndex={null}
-                    defaultReasoningOpen={true}
-                  />
-                )}
-                
-                {/* <div ref={endRef} /> */}
-              </div>
+              {messages.map((message, index) => (
+                <MessageBubble
+                  key={index}
+                  message={message}
+                  index={index}
+                  agentName={selectedAgent?.app_preset?.name}
+                  avatar={message.role === 'user' ? undefined : selectedAgent?.avatar}
+                  onCopy={copyMessage}
+                  onEdit={handleEditMessage}
+                  copiedIndex={copiedIndex}
+                />
+              ))}
+              
+              {/* 显示当前流式AI响应 */}
+              {isStreaming && (currentAIResponse || currentAIReasoning) && (
+                <MessageBubble
+                  message={{
+                    role: 'assistant',
+                    content: currentAIResponse,
+                    reasoning_content: currentAIReasoning,
+                  }}
+                  index={messages.length}
+                  onCopy={() => {}}
+                  onEdit={() => {}}
+                  copiedIndex={null}
+                  defaultReasoningOpen={true}
+                />
+              )}
+              
+              <div ref={endRef} />
             </div>
           </div>
         </ScrollArea>

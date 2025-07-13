@@ -88,7 +88,7 @@ export function AgentManagement() {
             <h1 className="text-3xl font-bold text-foreground mb-2">AI Agent管理</h1>
           </div>
           {/** 编辑供应商 */}
-          <Button variant="outline" size="default" onClick={() => {navigate('/chat/ai-provider-management')}}>
+          <Button variant="pretty" size="default" onClick={() => {navigate('/chat/ai-provider-management')}}>
             <Settings2 className="h-6 w-6" />
             编辑供应商
           </Button>

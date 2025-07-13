@@ -241,14 +241,6 @@ export function AgentEditor() {
       <div className="pt-2 px-4 flex items-center justify-between text-foreground">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
-            {/* Agent Info Editor */}
-            <AgentInfoEditor
-              agent={formData}
-              show={showAgentInfo}
-              onShowChange={setShowAgentInfo}
-              onSave={handleAgentInfoSave}
-              onDelete={handleAgentDelete}
-            />
             <AgentAvatar
               avatar={formData.avatar}
               name={formData.app_preset.name || 'Agent'}
@@ -264,15 +256,21 @@ export function AgentEditor() {
                 {formData.app_preset.description || ''}
               </span>
             </div>
-            
-            
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* Agent Info Editor */}
+          <AgentInfoEditor
+              agent={formData}
+              show={showAgentInfo}
+              onShowChange={setShowAgentInfo}
+              onSave={handleAgentInfoSave}
+              onDelete={handleAgentDelete}
+            />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="pretty" size="sm">
                 <Settings className="h-4 w-4 mr-2" />
                 {formData.model || '选择模型'}
               </Button>

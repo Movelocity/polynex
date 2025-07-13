@@ -71,7 +71,7 @@ export function AgentInfoEditor({ agent, show, onShowChange, onSave, onDelete, i
             </Button>
           </DialogTrigger>
         )}
-        <DialogContent className="sm:max-w-md text-foreground">
+        <DialogContent className="sm:max-w-md text-foreground" aria-describedby="">
           <DialogHeader>
             <DialogTitle>{isCreateMode ? '创建Agent' : '应用配置'}</DialogTitle>
           </DialogHeader>
