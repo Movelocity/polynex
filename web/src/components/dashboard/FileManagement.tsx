@@ -11,6 +11,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { FileUploadArea } from '@/components/common/file/FileUploadArea';
 import { FileList } from '@/components/common/FileList';
+import { FileGrid } from '@/components/common/FileGrid';
+import { Grid, List } from 'lucide-react';
 import { fileService } from '@/services';
 import { toast } from '@/hooks/use-toast';
 
@@ -31,6 +33,9 @@ export function FileManagement() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   // 加载用户文件列表
   const loadUserFiles = async (page: number = 1, pageSize: number = 10) => {
@@ -179,39 +184,70 @@ export function FileManagement() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between py-0">
         <div>
           <CardTitle>文件管理</CardTitle>
-          <CardDescription>上传、查看、下载和删除您的文件</CardDescription>
         </div>
-        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>上传文件</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>上传文件</DialogTitle>
-              <DialogDescription>
-                选择或拖拽文件进行上传。
-              </DialogDescription>
-            </DialogHeader>
-            <FileUploadArea
-              onFileUpload={handleFileUpload}
-              uploading={uploadingFile}
-              uploadProgress={uploadProgress}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center border border-border rounded-md p-1">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="px-2 py-1"
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="px-2 py-1"
+            >
+              <Grid className="w-4 h-4" />
+            </Button>
+          </div>
+          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>上传文件</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>上传文件</DialogTitle>
+                <DialogDescription>
+                  选择或拖拽文件进行上传。
+                </DialogDescription>
+              </DialogHeader>
+              <FileUploadArea
+                onFileUpload={handleFileUpload}
+                uploading={uploadingFile}
+                uploadProgress={uploadProgress}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
-        <FileList
-          files={userFiles}
-          loading={loadingFiles}
-          pagination={filePagination}
-          onDelete={handleFileDelete}
-          onRefresh={loadUserFiles}
-          onPageChange={handlePageChange}
-        />
+        {viewMode === 'list' ? (
+          <FileList
+            files={userFiles}
+            loading={loadingFiles}
+            pagination={filePagination}
+            onDelete={handleFileDelete}
+            onRefresh={loadUserFiles}
+            onPageChange={handlePageChange}
+          />
+        ) : (
+          <FileGrid
+            files={userFiles}
+            loading={loadingFiles}
+            pagination={filePagination}
+            onDelete={handleFileDelete}
+            onRefresh={loadUserFiles}
+            onPageChange={handlePageChange}
+          />
+        )}
       </CardContent>
     </Card>
   )
