@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TextareaAutosize from 'react-textarea-autosize';
 import { MarkdownPreview } from '@/components/common/MarkdownPreview';
-import { blogService, categoryService } from '@/services';
+import { ImageUploadDialog } from '@/components/common/ImageUploadDialog';
+import { blogService, categoryService, fileService } from '@/services';
 import { Blog, Category } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/x-ui/button';
@@ -56,8 +57,14 @@ export function WriteBlog() {
   const [isEdit, setIsEdit] = useState(false);
   const [activeTab, setActiveTab] = useState('write');
   
+  // Image upload dialog state
+  const [showImageUploadDialog, setShowImageUploadDialog] = useState(false);
+  const [pastedImageFile, setPastedImageFile] = useState<File | null>(null);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  
   const { user } = useAuth();
   const navigate = useNavigate();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   // const { toast } = useToast();
 
   // 动态设置页面标题 - 根据是否为编辑模式设置不同标题
@@ -146,6 +153,66 @@ export function WriteBlog() {
       handleAddTag();
     }
   };
+
+  // Handle paste events for image detection
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = Array.from(e.clipboardData.items);
+    const imageItem = items.find(item => item.type.startsWith('image/'));
+    
+    if (imageItem) {
+      e.preventDefault();
+      const file = imageItem.getAsFile();
+      if (file) {
+        // Store current cursor position
+        const textarea = textareaRef.current;
+        if (textarea) {
+          setCursorPosition(textarea.selectionStart);
+        }
+        
+        setPastedImageFile(file);
+        setShowImageUploadDialog(true);
+      }
+    }
+  }, []);
+
+  // Handle image upload from dialog
+  const handleImageUpload = useCallback(async (file: File, altText: string) => {
+    try {
+      const response = await fileService.uploadFile(file);
+      const imageUrl = `/api/resources/${response.uniqueId}${response.extension}`;
+      
+      // Insert markdown image link at cursor position
+      const markdownLink = `![${altText}](${imageUrl})`;
+      const textarea = textareaRef.current;
+      
+      if (textarea) {
+        const content = formData.content;
+        const beforeCursor = content.substring(0, cursorPosition);
+        const afterCursor = content.substring(cursorPosition);
+        const newContent = beforeCursor + markdownLink + afterCursor;
+        
+        setFormData(prev => ({
+          ...prev,
+          content: newContent
+        }));
+        
+        // Set cursor position after the inserted link
+        setTimeout(() => {
+          const newCursorPos = cursorPosition + markdownLink.length;
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+          textarea.focus();
+        }, 0);
+      }
+      
+      toast({
+        title: "图片上传成功",
+        description: "图片已插入到文章中",
+      });
+    } catch (error: any) {
+      console.error('Image upload failed:', error);
+      throw new Error(error.message || '图片上传失败');
+    }
+  }, [formData.content, cursorPosition, toast]);
 
   const validateForm = useCallback(() => {
     if (!formData.title.trim()) {
@@ -462,16 +529,18 @@ export function WriteBlog() {
               {activeTab === 'write' && (
                 <div className="relative min-h-[600px] pb-4">
                   <TextareaAutosize
+                    ref={textareaRef}
                     id="content"
                     placeholder="开始编写您的文章..."
                     value={formData.content}
                     onChange={(e) => handleInputChange('content', e.target.value)}
+                    onPaste={handlePaste}
                     className="w-full p-2 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc]"
                     spellCheck={false}
                     minRows={20}
                   />
                   <div className="text-xs text-muted-foreground absolute bottom-0">
-                    支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等
+                    支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等。支持粘贴图片直接上传。
                   </div>
                 </div>
               )}
@@ -485,6 +554,16 @@ export function WriteBlog() {
         </div>
         
       </div>
+
+      {/* Image Upload Dialog */}
+      {pastedImageFile && (
+        <ImageUploadDialog
+          open={showImageUploadDialog}
+          onOpenChange={setShowImageUploadDialog}
+          imageFile={pastedImageFile}
+          onUpload={handleImageUpload}
+        />
+      )}
     </div>
   );
 }

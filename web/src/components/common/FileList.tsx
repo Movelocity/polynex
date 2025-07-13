@@ -210,7 +210,7 @@ export function FileList({
           const isDeleting = deletingFile === file.unique_id;
           
           return (
-            <div key={file.unique_id} className="flex items-center justify-between p-4 border-b border-border hover:bg-accent">
+            <div key={file.unique_id} className="flex items-center justify-between px-4 py-2 border-b border-border hover:bg-accent">
               <div className="flex items-center space-x-4">
                 {/* 文件图标或缩略图 */}
                 <div className="flex-shrink-0">
