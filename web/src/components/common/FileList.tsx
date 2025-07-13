@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/x-ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/x-ui/dialog';
 import { 
   Pagination,
   PaginationContent,
@@ -10,7 +9,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/x-ui/pagination';
-import { File, Image as ImageIcon, Eye, Download, Trash2, RefreshCw } from 'lucide-react';
+import { File, Image as ImageIcon, Download, Trash2, RefreshCw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { fileService } from '@/services';
 import { PaginationInfo } from '@/services/api/FileApiService';
 
@@ -43,12 +42,139 @@ export function FileList({
 }: FileListProps) {
   const [filePreview, setFilePreview] = useState<string>('');
   const [showFilePreview, setShowFilePreview] = useState(false);
-  const [deletingFile, setDeletingFile] = useState<string>('');
+  const [deletingFile, setDeletingFile] = useState<string>('');  
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [lastTouchDistance, setLastTouchDistance] = useState(0);
+  const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
 
   // 预览图片
   const previewImage = (fileUrl: string) => {
     setFilePreview(fileService.resolveFileUrl(fileUrl));
     setShowFilePreview(true);
+    setZoomLevel(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  // 处理缩放
+  const handleZoom = (delta: number, event?: React.WheelEvent) => {
+    const newZoom = Math.max(0.1, Math.min(5, zoomLevel + delta));
+    setZoomLevel(newZoom);
+    
+    // 如果是鼠标滚轮事件，以鼠标位置为中心缩放
+    if (event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const centerX = event.clientX - rect.left - rect.width / 2;
+      const centerY = event.clientY - rect.top - rect.height / 2;
+      
+      setPosition(prev => ({
+        x: prev.x - centerX * (delta / zoomLevel),
+        y: prev.y - centerY * (delta / zoomLevel)
+      }));
+    }
+  };
+
+  // 处理拖拽
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel > 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && zoomLevel > 1) {
+      setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // 重置查看器状态
+  const resetViewer = () => {
+    setZoomLevel(1);
+    setPosition({ x: 0, y: 0 });
+    setIsDragging(false);
+  };
+
+  // 关闭预览
+  const closePreview = () => {
+    setShowFilePreview(false);
+    resetViewer();
+  };
+
+  // 计算两点之间距离
+  const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
+    return Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) + 
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    );
+  };
+
+  // 计算两点中心
+  const getCenter = (touch1: React.Touch, touch2: React.Touch) => {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  };
+
+  // 处理触摸开始
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      // 单指拖拽
+      if (zoomLevel > 1) {
+        setIsDragging(true);
+        setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
+      }
+    } else if (e.touches.length === 2) {
+      // 双指缩放
+      const distance = getDistance(e.touches[0], e.touches[1]);
+      const center = getCenter(e.touches[0], e.touches[1]);
+      setLastTouchDistance(distance);
+      setLastTouchCenter(center);
+    }
+  };
+
+  // 处理触摸移动
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    if (e.touches.length === 1 && isDragging && zoomLevel > 1) {
+      // 单指拖拽
+      setPosition({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y });
+    } else if (e.touches.length === 2 && lastTouchDistance > 0) {
+      // 双指缩放
+      const distance = getDistance(e.touches[0], e.touches[1]);
+      const center = getCenter(e.touches[0], e.touches[1]);
+      
+      const scale = distance / lastTouchDistance;
+      const newZoom = Math.max(0.1, Math.min(5, zoomLevel * scale));
+      
+      // 以触摸中心为基准缩放
+      const rect = e.currentTarget.getBoundingClientRect();
+      const centerX = center.x - rect.left - rect.width / 2;
+      const centerY = center.y - rect.top - rect.height / 2;
+      
+      setZoomLevel(newZoom);
+      setPosition(prev => ({
+        x: prev.x - centerX * (scale - 1),
+        y: prev.y - centerY * (scale - 1)
+      }));
+      
+      setLastTouchDistance(distance);
+      setLastTouchCenter(center);
+    }
+  };
+
+  // 处理触摸结束
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setLastTouchDistance(0);
   };
 
   // 下载文件
@@ -220,11 +346,11 @@ export function FileList({
                 {/* 文件图标或缩略图 */}
                 <div className="flex-shrink-0">
                   {fileTypeInfo.isImage && thumbnailUrl ? (
-                    <div className="relative w-12 h-12">
+                    <div className="relative w-12 h-12 cursor-pointer group" onClick={() => previewImage(file.url)}>
                       <img 
                         src={thumbnailUrl}
                         alt={file.original_name || file.unique_id}
-                        className="w-12 h-12 rounded-md object-cover border border-border bg-muted"
+                        className="w-12 h-12 rounded-md object-cover border border-border bg-muted transition-all group-hover:opacity-80"
                         onError={(e) => {
                           // 如果缩略图加载失败，显示默认图标
                           const target = e.target as HTMLImageElement;
@@ -235,11 +361,24 @@ export function FileList({
                           }
                         }}
                       />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-md transition-all flex items-center justify-center">
+                        <ZoomIn className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
                   ) : (
-                    <div className="w-12 h-12 rounded-md border border-border bg-muted flex items-center justify-center">
+                    <div 
+                      className={`w-12 h-12 rounded-md border border-border bg-muted flex items-center justify-center ${
+                        fileTypeInfo.isImage ? 'cursor-pointer group' : ''
+                      }`}
+                      onClick={fileTypeInfo.isImage ? () => previewImage(file.url) : undefined}
+                    >
                       {fileTypeInfo.isImage ? (
-                        <ImageIcon className="w-6 h-6 text-blue-500" />
+                        <div className="relative">
+                          <ImageIcon className="w-6 h-6 text-blue-500 group-hover:opacity-80 transition-opacity" />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ZoomIn className="w-4 h-4 text-blue-500" />
+                          </div>
+                        </div>
                       ) : fileTypeInfo.isDocument ? (
                         <File className="w-6 h-6 text-green-500" />
                       ) : (
@@ -262,16 +401,6 @@ export function FileList({
               
               {/* 操作按钮 */}
               <div className="flex items-center space-x-2 flex-shrink-0">
-                {fileTypeInfo.isImage && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => previewImage(file.url)}
-                    title="预览图片"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                )}
                 <Button
                   variant="outline"  
                   size="sm"
@@ -299,23 +428,98 @@ export function FileList({
       {/* 分页 */}
       {renderPagination()}
 
-      {/* File Preview Dialog */}
-      <Dialog open={showFilePreview} onOpenChange={setShowFilePreview}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>图片预览</DialogTitle>
-          </DialogHeader>
-          {filePreview && (
-            <div className="flex justify-center items-center max-h-[70vh] overflow-hidden">
-              <img 
-                src={filePreview} 
-                alt="文件预览" 
-                className="max-w-full max-h-full object-contain rounded-lg"
-              />
+      {/* Full Screen Image Viewer */}
+      {showFilePreview && filePreview && (
+        <div 
+          className="fixed inset-0 z-50 bg-black bg-opacity-95 flex items-center justify-center touch-none"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Close Button */}
+          <button
+            onClick={closePreview}
+            className="absolute top-4 right-4 z-10 p-3 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all touch-manipulation"
+            title="关闭预览"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Zoom Controls - Hidden on mobile */}
+          <div className="absolute top-4 left-4 z-10 flex-col gap-2 hidden md:flex">
+            <button
+              onClick={() => handleZoom(0.2)}
+              className="p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all"
+              title="放大"
+            >
+              <ZoomIn className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleZoom(-0.2)}
+              className="p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all"
+              title="缩小"
+            >
+              <ZoomOut className="w-5 h-5" />
+            </button>
+            <button
+              onClick={resetViewer}
+              className="p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all text-xs"
+              title="重置视图"
+            >
+              1:1
+            </button>
+          </div>
+
+          {/* Zoom Level Indicator */}
+          <div className="absolute bottom-4 left-4 z-10 px-3 py-1 rounded-full bg-black bg-opacity-50 text-white text-sm">
+            {Math.round(zoomLevel * 100)}%
+          </div>
+
+          {/* Image Container */}
+          <div 
+            className="w-full h-full flex items-center justify-center overflow-hidden"
+            onWheel={(e) => {
+              e.preventDefault();
+              const delta = e.deltaY > 0 ? -0.1 : 0.1;
+              handleZoom(delta, e);
+            }}
+          >
+            <img 
+              src={filePreview} 
+              alt="文件预览" 
+              className={`max-w-none max-h-none object-contain select-none ${
+                zoomLevel > 1 ? 'cursor-move' : 'cursor-zoom-in'
+              } ${isDragging ? 'cursor-grabbing' : ''}`}
+              style={{
+                transform: `translate(${position.x}px, ${position.y}px) scale(${zoomLevel})`,
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+              }}
+              onMouseDown={handleMouseDown}
+              onDoubleClick={() => {
+                if (zoomLevel === 1) {
+                  handleZoom(1);
+                } else {
+                  resetViewer();
+                }
+              }}
+              draggable={false}
+            />
+          </div>
+
+          {/* Instructions */}
+          <div className="absolute bottom-4 right-4 z-10 text-white text-sm bg-black bg-opacity-50 px-3 py-2 rounded-lg">
+            <div className="text-xs opacity-80 hidden md:block">
+              滚轮缩放 • 拖拽移动 • 双击重置
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="text-xs opacity-80 block md:hidden">
+              双指缩放 • 拖拽移动 • 双击重置
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 } 
