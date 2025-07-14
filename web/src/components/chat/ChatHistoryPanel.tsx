@@ -126,8 +126,8 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
             </TabsTrigger>
           </TabsList>
         </div>
-        <TabsContent value="agents" className="flex-grow min-h-0">
-          <div className="flex items-center justify-between px-4 py-2">
+        <TabsContent value="agents" className="flex-grow flex flex-col min-h-0">
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-2">
             <span className="text-sm text-muted-foreground">
               {availableAgents.length} 个助手
             </span>
@@ -140,7 +140,7 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
               onAgentCreated={(agentId) => onAgentSwitch(agentId)}
             />
           </div>
-          <ScrollArea className="h-full">
+          <ScrollArea className="flex-1">
             <div className="px-2">
               {isLoadingAgents ? (
                 <div className="text-center py-8 text-muted-foreground">
