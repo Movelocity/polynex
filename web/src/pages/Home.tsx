@@ -153,13 +153,13 @@ export function Home() {
         </div>
       ) : (
         <div className="text-center py-16">
-          <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-12 h-12 text-slate-400" />
           </div>
-          <h3 className="text-xl font-medium text-slate-600 mb-2">
+          <h3 className="text-xl font-medium text-slate-600 dark:text-slate-400 mb-2">
             {selectedCategory ? `"${selectedCategory}"分类下暂无文章` : '还没有文章'}
           </h3>
-          <p className="text-slate-500 mb-6">
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
             {selectedCategory ? '换个分类看看吧' : '成为第一个分享故事的人'}
           </p>
           <Button 

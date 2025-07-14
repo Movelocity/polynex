@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { X, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface ImagePreviewModalProps {
@@ -16,6 +16,7 @@ interface ImagePreviewModalProps {
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
+  onUpdateContainerSize?: (width: number, height: number) => void;
 }
 
 export function ImagePreviewModal({
@@ -32,8 +33,57 @@ export function ImagePreviewModal({
   onClosePreview,
   onTouchStart,
   onTouchMove,
-  onTouchEnd
+  onTouchEnd,
+  onUpdateContainerSize
 }: ImagePreviewModalProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const minZoom = 0.5;
+    const maxZoom = 5;
+    
+    // Prevent calling onZoom if already at zoom limits
+    if ((delta < 0 && zoomLevel <= minZoom) || (delta > 0 && zoomLevel >= maxZoom)) {
+      return;
+    }
+    
+    onZoom(delta, e as any);
+  }, [onZoom, zoomLevel]);
+
+  useEffect(() => {
+    if (showFilePreview && containerRef.current && onUpdateContainerSize) {
+      const updateSize = () => {
+        if (containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          onUpdateContainerSize(rect.width, rect.height);
+        }
+      };
+
+      const timeoutId = setTimeout(updateSize, 0);
+
+      const resizeObserver = new ResizeObserver(updateSize);
+      resizeObserver.observe(containerRef.current);
+
+      return () => {
+        clearTimeout(timeoutId);
+        resizeObserver.disconnect();
+      };
+    }
+  }, [showFilePreview, onUpdateContainerSize]);
+
+  useEffect(() => {
+    if (showFilePreview && containerRef.current) {
+      const container = containerRef.current;
+      container.addEventListener('wheel', handleWheel, { passive: false });
+
+      return () => {
+        container.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, [showFilePreview, handleWheel]);
+
   if (!showFilePreview || !filePreview) {
     return null;
   }
@@ -85,19 +135,15 @@ export function ImagePreviewModal({
       </div>
 
       <div 
+        ref={containerRef}
         className="w-full h-full flex items-center justify-center overflow-hidden"
-        onWheel={(e) => {
-          e.preventDefault();
-          const delta = e.deltaY > 0 ? -0.1 : 0.1;
-          onZoom(delta, e);
-        }}
       >
         <img 
           src={filePreview} 
           alt="文件预览" 
           className={`max-w-none max-h-none object-contain select-none ${
-            zoomLevel > 1 ? 'cursor-move' : 'cursor-zoom-in'
-          } ${isDragging ? 'cursor-grabbing' : ''}`}
+            isDragging ? 'cursor-grabbing' : 'cursor-move'
+          }`}
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${zoomLevel})`,
             transition: isDragging ? 'none' : 'transform 0.1s ease-out'

@@ -290,6 +290,7 @@ export function FileGrid({
         onTouchStart={imagePreview.handleTouchStart}
         onTouchMove={imagePreview.handleTouchMove}
         onTouchEnd={imagePreview.handleTouchEnd}
+        onUpdateContainerSize={imagePreview.updateContainerSize}
       />
     </>
   );

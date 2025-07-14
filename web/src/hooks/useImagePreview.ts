@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { fileService } from '@/services';
 
 interface Position {
@@ -15,16 +15,60 @@ export function useImagePreview() {
   const [dragStart, setDragStart] = useState<Position>({ x: 0, y: 0 });
   const [lastTouchDistance, setLastTouchDistance] = useState(0);
   const [lastTouchCenter, setLastTouchCenter] = useState<Position>({ x: 0, y: 0 });
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [containerDimensions, setContainerDimensions] = useState<{ width: number; height: number } | null>(null);
 
-  const previewImage = (fileUrl: string) => {
-    setFilePreview(fileService.resolveFileUrl(fileUrl));
-    setShowFilePreview(true);
-    setZoomLevel(1);
-    setPosition({ x: 0, y: 0 });
+  const calculateInitialZoom = (imgWidth: number, imgHeight: number, containerWidth: number, containerHeight: number) => {
+    const scaleX = (containerWidth * 0.9) / imgWidth;
+    const scaleY = (containerHeight * 0.9) / imgHeight;
+    return Math.min(scaleX, scaleY, 1);
   };
 
+  const previewImage = (fileUrl: string) => {
+    const resolvedUrl = fileService.resolveFileUrl(fileUrl);
+    setFilePreview(resolvedUrl);
+    setShowFilePreview(true);
+    setPosition({ x: 0, y: 0 });
+    setImageDimensions(null);
+    setContainerDimensions(null);
+    
+    const img = new Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.width, height: img.height });
+      
+      if (containerDimensions) {
+        const initialZoom = calculateInitialZoom(img.width, img.height, containerDimensions.width, containerDimensions.height);
+        setZoomLevel(initialZoom);
+      } else {
+        setZoomLevel(1);
+      }
+    };
+    img.src = resolvedUrl;
+  };
+
+  const updateContainerSize = useCallback((width: number, height: number) => {
+    setContainerDimensions(prevContainer => {
+      if (prevContainer?.width === width && prevContainer?.height === height) {
+        return prevContainer;
+      }
+      
+      const newContainer = { width, height };
+      
+      setImageDimensions(prevImage => {
+        if (prevImage && !prevContainer) {
+          const initialZoom = calculateInitialZoom(prevImage.width, prevImage.height, width, height);
+          setZoomLevel(initialZoom);
+        }
+        return prevImage;
+      });
+      
+      return newContainer;
+    });
+  }, []);
+
   const handleZoom = (delta: number, event?: React.WheelEvent) => {
-    const newZoom = Math.max(0.1, Math.min(5, zoomLevel + delta));
+    const minZoom = 0.5;
+    const newZoom = Math.max(minZoom, Math.min(5, zoomLevel + delta));
     setZoomLevel(newZoom);
     
     if (event) {
@@ -40,14 +84,12 @@ export function useImagePreview() {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoomLevel > 1) {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-    }
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && zoomLevel > 1) {
+    if (isDragging) {
       setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
     }
   };
@@ -57,7 +99,12 @@ export function useImagePreview() {
   };
 
   const resetViewer = () => {
-    setZoomLevel(1);
+    if (imageDimensions && containerDimensions) {
+      const initialZoom = calculateInitialZoom(imageDimensions.width, imageDimensions.height, containerDimensions.width, containerDimensions.height);
+      setZoomLevel(initialZoom);
+    } else {
+      setZoomLevel(1);
+    }
     setPosition({ x: 0, y: 0 });
     setIsDragging(false);
   };
@@ -83,10 +130,8 @@ export function useImagePreview() {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
-      if (zoomLevel > 1) {
-        setIsDragging(true);
-        setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
-      }
+      setIsDragging(true);
+      setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
     } else if (e.touches.length === 2) {
       const distance = getDistance(e.touches[0], e.touches[1]);
       const center = getCenter(e.touches[0], e.touches[1]);
@@ -98,14 +143,15 @@ export function useImagePreview() {
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
     
-    if (e.touches.length === 1 && isDragging && zoomLevel > 1) {
+    if (e.touches.length === 1 && isDragging) {
       setPosition({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y });
     } else if (e.touches.length === 2 && lastTouchDistance > 0) {
       const distance = getDistance(e.touches[0], e.touches[1]);
       const center = getCenter(e.touches[0], e.touches[1]);
       
       const scale = distance / lastTouchDistance;
-      const newZoom = Math.max(0.1, Math.min(5, zoomLevel * scale));
+      const minZoom = 0.5;
+      const newZoom = Math.max(minZoom, Math.min(5, zoomLevel * scale));
       
       const rect = e.currentTarget.getBoundingClientRect();
       const centerX = center.x - rect.left - rect.width / 2;
@@ -142,6 +188,9 @@ export function useImagePreview() {
     closePreview,
     handleTouchStart,
     handleTouchMove,
-    handleTouchEnd
+    handleTouchEnd,
+    updateContainerSize,
+    imageDimensions,
+    containerDimensions
   };
 }

@@ -336,10 +336,10 @@ export function BlogManagement({ user }: BlogManagementProps) {
               </>
             ) : (
               <div className="text-center py-16">
-                <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                   <FileText className="w-12 h-12 text-slate-400" />
                 </div>
-                <h3 className="text-xl font-medium text-slate-600 mb-2">
+                <h3 className="text-xl font-medium text-slate-600 dark:text-slate-400 mb-2">
                   {debouncedSearchQuery.trim() 
                     ? `没有找到包含"${debouncedSearchQuery}"的文章`
                     : activeTab === 'published' 

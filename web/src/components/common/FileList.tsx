@@ -312,6 +312,7 @@ export function FileList({
         onTouchStart={imagePreview.handleTouchStart}
         onTouchMove={imagePreview.handleTouchMove}
         onTouchEnd={imagePreview.handleTouchEnd}
+        onUpdateContainerSize={imagePreview.updateContainerSize}
       />
     </>
   );
