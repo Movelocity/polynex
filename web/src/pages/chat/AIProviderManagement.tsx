@@ -28,7 +28,9 @@ import {
   User,
   Circle,
   Shield,
-  Bot
+  Bot,
+  X,
+  ChevronDown
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AIProviderDialog } from '@/components/chat/AIProviderDialog';
@@ -130,12 +132,28 @@ function ProviderDetail({
 }: ProviderDetailProps) {
   const [editData, setEditData] = useState<any>(null);
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
+  const [newModelInput, setNewModelInput] = useState<string>('');
+  const [showDefaultModelDropdown, setShowDefaultModelDropdown] = useState<boolean>(false);
 
   // 当开始编辑时，初始化编辑数据
   useEffect(() => {
     setShowApiKey(false);
     setEditData({ ...provider });
+    setNewModelInput('');
+    setShowDefaultModelDropdown(false);
   }, [provider]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowDefaultModelDropdown(false);
+    };
+    
+    if (showDefaultModelDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showDefaultModelDropdown]);
 
   const handleFieldChange = (field: string, value: any) => {
     setEditData((prev: any) => ({
@@ -156,14 +174,68 @@ function ProviderDetail({
 
   const handleUpdateModels = (models: string[]) => {
     if (editData) {
-      setEditData((prev: any) => ({
-        ...prev,
-        models
-      }));
+      setEditData((prev: any) => {
+        const updatedData = {
+          ...prev,
+          models
+        };
+        
+        // Auto-set default model if empty and models exist
+        if (models.length > 0 && !updatedData.default_model) {
+          updatedData.default_model = models[0];
+        }
+        // Clear default model if it's not in available models
+        else if (models.length > 0 && updatedData.default_model && !models.includes(updatedData.default_model)) {
+          updatedData.default_model = models[0];
+        }
+        // Clear default model if no models available
+        else if (models.length === 0) {
+          updatedData.default_model = '';
+        }
+        
+        return updatedData;
+      });
     } else {
       // Create a new provider object to avoid direct mutation
       const updatedProvider = { ...provider, models };
+      
+      // Auto-set default model if empty and models exist
+      if (models.length > 0 && !updatedProvider.default_model) {
+        updatedProvider.default_model = models[0];
+      }
+      // Clear default model if it's not in available models
+      else if (models.length > 0 && updatedProvider.default_model && !models.includes(updatedProvider.default_model)) {
+        updatedProvider.default_model = models[0];
+      }
+      // Clear default model if no models available
+      else if (models.length === 0) {
+        updatedProvider.default_model = '';
+      }
+      
       onProviderUpdate(updatedProvider);
+    }
+  };
+
+  const handleAddModel = () => {
+    if (newModelInput.trim()) {
+      const currentModels = getCurrentData().models || [];
+      if (!currentModels.includes(newModelInput.trim())) {
+        handleUpdateModels([...currentModels, newModelInput.trim()]);
+      }
+      setNewModelInput('');
+    }
+  };
+
+  const handleRemoveModel = (modelToRemove: string) => {
+    const currentModels = getCurrentData().models || [];
+    const updatedModels = currentModels.filter((model: string) => model !== modelToRemove);
+    handleUpdateModels(updatedModels);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddModel();
     }
   };
 
@@ -278,32 +350,119 @@ function ProviderDetail({
 
         {/* 模型配置 */}
         <div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="models" className="text-xs text-muted-foreground">Available Models</Label>
-              <div className="mt-1">
+              <Label className="text-xs text-muted-foreground">Available Models</Label>
+              <div className="mt-1 space-y-2">
+                {/* Model badges */}
+                <div className="flex flex-wrap gap-1.5 min-h-[32px] px-2 bg-background">
+                  {(getCurrentData().models || []).map((model: string, index: number) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="inline-flex items-center gap-1 pr-1 text-xs border-none bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+                    >
+                      <span className="truncate max-w-[220px]">{model}</span>
+                      <button
+                        onClick={() => handleRemoveModel(model)}
+                        className="ml-1 hover:bg-destructive/20 hover:text-destructive rounded-sm p-0.5 transition-colors"
+                        type="button"
+                        aria-label={`Remove ${model}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {(getCurrentData().models || []).length === 0 && (
+                    <span className="text-xs text-muted-foreground py-1">No models configured</span>
+                  )}
+                </div>
                 
-                <Textarea
-                  id="models"
-                  value={(getCurrentData().models || []).join(", ")}
-                  onChange={(e) => {
-                    const models = e.target.value.split(",").map(model => model.trim()).filter(model => model);
-                    handleUpdateModels(models);
-                  }}
-                  className="bg-background border-border text-foreground text-sm resize-none"
-                  rows={2}
-                />
-                
+                {/* Add new model input */}
+                <div className="flex gap-2">
+                  <Input
+                    value={newModelInput}
+                    onChange={(e) => setNewModelInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Enter model name (e.g., gpt-4, claude-3-sonnet)"
+                    className="flex-1 h-8 bg-background border-border text-foreground text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleAddModel}
+                    disabled={!newModelInput.trim()}
+                    className="h-8 px-3 border-border hover:bg-muted/80"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
+            
             <div>
               <Label htmlFor="default_model" className="text-xs text-muted-foreground">Default Model</Label>
-              <Input
-                id="default_model"
-                value={getCurrentData().default_model || ''}
-                onChange={(e) => handleFieldChange('default_model', e.target.value)}
-                className="mt-1 h-8 bg-background border-border text-foreground text-sm"
-              />
+              <div className="mt-1 relative">
+                <div 
+                  className="flex items-center justify-between h-8 px-3 bg-background border border-border rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if ((getCurrentData().models || []).length > 0) {
+                      setShowDefaultModelDropdown(!showDefaultModelDropdown);
+                    }
+                  }}
+                >
+                  <span className={`text-sm ${
+                    getCurrentData().default_model 
+                      ? 'text-foreground' 
+                      : 'text-muted-foreground'
+                  }`}>
+                    {getCurrentData().default_model || 
+                      ((getCurrentData().models || []).length > 0 
+                        ? 'Select a default model' 
+                        : 'No models available')}
+                  </span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
+                    showDefaultModelDropdown ? 'rotate-180' : ''
+                  } ${
+                    (getCurrentData().models || []).length === 0 ? 'opacity-50' : ''
+                  }`} />
+                </div>
+                
+                {/* Dropdown for available models */}
+                {showDefaultModelDropdown && (getCurrentData().models || []).length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-background border border-border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    <div 
+                      className="px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFieldChange('default_model', '');
+                        setShowDefaultModelDropdown(false);
+                      }}
+                    >
+                      None (clear selection)
+                    </div>
+                    {(getCurrentData().models || []).map((model: string) => (
+                      <div
+                        key={model}
+                        className={`px-3 py-2 text-sm cursor-pointer hover:bg-muted/50 transition-colors ${
+                          getCurrentData().default_model === model 
+                            ? 'bg-theme-blue/10 text-theme-blue' 
+                            : 'text-foreground'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFieldChange('default_model', model);
+                          setShowDefaultModelDropdown(false);
+                        }}
+                      >
+                        {model}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

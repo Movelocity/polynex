@@ -66,7 +66,7 @@ export function CreateAgentDialog({ trigger, onAgentCreated }: CreateAgentDialog
         model: defaultProvider.models?.[0] || '',
         temperature: 0.7,
         top_p: 1.0,
-        max_tokens: 112048,
+        max_tokens: 8192,
         preset_messages: [
           { 
             role: 'system', 
