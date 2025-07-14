@@ -36,7 +36,7 @@ export interface AppPreset {
 
 // AI代理摘要信息
 export interface AgentSummary {
-  id: string;
+  // id: string;
   agent_id: string;
   creator_id: string;
   provider: string;

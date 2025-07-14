@@ -75,7 +75,7 @@ export function Conversation() {
       const targetAgent = agents.find(agent => agent.access_level > 0) || agents[0];
       if (targetAgent) {
         // 使用hash设置agent参数
-        setAgentHash(targetAgent.id);
+        setAgentHash(targetAgent.agent_id);
       }
     }
   }, [agentId, isLoadingAgents, agents, selectedAgent, setAgentHash]);

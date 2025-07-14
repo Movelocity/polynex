@@ -240,7 +240,7 @@ export function AgentEditor() {
       {/* 顶部导航栏 */}
       <div className="pt-2 px-4 flex items-center justify-between text-foreground">
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 ml-8">
             <AgentAvatar
               avatar={formData.avatar}
               name={formData.app_preset.name || 'Agent'}
@@ -450,8 +450,6 @@ export function AgentEditor() {
           </CardContent>
         </Card>
       </div>
-
-      
     </div>
   );
 } 

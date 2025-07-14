@@ -150,12 +150,12 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
                 <div className="space-y-1">
                   {availableAgents.map((agent) => (
                     <div
-                      key={agent.id}
+                      key={agent.agent_id}
                       className={cn(
                         "group relative rounded-lg p-3 cursor-pointer hover:bg-muted/50 flex items-center space-x-3",
-                        selectedAgent?.id === agent.id ? "bg-theme-blue/10 border border-theme-blue/30" : "hover:bg-muted"
+                        selectedAgent?.agent_id === agent.agent_id ? "bg-theme-blue/10 border border-theme-blue/30" : "hover:bg-muted"
                       )}
-                      onClick={() => onAgentSwitch(agent.id)}
+                      onClick={() => onAgentSwitch(agent.agent_id)}
                     >
                       {/* <AgentAvatarDisplay avatar={agent.avatar} /> */}
                       <AgentAvatar avatar={agent.avatar} name={agent.name} size="md" />
@@ -163,7 +163,7 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
                         <div className="text-sm font-medium text-foreground">{agent.name}</div>
                         <div className="text-xs text-muted-foreground truncate">{agent.description}</div>
                       </div>
-                      {selectedAgent?.id === agent.id && (
+                      {selectedAgent?.agent_id === agent.agent_id && (
                         <ChevronRight className="h-3 w-3 text-theme-blue flex-shrink-0" />
                       )}
                     </div>

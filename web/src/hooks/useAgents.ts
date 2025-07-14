@@ -108,7 +108,7 @@ export const useAgents = () => {
       
       // 更新列表中的代理信息
       setAgents(prev => prev.map(agent => {
-        if (agent.id === agentId) {
+        if (agent.agent_id === agentId) {
           return {
             ...agent,
             name: updatedAgent.app_preset.name,
@@ -149,7 +149,7 @@ export const useAgents = () => {
       setError(null);
       const success = await agentService.deleteAgent(agentId);
       if (success) {
-        setAgents(prev => prev.filter(agent => agent.id !== agentId));
+        setAgents(prev => prev.filter(agent => agent.agent_id !== agentId));
         toast({
           title: '删除成功',
           description: 'AI代理删除成功'
@@ -230,6 +230,10 @@ export const useAgents = () => {
     }
   }, [user, loadAgents]);
 
+  const generateAgentId = useCallback(() => {
+    return `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }, []);
+
   return {
     // 状态
     agents,
@@ -248,6 +252,7 @@ export const useAgents = () => {
     isOwner,
     canEdit,
     canDelete,
+    generateAgentId,
     
     // 便捷属性
     // myAgents: agents.filter(agent => user?.id === agent.user_id),

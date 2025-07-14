@@ -9,13 +9,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   formatAgentDisplayName,
   canEditAgent,
-  isAgentOwner
 } from '@/utils/agentUtils';
-import { Plus, Edit,  Star, AlertCircle, Users, Lock, MessageCircle, FileUp, Settings2 } from 'lucide-react';
+import { Plus, AlertCircle, MessageCircle, FileUp, Settings2, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { AgentAvatar } from '@/components/chat/AgentAvatar'
 import { CreateAgentDialog } from '@/components/chat/CreateAgentDialog';
+import { Agent, AgentDetail, AgentSummary } from '@/types/agent';
 
 export function AgentManagement() {
   const navigate = useNavigate();
@@ -25,10 +25,14 @@ export function AgentManagement() {
     loading,
     error,
     deleteAgent,
-    refresh
+    createAgent,
+    refresh,
+    generateAgentId,
+    getAgent
   } = useAgents();
 
   const [deletingAgent, setDeletingAgent] = useState<string | null>(null);
+  const fileInputRef = useState<HTMLInputElement | null>(null)[0];
 
   useEffect(() => {
     if (error) {
@@ -62,8 +66,106 @@ export function AgentManagement() {
     navigate(`/chat/agent/edit/${agentId}`);
   };
 
-  const handleStartConversation = (agent: any) => {
-    navigate(`/chat/conversation#agent=${agent.id}`);
+  const handleStartConversation = (agent: AgentSummary) => {
+    navigate(`/chat/conversation#agent=${agent.agent_id}`);
+  };
+
+  const handleExportAgent = async (agent: AgentSummary) => {
+    try {
+      const agentDetail = await getAgent(agent.agent_id);
+      // Export agent data as JSON
+      const exportData = {
+        provider: agentDetail.provider,
+        model: agentDetail.model,
+        top_p: agentDetail.top_p,
+        temperature: agentDetail.temperature,
+        max_tokens: agentDetail.max_tokens,
+        preset_messages: agentDetail.preset_messages,
+        app_preset: agentDetail.app_preset,
+        avatar: agentDetail.avatar
+      };
+      
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(dataBlob);
+      link.download = `${agentDetail.app_preset.name || 'agent'}_${Date.now()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "导出成功",
+        description: `Agent "${agentDetail.app_preset.name}" 已成功导出`,
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "导出失败",
+        description: "导出Agent时发生错误",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImportAgent = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const agentData = JSON.parse(text) as AgentDetail;
+        
+        // Validate required fields
+        if (!agentData.app_preset.name || !agentData.provider || !agentData.model) {
+          toast({
+            title: "导入失败",
+            description: "JSON文件格式不正确，缺少必要字段",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Create agent using API
+        const createData = {
+          agent_id: generateAgentId(),
+          app_preset: agentData.app_preset,
+          avatar: agentData.avatar || {
+            variant: 'emoji',
+            emoji: '🤖',
+            bg_color: 'bg-blue-500'
+          },
+          provider: agentData.provider,
+          model: agentData.model,
+          top_p: agentData.top_p || 0.7,
+          temperature: agentData.temperature || 0.7,
+          max_tokens: agentData.max_tokens || 8000,
+          preset_messages: agentData.preset_messages || [],
+        };
+        
+        // Use the createAgent function from useAgents hook
+        const success = await createAgent(createData);
+        if (success) {
+          toast({
+            title: "导入成功",
+            description: `Agent "${agentData.app_preset.name}" 已成功导入`,
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "导入失败",
+          description: "解析JSON文件时发生错误",
+          variant: "destructive",
+        });
+      }
+    };
+    input.click();
   };
 
   if (!user) {
@@ -111,20 +213,20 @@ export function AgentManagement() {
                 }
                 onAgentCreated={handleAgentCreated}
               />
-              <Button onClick={()=>{}} variant="outline" className="flex justify-start">
+              <Button onClick={handleImportAgent} variant="outline" className="flex justify-start">
                 <FileUp className="h-4 w-4" />
-                导入 Agent
+                导入 Agent (JSON)
               </Button>
             </CardContent>
           </Card>
 
           {agents.map((agent) => (
             <Card 
-              key={agent.id} 
+              key={agent.agent_id} 
               className="relative grid-cols-1 cursor-pointer"
               onClick={() => {
                 if(!canEditAgent(agent, user.id)) return;
-                handleEditAgent(agent.id);
+                handleEditAgent(agent.agent_id);
               }}
             >
               <CardHeader className="p-4">
@@ -174,6 +276,18 @@ export function AgentManagement() {
                     >
                       <MessageCircle className="h-3 w-3 mr-1" />
                       对话
+                    </Button>
+                    <Button
+                      size="default"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleExportAgent(agent);
+                      }}
+                      className="text-xs px-2"
+                    >
+                      <Download className="h-3 w-3 mr-1" />
+                      Export
                     </Button>
                   </div>
                 </div>

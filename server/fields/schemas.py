@@ -335,7 +335,7 @@ class Agent(BaseModel):
 
 class AgentSummary(BaseModel):
     """Agent摘要模型（不包含敏感信息）"""
-    id: str
+    # id: str
     agent_id: str
     creator_id: str
     provider: str  # 供应商名称

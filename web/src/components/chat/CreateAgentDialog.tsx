@@ -16,25 +16,9 @@ interface CreateAgentDialogProps {
 
 export function CreateAgentDialog({ trigger, onAgentCreated }: CreateAgentDialogProps) {
   const [showDialog, setShowDialog] = useState(false);
-  const { createAgent } = useAgents();
+  const { createAgent, generateAgentId } = useAgents();
   const { providers } = useAIProviders();
   const navigate = useNavigate();
-  const [saving, setSaving] = useState(false);
-
-  const generateAgentId = useCallback(() => {
-    return `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }, []);
-
-  // const [agentInfo, setAgentInfo] = useState<AgentInfo>({
-  //   name: '',
-  //   description: '',
-  //   avatar: {
-  //     variant: 'emoji',
-  //     emoji: '🤖',
-  //     bg_color: 'bg-blue-500'
-  //   },
-  //   access_level: 1,
-  // });
 
   const handleAgentInfoSave = async (info: AgentInfo) => {
     if (!info.name.trim()) {
@@ -46,7 +30,6 @@ export function CreateAgentDialog({ trigger, onAgentCreated }: CreateAgentDialog
       return;
     }
 
-    setSaving(true);
     try {
       // 获取默认供应商和模型
       const defaultProvider = providers.find(p => p.access_level === 3) || providers[0];
@@ -100,8 +83,6 @@ export function CreateAgentDialog({ trigger, onAgentCreated }: CreateAgentDialog
       }
     } catch (error) {
       // Error handling is done in the hook
-    } finally {
-      setSaving(false);
     }
   };
 

@@ -35,7 +35,7 @@ async def create_agent(
         )
         
         return AgentSummary(
-            id=agent.agent_id,
+            # id=agent.agent_id,
             agent_id=agent.agent_id,
             creator_id=agent.creator_id,
             provider=agent.provider,
@@ -83,7 +83,7 @@ async def get_agents(
         
         return [
             AgentSummary(
-                id=agent.agent_id,
+                # id=agent.agent_id,
                 agent_id=agent.agent_id,
                 creator_id=agent.creator_id,
                 provider=agent.provider,
@@ -280,7 +280,7 @@ async def get_public_agents(
         
         return [
             AgentSummary(
-                id=agent.agent_id,
+                # id=agent.agent_id,
                 agent_id=agent.agent_id,
                 creator_id=agent.creator_id,
                 provider=agent.provider,
