@@ -131,14 +131,14 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
             <span className="text-sm text-muted-foreground">
               {availableAgents.length} 个助手
             </span>
-            <CreateAgentDialog 
+            {/* <CreateAgentDialog 
               trigger={
                 <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="创建新助手">
                   <Plus className="h-4 w-4" />
                 </Button>
               }
               onAgentCreated={(agentId) => onAgentSwitch(agentId)}
-            />
+            /> */}
           </div>
           <ScrollArea className="flex-1">
             <div className="px-2">

@@ -7,6 +7,7 @@ import { useConversation } from '@/hooks/useConversation';
 import { useAgents } from '@/hooks/useAgents';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import { useIsMobile } from '@/hooks/use-mobile';
+import cn from 'classnames';
 
 import { 
   PanelLeftOpen,
@@ -63,7 +64,8 @@ export function Conversation() {
   const { endRef } = useAutoScroll(
     messages, 
     currentAIResponse, 
-    currentAIReasoning
+    currentAIReasoning,
+    isStreaming
   );
 
   // 自动选择可用的agent（当hash中没有agent参数时）
@@ -264,7 +266,10 @@ export function Conversation() {
           )}
         </div>
         {/* 固定在屏幕底部的输入区域 */}
-        <div className="w-full flex justify-center mb-3">
+        <div className={cn(
+          "w-full flex justify-center transition-all duration-300",
+          isMobile ? "mb-0 pb-safe-area-inset-bottom" : "mb-3"
+        )}>
           {/* 输入区域 */}
           <ChatInput
             value={inputMessage}
@@ -274,7 +279,6 @@ export function Conversation() {
             disabled={isLoading || isStreaming || !selectedAgent}
             isLoading={isLoading || isStreaming}
             isStreaming={isStreaming}
-            // className={isMobile ? 'w-full' : 'w-full'}
             className="w-full mx-2 max-w-3xl"
           />
         </div>

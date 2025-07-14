@@ -66,7 +66,70 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
+  // 检测移动设备
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // 监听视口高度变化（键盘弹出/收起）
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+    
+    const handleViewportChange = () => {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const heightDiff = initialViewportHeight - currentHeight;
+      
+      // 如果高度差超过150px，认为键盘弹出
+      if (heightDiff > 150) {
+        setKeyboardHeight(heightDiff);
+      } else {
+        setKeyboardHeight(0);
+      }
+    };
+
+    // 优先使用 visualViewport API
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      return () => window.visualViewport?.removeEventListener('resize', handleViewportChange);
+    } else {
+      // 降级到 window resize 事件
+      window.addEventListener('resize', handleViewportChange);
+      return () => window.removeEventListener('resize', handleViewportChange);
+    }
+  }, [isMobile]);
+
+  // 移动端键盘弹出时滚动到输入框
+  useEffect(() => {
+    if (!isMobile || !isFocused) return;
+
+    const scrollToInput = () => {
+      if (textareaRef.current) {
+        // 延迟执行，确保键盘完全展开
+        setTimeout(() => {
+          textareaRef.current?.scrollIntoView({
+            behavior: 'instant',
+            block: 'center'
+          });
+        }, 300);
+      }
+    };
+
+    scrollToInput();
+  }, [isFocused, isMobile, keyboardHeight]);
+
   // 自动调整高度
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -79,6 +142,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       textarea.style.height = `${newHeight}px`;
     }
   }, [value]);
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    
+    // 移动端额外处理
+    if (isMobile) {
+      // 确保视口不会被缩放
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    
+    // 移动端恢复视口设置
+    if (isMobile) {
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      }
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Ctrl/Cmd + Enter 也可以发送
@@ -121,8 +209,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               placeholder="输入消息..."
               disabled={disabled || isOverLimit}
               maxLength={maxChars}

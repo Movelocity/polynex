@@ -499,6 +499,48 @@ img {
   object-position: top;
 }
 
+/* 移动端安全区域和键盘支持 */
+@supports (padding: max(0px)) {
+  .pb-safe-area-inset-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+  
+  .mb-safe-area-inset-bottom {
+    margin-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+}
+
+/* 移动端键盘输入优化 */
+@media (max-width: 768px) {
+  /* 防止移动端输入时页面缩放 */
+  input[type="text"], 
+  input[type="email"], 
+  input[type="password"], 
+  input[type="number"], 
+  input[type="search"], 
+  input[type="tel"], 
+  input[type="url"], 
+  textarea {
+    font-size: 16px !important;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  
+  /* 移动端聊天输入框特殊优化 */
+  textarea[name="chat-input"] {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    resize: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  /* 移动端键盘弹出时的平滑滚动 */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 .item-title {
   position: relative;
   display: inline-block;

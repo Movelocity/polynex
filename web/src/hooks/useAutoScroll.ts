@@ -12,12 +12,14 @@ interface Message {
  * @param messages 消息数组
  * @param currentAIResponse 当前AI响应内容（流式）
  * @param currentAIReasoning 当前AI推理内容（流式）
+ * @param isStreaming 是否正在流式传输
  * @param threshold 距离底部多少像素时认为用户在底部附近，默认100px
  */
 export function useAutoScroll(
   messages: Message[] = [], 
   currentAIResponse: string = '', 
   currentAIReasoning: string = '',
+  isStreaming: boolean = false,
   threshold: number = 100
 ) {
   const endRef = useRef<HTMLDivElement>(null);
@@ -147,20 +149,24 @@ export function useAutoScroll(
     const lastMessageContent = lastMessage ? `${lastMessage.content}${lastMessage.reasoning_content || ''}` : '';
     const hasMessageContentChanged = lastMessageContent !== lastMessageRef.current;
     
-    // 检测AI流式响应的变化
-    const hasAIResponseChanged = currentAIResponse !== lastAIResponseRef.current;
-    const hasAIReasoningChanged = currentAIReasoning !== lastAIReasoningRef.current;
+    // 检测AI流式响应的变化 - 只在流式传输时检查
+    const hasAIResponseChanged = isStreaming && currentAIResponse !== lastAIResponseRef.current;
+    const hasAIReasoningChanged = isStreaming && currentAIReasoning !== lastAIReasoningRef.current;
     
-    console.log('Auto scroll check:', {
-      hasNewMessage,
-      hasMessageContentChanged,
-      hasAIResponseChanged,
-      hasAIReasoningChanged,
-      isUserScrolling,
-      isAtBottom,
-      messageCount: messages.length,
-      lastMessageContent: lastMessageContent.slice(0, 50) + '...'
-    });
+    // 只在有实际变化时记录日志，避免无用的控制台输出
+    if (hasNewMessage || hasMessageContentChanged || hasAIResponseChanged || hasAIReasoningChanged) {
+      console.log('Auto scroll check:', {
+        hasNewMessage,
+        hasMessageContentChanged,
+        hasAIResponseChanged,
+        hasAIReasoningChanged,
+        isStreaming,
+        isUserScrolling,
+        isAtBottom,
+        messageCount: messages.length,
+        lastMessageContent: lastMessageContent.slice(0, 50) + '...'
+      });
+    }
     
     // 如果有新消息、消息内容变化、或AI响应变化，且用户没有主动滚动，则自动滚动
     if ((hasNewMessage || hasMessageContentChanged || hasAIResponseChanged || hasAIReasoningChanged) && 
@@ -176,7 +182,7 @@ export function useAutoScroll(
     lastMessageRef.current = lastMessageContent;
     lastAIResponseRef.current = currentAIResponse;
     lastAIReasoningRef.current = currentAIReasoning;
-  }, [messages, currentAIResponse, currentAIReasoning, isUserScrolling, isAtBottom, scrollToBottom]);
+  }, [messages, currentAIResponse, currentAIReasoning, isStreaming, isUserScrolling, isAtBottom, scrollToBottom]);
 
   // 初始化时滚动到底部
   useEffect(() => {
