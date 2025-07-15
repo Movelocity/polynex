@@ -4,6 +4,7 @@ import { useAgents } from '@/hooks/useAgents';
 import { conversationService } from '@/services';
 import { ConversationMessage, Conversation as ConversationType } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { copyToClipboard } from '@/lib/utils';
 
 // Hash参数工具函数
 const getHashParams = () => {
@@ -31,7 +32,6 @@ export interface UseConversationReturn {
   conversationId: string | null;
   messages: ConversationMessage[];
   inputMessage: string;
-  isLoading: boolean;
   isLoadingAgent: boolean;
   copiedIndex: number | null;
   isSidebarOpen: boolean;
@@ -75,7 +75,7 @@ export function useConversation(): UseConversationReturn {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -102,11 +102,7 @@ export function useConversation(): UseConversationReturn {
       setConversations(data);
     } catch (error) {
       console.error('Failed to load conversations:', error);
-      toast({
-        title: "错误",
-        description: "加载对话历史失败",
-        variant: "destructive",
-      });
+      toast.error({title: "加载对话历史失败"});
     }
   };
 
@@ -120,16 +116,9 @@ export function useConversation(): UseConversationReturn {
         handleNewConversation();
       }
       setConversations(prev => prev.filter(c => c.id !== conv_id));
-      toast({
-        title: "成功",
-        description: "对话删除成功",
-      });
+      toast.success({title: "对话删除成功"});
     } catch (error) {
-      toast({
-        title: "错误",
-        description: "删除对话失败",
-        variant: "destructive",
-      });
+      toast.error({title: "删除对话失败"});
     }
   };
 
@@ -186,18 +175,10 @@ export function useConversation(): UseConversationReturn {
           }]);
         }
       } else {
-        toast({
-          title: "错误",
-          description: "找不到指定的Agent",
-          variant: "destructive",
-        });
+        toast.error({title: "找不到指定的Agent"});
       }
     } catch (error) {
-      toast({
-        title: "错误",
-        description: "加载Agent失败",
-        variant: "destructive",
-      });
+      toast.error({title: "加载Agent失败"});
     } finally {
       setIsLoadingAgent(false);
     }
@@ -205,43 +186,14 @@ export function useConversation(): UseConversationReturn {
 
   // 复制消息内容
   const copyMessage = async (content: string, index: number) => {
-    try {
-      const textArea = document.createElement("textarea");
-      textArea.value = content;
-      // 使文本区域在屏幕外，防止干扰视图
-      textArea.style.position = 'fixed';
-      textArea.style.top = '-9999px';
-      textArea.style.left = '-9999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
-      let success = false;
-      try {
-        success = document.execCommand('copy');
-      } catch (err) {
-        console.error('Fallback: Oops, unable to copy', err);
-      }
-
-      document.body.removeChild(textArea);
-
-      if (!success) {
-        throw new Error('Unable to copy content to clipboard');
-      }
-      
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-      toast({
-        title: "复制成功",
-        description: "消息内容已复制到剪贴板",
-      });
-    } catch (error) {
-      toast({
-        title: "复制失败",
-        description: "无法复制消息内容",
-        variant: "destructive",
-      });
+    if (!copyToClipboard(content)) {
+      toast.error({title: "无法复制消息内容"});
+      return;
     }
+
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+    toast.success({title: "消息内容已复制到剪贴板"});
   };
 
   // 编辑消息
@@ -310,7 +262,7 @@ export function useConversation(): UseConversationReturn {
 
   // 发送消息
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !selectedAgent || isLoading || isStreaming) return;
+    if (!inputMessage.trim() || !selectedAgent || isStreaming) return;
 
     const messageContent = inputMessage.trim();
     setInputMessage('');
@@ -430,7 +382,7 @@ export function useConversation(): UseConversationReturn {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && !isLoading && !isStreaming) {
+    if (e.key === 'Enter' && !e.shiftKey && !isStreaming) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -458,7 +410,6 @@ export function useConversation(): UseConversationReturn {
     conversationId,
     messages,
     inputMessage,
-    isLoading,
     isLoadingAgent,
     copiedIndex,
     isSidebarOpen,

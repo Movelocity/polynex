@@ -139,16 +139,9 @@ export function ImageCropper() {
     setIsProcessing(true);
     try {
       await finishCropping();
-      toast({
-        title: '成功',
-        description: '图片裁剪完成'
-      });
+      toast.success({title: '图片裁剪完成'});
     } catch (error) {
-      toast({
-        title: '错误',
-        description: '裁剪图片失败',
-        variant: 'destructive'
-      });
+      toast.error({title: '裁剪图片失败'});
     } finally {
       setIsProcessing(false);
     }
@@ -186,20 +179,6 @@ export function ImageCropper() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* <div className="mb-8">
-        <div className="flex items-center space-x-4 mb-4">
-          <Link 
-            to="/tools" 
-            className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            返回工具列表
-          </Link>
-        </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">图片裁剪工具</h1>
-        <p className="text-slate-600">上传图片并裁剪成所需尺寸</p>
-      </div> */}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 主要操作区域 */}
         <div className="lg:col-span-2">

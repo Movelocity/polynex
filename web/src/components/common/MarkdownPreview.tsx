@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -6,7 +6,11 @@ import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import { fileService } from '@/services';
-import { cn } from '@/lib/utils';
+import { cn, copyToClipboard } from '@/lib/utils';
+import { CopyIcon } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { useDebouncedCallback } from "use-debounce";
+import mermaid from "mermaid";
 import 'katex/dist/katex.min.css'; // KaTeX CSS
 import './markdown.css';
 
@@ -64,6 +68,149 @@ const preprocessMathContent = (content: string): string => {
   return processed;
 };
 
+export function Mermaid(props: { code: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (props.code && ref.current) {
+      mermaid
+        .run({
+          nodes: [ref.current],
+          suppressErrors: true,
+        })
+        .catch((e) => {
+          setHasError(true);
+          console.error("[Mermaid] ", e.message);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.code]);
+
+  // function viewSvgInNewWindow() {
+  //   const svg = ref.current?.querySelector("svg");
+  //   if (!svg) return;
+  //   const text = new XMLSerializer().serializeToString(svg);
+  //   const blob = new Blob([text], { type: "image/svg+xml" });
+  //   renderWithImagePreviewModal(URL.createObjectURL(blob));
+  // }
+
+  if (hasError) {
+    return null;
+  }
+
+  return (
+    <div
+      className={cn("no-dark", "mermaid")}
+      style={{
+        cursor: "pointer",
+        overflow: "auto",
+      }}
+      ref={ref}
+      // onClick={() => viewSvgInNewWindow()}
+    >
+      {props.code}
+    </div>
+  );
+}
+
+const PreCode = (props: { children: any; className?: string }) => {
+  const ref = useRef<HTMLPreElement>(null);
+  const [mermaidCode, setMermaidCode] = useState("");
+  const detectCode = useDebouncedCallback(() => {
+    const mermaidDom = ref.current?.querySelector("code.language-mermaid");
+    console.log("mermaidDom", mermaidDom);
+    if (mermaidDom) {
+      setMermaidCode((mermaidDom as HTMLElement).innerText);
+    }
+  }, 600);
+
+  useEffect(() => {
+    if (ref.current) {
+      const codeElements = ref.current.querySelectorAll(
+        "code",
+      ) as NodeListOf<HTMLElement>;
+      const wrapLanguages = [
+        "",
+        "md",
+        "markdown",
+        "text",
+        "txt",
+        "plaintext",
+        "tex",
+        "latex",
+      ];
+      codeElements.forEach((codeElement) => {
+        let languageClass = codeElement.className.match(/language-(\w+)/);
+        console.log("languageClass", languageClass);
+        let name = languageClass ? languageClass[1] : "";
+        if (wrapLanguages.includes(name)) {
+          codeElement.style.whiteSpace = "pre-wrap";
+        }
+      });
+      setTimeout(detectCode, 1);
+    }
+  }, []);
+
+  return (
+    <div className='relative w-full p-0'>
+      <CodeBlockContext.Provider value={true}>
+        <pre 
+          className="bg-muted border border-border rounded-lg overflow-x-auto my-4 shadow-sm" 
+          style={{ maxWidth: 'var(--markdown-pre-width)', width: 'var(--markdown-pre-width)' }}
+          ref={ref}
+        >
+          {props.children}
+        </pre>
+      </CodeBlockContext.Provider>
+      {mermaidCode && <Mermaid code={mermaidCode} />}
+    </div>
+  )
+}
+
+const CustomCode = (props: { children: any; className?: string }) => {
+  const isInCodeBlock = useContext(CodeBlockContext);
+  if (!isInCodeBlock) {
+    // 内联代码样式 - 使用主题色
+    return (
+      <code className="bg-gray-200 dark:bg-gray-700 font-semibold px-1 mx-0.5 rounded break-all" style={{fontSize: '16px'}}>
+        {props.children}
+      </code>
+    );
+  }
+  // const match = /language-(\w+)/.exec(props.className || '');
+  // const language = match && match[1];
+
+  const ref = useRef<HTMLDivElement>(null);
+  const handleCopy = () => {
+    console.log("handleCopy")
+    if (ref.current) {
+      console.log("ref.current", ref.current.querySelector("code"));
+      copyToClipboard(ref.current.querySelector("code")?.innerText ?? "");
+      toast.success({title: "代码已复制到剪贴板"});
+      console.log("复制成功");
+    }
+  }
+
+  // 代码块样式 - 使用主题色
+  return (
+    <div className='relative w-full p-0' ref={ref}>
+      <button className='text-sm text-gray-500 hover:text-gray-700 absolute top-2 right-2' onClick={handleCopy}>
+        <CopyIcon className='w-4 h-4' />
+      </button>
+
+      <code
+        className={cn('block p-0 leading-relaxed overflow-x-auto hljs', props.className)}
+        style={{ maxWidth: '100%' }}
+        {...props}
+      >
+        {props.children}
+      </code>
+    </div>
+  );
+}
+
+
 export function MarkdownPreview({ content, hardBreak = false, className }: { content: string, hardBreak?: boolean, className?: string }) {
   // 预处理内容以支持更多数学语法
   const processedContent = preprocessMathContent(content || '');
@@ -99,6 +246,21 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
             }]
           ]}
           components={{
+            // 处理代码块的容器 pre 标签
+            // pre: ({ children, ...props }) => {
+            //   return (
+            //     <CodeBlockContext.Provider value={true}>
+            //       <pre 
+            //         className="bg-muted border border-border rounded-lg overflow-x-auto my-4 shadow-sm" 
+            //         style={{ maxWidth: 'var(--markdown-pre-width)', width: 'var(--markdown-pre-width)' }}
+            //       >
+            //         {children}
+            //       </pre>
+            //     </CodeBlockContext.Provider>
+            //   );
+            // },
+            pre: PreCode as any,
+            code: CustomCode as any,
             h1: ({ children }) => {
               const text = extractText(children);
               const id = generateId(text);
@@ -163,47 +325,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
                 {children}
               </blockquote>
             ),
-            // 处理代码块的容器 pre 标签
-            pre: ({ children, ...props }) => {
-              return (
-                <CodeBlockContext.Provider value={true}>
-                  <pre 
-                    className="bg-muted border border-border rounded-lg overflow-x-auto my-4 shadow-sm" 
-                    style={{ maxWidth: 'var(--markdown-pre-width)', width: 'var(--markdown-pre-width)' }}
-                  >
-                    {children}
-                  </pre>
-                </CodeBlockContext.Provider>
-              );
-            },
             // 处理代码元素
-            code: ({ children, className, node, ...props }) => {
-              const isInCodeBlock = useContext(CodeBlockContext);
-              
-              if (!isInCodeBlock) {
-                // 内联代码样式 - 使用主题色
-                return (
-                  <code className="bg-gray-200 dark:bg-gray-700 font-bold px-1 mx-0.5 py-0.5 rounded break-all" style={{fontSize: '16px'}}>
-                    {children}
-                  </code>
-                );
-              }
-              
-              const match = /language-(\w+)/.exec(className || '');
-              const language = match && match[1];
-
-              // 代码块样式 - 使用主题色
-              return (
-                <code 
-                  data-coding-language={language}
-                  className={cn('block p-2 leading-relaxed overflow-x-auto hljs', className)}
-                  style={{ maxWidth: '100%' }}
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            },
             ul: ({ children }) => (
               <ul className="mb-2 break-words overflow-hidden">
                 {children}

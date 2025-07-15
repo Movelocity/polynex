@@ -28,7 +28,6 @@ export function Conversation() {
     conversationId,
     messages,
     inputMessage,
-    isLoading,
     copiedIndex,
     isSidebarOpen,
     editingMessage,
@@ -240,6 +239,7 @@ export function Conversation() {
                     content: currentAIResponse,
                     reasoning_content: currentAIReasoning,
                   }}
+                  agentName={selectedAgent?.app_preset?.name}
                   index={messages.length}
                   onCopy={() => {}}
                   onEdit={() => {}}
@@ -276,8 +276,8 @@ export function Conversation() {
             onChange={setInputMessage}
             onSend={handleSendMessage}
             onKeyPress={handleKeyPress}
-            disabled={isLoading || isStreaming || !selectedAgent}
-            isLoading={isLoading || isStreaming}
+            disabled={isStreaming || !selectedAgent}
+            isLoading={isStreaming}
             isStreaming={isStreaming}
             className="w-full mx-2 max-w-3xl"
           />

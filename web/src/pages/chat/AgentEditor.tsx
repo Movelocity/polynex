@@ -357,9 +357,9 @@ export function AgentEditor() {
                 <Slider
                   value={[formData.max_tokens]}
                   onValueChange={([value]) => updateFormData('max_tokens', value)}
-                  max={8192}
-                  min={256}
-                  step={256}
+                  max={120000}
+                  min={1024}
+                  step={1024}
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground">

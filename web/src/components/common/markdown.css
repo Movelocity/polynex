@@ -11,6 +11,8 @@
   --hljs-punctuation-fg: #24292e;
   --hljs-bg: #f6f8fa;
   --hljs-fg: #24292e;
+
+  --mermaid-bg: #e4eded;
 }
 
 .dark {
@@ -26,6 +28,8 @@
   --hljs-punctuation-fg: #c0caf5;
   --hljs-bg: #1a1b26;
   --hljs-fg: #c0caf5;
+
+  --mermaid-bg: #9ca7a7;
 }
 
 .prose * {
@@ -33,20 +37,15 @@
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
-  font-family: Manrope, "Manrope Fallback", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, "noto sans sc", "hiragino sans gb", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji", "Not Color Emoji";
 }
 
 .prose pre {
-  background-color: var(--hljs-bg);
-  color: var(--hljs-fg);
   max-width: calc(100% - 16px);
   overflow-x: auto;
 }
 
 .prose code {
   white-space: pre-wrap;
-  /* word-break: break-all; */
-  font-family: monospace;
 }
 
 .prose table {
@@ -85,6 +84,11 @@
 .prose h5,
 .prose h6 {
   color: hsl(var(--foreground));
+}
+
+.prose p,
+.prose li {
+  font-family: Manrope, "Manrope Fallback", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, "noto sans sc", "hiragino sans gb", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji", "Not Color Emoji";
 }
 
 
@@ -176,3 +180,138 @@ Touched: 2022
 .prose .hljs-strong {
   font-weight: 700;
 }
+
+.mermaid {
+  border: var(--border);
+  margin-bottom: 10px;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: var(--mermaid-bg);
+}
+
+/* Highlight.js 自定义主题样式 */
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: .6rem;
+  background: hsl(var(--hljs-bg));
+  color: hsl(var(--hljs-color));
+  /* font-family: 'Fira Code', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace; */
+  font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', 'monospace';
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+
+/* 语法高亮元素样式 */
+/* .hljs-comment,
+.hljs-quote {
+  color: hsl(var(--hljs-comment));
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: hsl(var(--hljs-keyword));
+  font-weight: 600;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: hsl(var(--hljs-number));
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: hsl(var(--hljs-string));
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: hsl(var(--hljs-function));
+  font-weight: 600;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: hsl(var(--hljs-class));
+  font-weight: 600;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: hsl(var(--hljs-tag));
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: hsl(var(--hljs-variable));
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: hsl(var(--hljs-property));
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: hsl(var(--hljs-function));
+}
+
+.hljs-meta {
+  color: hsl(var(--hljs-comment));
+}
+
+.hljs-deletion {
+  background: hsl(var(--red) / 0.1);
+  color: hsl(var(--red));
+}
+
+.hljs-addition {
+  background: hsl(var(--green) / 0.1);
+  color: hsl(var(--green));
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+} */
+
+/* 特定语言的增强样式 */
+/* .hljs-attr {
+  color: hsl(var(--hljs-attribute));
+}
+
+.hljs-operator,
+.hljs-punctuation {
+  color: hsl(var(--hljs-operator));
+}
+
+.hljs-property {
+  color: hsl(var(--hljs-property));
+}
+
+.hljs-params {
+  color: hsl(var(--hljs-variable));
+}
+
+.hljs-function .hljs-title {
+  color: hsl(var(--hljs-function));
+}
+
+.hljs-attr-value,
+.hljs-attr-value .hljs-string {
+  color: hsl(var(--hljs-value));
+} */
+
+
