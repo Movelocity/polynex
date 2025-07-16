@@ -50,6 +50,8 @@ class OpenAIProvider:
         self.client = None
         proxy_info = ""
         if self.config.proxy and self.config.proxy.get('url'):
+            # AsyncClient.__init__() got an unexpected keyword argument 'proxies'
+            # to resolve the problem, set httpx==0.27.2
             self.client = httpx.AsyncClient(
                 proxies=self._get_proxy_url(),
                 timeout=httpx.Timeout(30.0),  # 30秒超时
