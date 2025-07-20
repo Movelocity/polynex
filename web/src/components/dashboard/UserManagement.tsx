@@ -191,10 +191,9 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <div>
         <CardHeader>
-          <CardTitle>邀请码设置</CardTitle>
-          <CardDescription>管理新用户注册时是否需要邀请码</CardDescription>
+          <CardTitle>新用户注册时是否需要邀请码</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-4">
@@ -204,7 +203,7 @@ export function UserManagement() {
               onCheckedChange={handleSwitchToggle}
               disabled={switchUpdating || inviteCodeLoading}
             />
-            <label htmlFor="require-invite-code" className="text-sm font-medium">
+            <label htmlFor="require-invite-code" className="text-sm font-medium text-muted-foreground">
               {inviteCodeConfig.require_invite_code ? '已启用邀请码' : '已禁用邀请码'}
             </label>
           </div>
@@ -216,7 +215,7 @@ export function UserManagement() {
                 value={inviteCodeConfig.invite_code}
                 onChange={(e) => setInviteCodeConfig(prev => ({ ...prev, invite_code: e.target.value }))}
                 placeholder="输入新的邀请码"
-                className="max-w-xs"
+                className="max-w-xs text-foreground"
                 disabled={inviteCodeUpdating || inviteCodeLoading}
               />
               <Button onClick={handleUpdateInviteCodeConfig} disabled={inviteCodeUpdating || inviteCodeLoading}>
@@ -226,12 +225,11 @@ export function UserManagement() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </div>
 
-      <Card>
+      <div>
         <CardHeader>
-          <CardTitle>用户列表</CardTitle>
-          <CardDescription>管理系统中的所有用户</CardDescription>
+          <CardTitle>管理系统中的所有用户</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -241,7 +239,7 @@ export function UserManagement() {
                 placeholder="按用户名、邮箱或角色搜索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-foreground"
               />
             </div>
           </div>
@@ -305,7 +303,7 @@ export function UserManagement() {
             </Table>
           </div>
         </CardContent>
-      </Card>
+      </div>
 
       <AlertDialog open={deleteConfirmUser !== null} onOpenChange={(open) => !open && setDeleteConfirmUser(null)}>
         <AlertDialogContent>

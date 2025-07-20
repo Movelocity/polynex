@@ -101,11 +101,7 @@ export function Mermaid(props: { code: string }) {
 
   return (
     <div
-      className={cn("no-dark", "mermaid")}
-      style={{
-        cursor: "pointer",
-        overflow: "auto",
-      }}
+      className={cn("no-dark cursor-pointer overflow-auto mermaid")}
       ref={ref}
       // onClick={() => viewSvgInNewWindow()}
     >
@@ -153,7 +149,7 @@ const PreCode = (props: { children: any; className?: string }) => {
   }, []);
 
   return (
-    <div className='relative w-full p-0'>
+    <div className='relative p-0 overflow-auto'>
       <CodeBlockContext.Provider value={true}>
         <pre 
           className="bg-muted border border-border rounded-lg overflow-x-auto my-4 shadow-sm" 

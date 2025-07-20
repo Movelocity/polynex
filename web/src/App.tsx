@@ -3,7 +3,6 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { Layout } from '@/components/Layout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/x-ui/toaster';
-
 // Pages
 import { Home } from '@/pages/Home';
 import { Login } from '@/pages/Login';
@@ -11,7 +10,6 @@ import { Register } from '@/pages/Register';
 import { BlogDetail } from '@/pages/BlogDetail';
 import { WriteBlog } from '@/pages/WriteBlog';
 import { Dashboard } from '@/pages/Dashboard';
-// import { UserManagement } from '@/pages/UserManagement';
 import { Search } from '@/pages/Search';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ArticleList } from '@/pages/ArticleList';
@@ -30,7 +28,6 @@ import { ServiceDemo } from '@/components/ServiceDemo';
 import { ThemeDemo } from '@/components/ThemeDemo';
 
 function App() {
-
   return (
     <AuthProvider>
       <Router>

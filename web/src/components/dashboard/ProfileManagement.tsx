@@ -76,13 +76,13 @@ export function ProfileManagement() {
   };
 
   return (
-    <Card>
+    <div>
       <CardHeader>
         <CardTitle>个人档案</CardTitle>
         <CardDescription>管理您的头像和基本信息</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-x-20 gap-y-4" style={{ gridTemplateColumns: 'max-content 1fr' }}>
+        <div className="grid gap-x-20 gap-y-4 text-foreground" style={{ gridTemplateColumns: 'max-content 1fr' }}>
           <div className="font-medium">头像</div>
           <div className="flex items-center gap-2">
             <AvatarUpload
@@ -131,6 +131,6 @@ export function ProfileManagement() {
           </div>
         </div>
       </CardContent>
-    </Card>
+    </div>
   );
 } 

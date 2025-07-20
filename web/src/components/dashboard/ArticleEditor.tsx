@@ -31,7 +31,6 @@ interface ArticleEditorProps {
   onSave?: (article: Blog) => void;
   onPublishToggle?: (article: Blog, isPublished: boolean) => void;
   onCreated?: (article: Blog) => void;
-  compact?: boolean;
   className?: string;
 }
 
@@ -53,7 +52,6 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   onSave,
   onPublishToggle,
   onCreated,
-  compact = false,
   className
 }) => {
   const [formData, setFormData] = useState({
@@ -66,7 +64,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   
   const [tagInput, setTagInput] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
   const [error, setError] = useState('');
@@ -80,12 +78,15 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   const [cursorPosition, setCursorPosition] = useState(0);
   
   const { user } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load data on mount and when blogId changes
   useEffect(() => {
     loadInitialData();
+    if (blogId) {
+      setIsEdit(true);
+    }
   }, [blogId]);
 
   const loadInitialData = async () => {
@@ -390,81 +391,98 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     };
   }, [saveLoading, publishLoading, handleSave]);
 
-  const containerClasses = cn(
-    compact ? "h-full flex flex-col" : "max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-8",
-    className
-  );
-
-  const gridClasses = compact 
-    ? "flex-1 flex gap-4 min-h-0" 
-    : "grid grid-cols-1 lg:grid-cols-5 gap-4";
-
-  const sidebarClasses = compact 
-    ? "w-80 flex-shrink-0" 
-    : "";
-
-  const editorClasses = compact 
-    ? "flex-1 min-w-0" 
-    : "col-span-1 lg:col-span-4";
-
-  const cardClasses = compact 
-    ? "h-full flex flex-col" 
-    : "";
-
   return (
-    <div className={containerClasses}>
+    <div className="h-full flex flex-col">
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className={gridClasses}>
+      <div className="flex-1 flex gap-4 min-h-0">
         {/* Editor */}
-        <div className={editorClasses}>
-          <Card className={cardClasses}>
-            <CardHeader className="py-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-muted-foreground p-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <span className="w-full md:w-1/2">
               <input
                 id="title"
                 placeholder="Title..."
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                className="text-3xl font-bold outline-none bg-transparent"
+                className="text-3xl font-bold outline-none bg-transparent text-foreground w-full"
               />
-            </CardHeader>
-            <CardContent className={cn("border-t border-border py-4 px-0 md:px-4", compact && "flex-1 min-h-0")}>
-              {activeTab === 'write' && (
-                <div className={cn("relative pb-4", compact ? "h-full flex flex-col" : "min-h-[600px]")}>
-                  <TextareaAutosize
-                    ref={textareaRef}
-                    id="content"
-                    placeholder="开始编写您的文章..."
-                    value={formData.content}
-                    onChange={(e) => handleInputChange('content', e.target.value)}
-                    onPaste={handlePaste}
-                    className={cn(
-                      "w-full p-2 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc]",
-                      compact ? "flex-1" : ""
-                    )}
-                    spellCheck={false}
-                    minRows={compact ? 10 : 20}
-                  />
-                  <div className="text-xs text-muted-foreground mt-2">
-                    支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等。支持粘贴图片直接上传。
-                  </div>
-                </div>
+            </span>
+            <span className="flex items-center justify-end gap-2">
+              <span className="text-sm text-muted-foreground">{article?.createTime?.split('.')[0]?.replace('T', ' ')}</span>
+              {isEdit && (
+                <Button 
+                  onClick={handleTogglePublish}
+                  disabled={publishLoading || saveLoading}
+                  variant='outline'
+                  size="sm"
+                >
+                  {formData.status === 'published' ? (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />设为草稿
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="w-4 h-4 mr-2" />发布
+                    </>
+                  )}
+                </Button>
               )}
-              {activeTab === 'preview' && (
-                <div className={cn("px-2", compact ? "h-full overflow-auto" : "min-h-[600px]")}>
-                  <MarkdownPreview content={formData.content} />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleSave}
+                disabled={saveLoading || publishLoading}
+              >
+                <Save className="w-4 h-4 mr-2" />保存
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setActiveTab(activeTab === 'write' ? 'preview' : 'write');
+                }}
+              >
+                {activeTab === 'write' ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
+                {activeTab === 'write' ? '预览' : '编辑'}
+              </Button>
+            </span>
+          </div>
+          <div className={cn("border-t border-border flex-1 h-[calc(100vh-130px)] md:h-[calc(100vh-100px)] min-h-0")}>
+            {activeTab === 'write' && (
+              <div className={cn("relative pb-8 h-full flex flex-col")}>
+                <TextareaAutosize
+                  ref={textareaRef}
+                  id="content"
+                  placeholder="开始编写您的文章... 支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等。支持粘贴图片直接上传。"
+                  value={formData.content}
+                  onChange={(e) => handleInputChange('content', e.target.value)}
+                  onPaste={handlePaste}
+                  className={cn(
+                    "w-full p-4 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc]",
+                    "flex-1"
+                  )}
+                  spellCheck={false}
+                  minRows={10}
+                />
+                
+              </div>
+            )}
+            {activeTab === 'preview' && (
+              <div className={cn("px-2 h-full overflow-auto")}>
+                <MarkdownPreview content={formData.content} />
+              </div>
+            )}
+          </div>
+          
         </div>
 
-                {/* Sidebar */}
-                <div className={sidebarClasses}>
+        {/* Sidebar */}
+        {/* <div className={sidebarClasses}>
           <Card className={compact ? "h-full flex flex-col" : "sticky top-20"}>
             <CardHeader>
               <CardTitle>文章设置</CardTitle>
@@ -570,7 +588,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               )}
             </CardContent>
           </Card>
-        </div>
+        </div> */}
       </div>
 
       {/* Image Upload Dialog */}

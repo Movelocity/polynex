@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { UserAvatar } from '@/components/common/user/UserAvatar';
 import { useTheme } from '@/hooks/useTheme';
+import { useIsMobile } from '@/hooks/use-mobile';
+import cn from 'classnames';
 
 interface HeadBannerProps {
   isAuthenticated: boolean;
@@ -51,11 +53,12 @@ export function HeadBanner({
   location
 }: HeadBannerProps) {
   const { isDark, toggleTheme } = useTheme();
-
+  const isMobile = useIsMobile();
+  // fixed top-0 left-0 right-0 z-40 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-gray-700 transition-transform duration-300 translate-y-0
   return (
-    <header className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+    <header className="bg-background/80 backdrop-blur-sm border-b border-border fixed top-0 left-0 right-0 z-50">
       <div className=" mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className={cn("flex justify-between items-center h-16", isMobile && "pl-8")}>
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group mr-4">
             <div className="w-8 h-8 bg-gradient-to-br from-theme-blue to-theme-purple rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">

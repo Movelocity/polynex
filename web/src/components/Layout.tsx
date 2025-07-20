@@ -34,7 +34,7 @@ export function Layout({ showFooter = true }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" >
       {/* Header */}
       <HeadBanner
         isAuthenticated={isAuthenticated}
@@ -51,7 +51,7 @@ export function Layout({ showFooter = true }: LayoutProps) {
       />
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 pt-16">
         <Outlet />
       </main>
 

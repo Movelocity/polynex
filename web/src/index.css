@@ -337,6 +337,10 @@
   }
 }
 
+body {
+  background-color: hsl(var(--background));
+}
+
 /* 保留原有的自定义样式 */
 img {
   object-position: top;

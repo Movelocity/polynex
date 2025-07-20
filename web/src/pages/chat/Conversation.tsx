@@ -209,10 +209,10 @@ export function Conversation() {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="fixed top-[70px] left-2 z-50"
+                className="fixed top-2 left-2 z-50 h-10 w-10"
                 onClick={() => setIsSidebarOpen(true)}
               >
-                <PanelLeftOpen className="h-5 w-5" />
+                <PanelLeftOpen className="h-6 w-6" />
               </Button>
             )}
             

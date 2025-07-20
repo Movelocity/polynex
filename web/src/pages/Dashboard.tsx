@@ -32,6 +32,7 @@ import {
   Lock,
   Tag,
   Eye,
+  RefreshCcw,
 } from 'lucide-react';
 // import { BlogManagement } from '@/components/dashboard/BlogManagement';
 import { FileManagement } from '@/components/dashboard/FileManagement';
@@ -85,8 +86,7 @@ export function Dashboard() {
   };
 
   const filteredBlogs = blogs.filter(blog => 
-    blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    blog.content.toLowerCase().includes(searchQuery.toLowerCase())
+    blog.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSidebarClose = () => {
@@ -121,11 +121,11 @@ export function Dashboard() {
     });
   };
 
-  const handleArticleSaved = (article: Blog) => {
+  const handleArticleSaved = (newBlog: Blog) => {
     setBlogs(prev => prev.map(blog => 
-      blog.id === article.id ? article : blog
+      blog.id === newBlog.id ? newBlog : blog
     ));
-    setSelectedArticle(article);
+    setSelectedArticle(newBlog);
   };
 
   const handleArticlePublishToggle = (article: Blog, isPublished: boolean) => {
@@ -143,21 +143,26 @@ export function Dashboard() {
     if (sidebarContent === 'articles') {
       return (
         <div className="flex flex-col h-full">
-          <div className="p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <Button onClick={handleNewArticle} size="sm">
-                <Plus className="w-4 h-4 mr-1" />
-                新建
-              </Button>
-            </div>
+          <div className="px-4 pt-4 shadow-sm space-y-3">
+            
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="搜索文章..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 text-foreground"
               />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Button onClick={loadUserBlogs} size="sm" variant="outline" >
+                <RefreshCcw className="w-4 h-4 mr-1" />
+                刷新
+              </Button>
+              <Button onClick={handleNewArticle} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-1" />
+                新建
+              </Button>
             </div>
           </div>
           
@@ -173,8 +178,8 @@ export function Dashboard() {
                   <p className="text-sm">暂无文章</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {filteredBlogs.map((blog) => (
+                <div className="space-y-1">
+                  {filteredBlogs.reverse().map((blog) => (
                     <div
                       key={blog.id}
                       className={cn(
@@ -191,7 +196,6 @@ export function Dashboard() {
                           <Calendar className="w-3 h-3 mr-1" />
                           {new Date(blog.updateTime).toLocaleDateString()}
                         </span>
-                        <span>{blog.category}</span>
                       </div>
                     </div>
                   ))}
@@ -212,7 +216,6 @@ export function Dashboard() {
           blogId={selectedArticle.id}
           onSave={handleArticleSaved}
           onPublishToggle={handleArticlePublishToggle}
-          compact={true}
         />
       );
     }
@@ -221,7 +224,6 @@ export function Dashboard() {
       return (
         <ArticleEditor
           onCreated={handleArticleCreated}
-          compact={true}
         />
       );
     }
@@ -270,13 +272,24 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-65px)] relative bg-muted/20">
+    <div className="flex h-[calc(100vh-65px)] relative">
       {/* 移动端背景遮罩 */}
       {isMobile && isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
           onClick={handleSidebarClose}
         />
+      )}
+      {/* 移动端汉堡菜单 */}
+      {isMobile && !isSidebarOpen && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="fixed top-2 left-2 z-50 h-10 w-10"
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <PanelLeftOpen className="h-6 w-6" />
+        </Button>
       )}
 
       {/* 左侧边栏 */}
@@ -288,15 +301,13 @@ export function Dashboard() {
         !isMobile ? 'block' : ''
       )}>
         <div className="h-full flex flex-col bg-background border-r border-border">
-
-
           {/* 内容区域 */}
           <div className="flex-1 min-h-0">
             {renderSidebarContent()}
           </div>
 
           {/* 底部设置区域 */}
-          <div className="p-2 border-t">
+          <div className="p-2">
             <div className="flex gap-1">
               <Button
                 variant="ghost"
@@ -329,20 +340,8 @@ export function Dashboard() {
 
       {/* 主要内容区域 */}
       <div className="flex-1 flex flex-col relative">
-        {/* 移动端汉堡菜单 */}
-        {isMobile && !isSidebarOpen && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="fixed top-[70px] left-2 z-50"
-            onClick={() => setIsSidebarOpen(true)}
-          >
-            <PanelLeftOpen className="h-5 w-5" />
-          </Button>
-        )}
-
         {/* 主内容区 */}
-        <div className="flex-1">
+        <div className="flex-1 relative">
           {renderMainContent()}
         </div>
       </div>
