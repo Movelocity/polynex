@@ -46,7 +46,7 @@ type SidebarContent = 'articles' | 'files';
 export function Dashboard() {
   useTitle('管理中心');
   
-  const [activeView, setActiveView] = useState<ActiveView>('blogs');
+  const [activeView, setActiveView] = useState<ActiveView>('article-create');
   const [sidebarContent, setSidebarContent] = useState<SidebarContent>('articles');
   const [selectedArticle, setSelectedArticle] = useState<Blog | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -233,6 +233,8 @@ export function Dashboard() {
         return <UserManagement />;
       case 'profile':
         return <ProfileManagement />;
+      case 'files':
+        return <FileManagement />;
       default:
         return (
           <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -314,6 +316,17 @@ export function Dashboard() {
                 size="sm"
                 className="flex-1 justify-center"
                 onClick={() => {
+                  setActiveView('files');
+                  if (isMobile) setIsSidebarOpen(false);
+                }}
+              >
+                <FileText className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 justify-center"
+                onClick={() => {
                   setActiveView('profile');
                   if (isMobile) setIsSidebarOpen(false);
                 }}
@@ -346,17 +359,17 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* 文件列表弹窗 */}
-      <Dialog open={isFileListOpen} onOpenChange={setIsFileListOpen}>
+      {/* 弹窗 */}
+      {/* <Dialog open={isFileListOpen} onOpenChange={setIsFileListOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>文件管理</DialogTitle>
           </DialogHeader>
           <div className="h-[60vh]">
-            <FileManagement />
+            
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 }

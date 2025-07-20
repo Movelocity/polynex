@@ -90,8 +90,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}>
       <div className={cn(
-        'flex space-x-1  max-w-[90%] w-full',
-        message.role === 'user' ? 'flex-row-reverse space-x-reverse space-x-3' : 'max-w-[98%] sm:max-w-[90%]'
+        'flex space-x-1 w-full',
+        message.role === 'user' && 'flex-row-reverse space-x-reverse space-x-3'
       )}>
         {/* 头像 */}
         {avatar ? (

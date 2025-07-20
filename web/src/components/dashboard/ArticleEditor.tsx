@@ -452,7 +452,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               </Button>
             </span>
           </div>
-          <div className={cn("border-t border-border flex-1 h-[calc(100vh-130px)] md:h-[calc(100vh-100px)] min-h-0")}>
+          <div className={cn("border-t border-border flex-1 h-[calc(100vh-160px)] md:h-[calc(100vh-120px)] min-h-0")}>
             {activeTab === 'write' && (
               <div className={cn("relative pb-8 h-full flex flex-col")}>
                 <TextareaAutosize
@@ -463,8 +463,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   onChange={(e) => handleInputChange('content', e.target.value)}
                   onPaste={handlePaste}
                   className={cn(
-                    "w-full p-4 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc]",
-                    "flex-1"
+                    "w-full p-4 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc]"
                   )}
                   spellCheck={false}
                   minRows={10}
@@ -473,7 +472,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               </div>
             )}
             {activeTab === 'preview' && (
-              <div className={cn("px-2 h-full overflow-auto")}>
+              <div className={cn("px-2 h-full overflow-auto px-4 py-2 mv-12")}>
                 <MarkdownPreview content={formData.content} />
               </div>
             )}
@@ -488,24 +487,6 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               <CardTitle>文章设置</CardTitle>
             </CardHeader>
             <CardContent className={cn("space-y-2", compact && "flex-1 overflow-auto")}>
-              <div className="flex gap-2 flex-wrap">
-                <Button 
-                  variant="default" 
-                  onClick={handleSave}
-                  disabled={saveLoading || publishLoading}
-                >
-                  <Save className="w-4 h-4 mr-2" />保存
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setActiveTab(activeTab === 'write' ? 'preview' : 'write');
-                  }}
-                >
-                  {activeTab === 'write' ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-                  {activeTab === 'write' ? '预览' : '编辑'}
-                </Button>
-              </div>
               
               <div className="space-y-3">
                 <div>
@@ -568,24 +549,6 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                 )}
               </div>
               
-              {isEdit && (
-                <Button 
-                  onClick={handleTogglePublish}
-                  disabled={publishLoading || saveLoading}
-                  variant='outline'
-                  className="w-full"
-                >
-                  {formData.status === 'published' ? (
-                    <>
-                      <Lock className="w-4 h-4 mr-2" />设为草稿
-                    </>
-                  ) : (
-                    <>
-                      <Globe className="w-4 h-4 mr-2" />发布
-                    </>
-                  )}
-                </Button>
-              )}
             </CardContent>
           </Card>
         </div> */}

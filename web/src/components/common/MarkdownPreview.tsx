@@ -115,7 +115,7 @@ const PreCode = (props: { children: any; className?: string }) => {
   const [mermaidCode, setMermaidCode] = useState("");
   const detectCode = useDebouncedCallback(() => {
     const mermaidDom = ref.current?.querySelector("code.language-mermaid");
-    console.log("mermaidDom", mermaidDom);
+    // console.log("mermaidDom", mermaidDom);
     if (mermaidDom) {
       setMermaidCode((mermaidDom as HTMLElement).innerText);
     }
@@ -328,7 +328,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
               </ul>
             ),
             ol: ({ children }) => (
-              <ol className="mb-2 break-words overflow-hidden">
+              <ol className="mb-2 break-words overflow-hidden max-w-[80vw]">
                 {children}
               </ol>
             ),

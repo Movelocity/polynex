@@ -217,7 +217,7 @@ export function Conversation() {
             )}
             
             {/* 消息列表 */}
-            <div className="h-full py-8">
+            <div className="h-full py-8 w-full max-w-[92vw]">
               {messages.map((message, index) => (
                 <MessageBubble
                   key={index}
