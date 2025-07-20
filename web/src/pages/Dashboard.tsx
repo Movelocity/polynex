@@ -1,34 +1,248 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fileService } from '@/services';
+import { fileService, blogService } from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/x-ui/button';
 import { Card, CardContent } from '@/components/x-ui/card';
+import { ScrollArea } from '@/components/x-ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/x-ui/dialog';
+import { Input } from '@/components/x-ui/input';
+import { Badge } from '@/components/x-ui/badge';
 import { useTitle } from '@/hooks/usePageTitle';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Blog } from '@/types';
+import { cn } from '@/lib/utils';
 import { 
   User,
   File,
   Newspaper,
   Users,
+  PanelLeftOpen,
+  Plus,
+  Edit,
+  Settings,
+  FileText,
+  Search,
+  Folder,
+  PenTool,
+  Calendar,
+  Save,
+  Globe,
+  Lock,
+  Tag,
+  Eye,
 } from 'lucide-react';
-import { BlogManagement } from '@/components/dashboard/BlogManagement';
+// import { BlogManagement } from '@/components/dashboard/BlogManagement';
 import { FileManagement } from '@/components/dashboard/FileManagement';
 import { UserManagement } from '@/components/dashboard/UserManagement';
 import { ProfileManagement } from '@/components/dashboard/ProfileManagement';
+import { ArticleEditor } from '@/components/dashboard/ArticleEditor';
 
-type ActiveView = 'blogs' | 'files' | 'users' | 'profile';
+type ActiveView = 'blogs' | 'files' | 'users' | 'profile' | 'article-edit' | 'article-create';
+type SidebarContent = 'articles' | 'files';
 
 export function Dashboard() {
-  // 设置页面标题
   useTitle('管理中心');
   
   const [activeView, setActiveView] = useState<ActiveView>('blogs');
+  const [sidebarContent, setSidebarContent] = useState<SidebarContent>('articles');
+  const [selectedArticle, setSelectedArticle] = useState<Blog | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isFileListOpen, setIsFileListOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
+  
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    // This effect can remain if there are other user-dependent actions in the future.
-  }, [user, authLoading]);
+    if (user) {
+      loadUserBlogs();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsSidebarOpen(true);
+    } else {
+      setIsSidebarOpen(false);
+    }
+  }, [isMobile]);
+
+  const loadUserBlogs = async () => {
+    try {
+      setLoadingBlogs(true);
+      const response = await blogService.getBlogsByAuthor(user!.id);
+      setBlogs(response);
+    } catch (error) {
+      console.error('Failed to load user blogs:', error);
+    } finally {
+      setLoadingBlogs(false);
+    }
+  };
+
+  const filteredBlogs = blogs.filter(blog => 
+    blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    blog.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSidebarClose = () => {
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleArticleSelect = (blog: Blog) => {
+    setSelectedArticle(blog);
+    setActiveView('article-edit');
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleNewArticle = () => {
+    setActiveView('article-create');
+    setSelectedArticle(null);
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleArticleCreated = (article: Blog) => {
+    setBlogs(prev => [article, ...prev]);
+    setActiveView('article-edit');
+    setSelectedArticle(article);
+    toast({
+      title: "文章创建成功",
+      description: "您可以继续编辑文章或查看其他文章",
+    });
+  };
+
+  const handleArticleSaved = (article: Blog) => {
+    setBlogs(prev => prev.map(blog => 
+      blog.id === article.id ? article : blog
+    ));
+    setSelectedArticle(article);
+  };
+
+  const handleArticlePublishToggle = (article: Blog, isPublished: boolean) => {
+    const updatedArticle = {
+      ...article,
+      status: isPublished ? 'published' as const : 'draft' as const
+    };
+    setBlogs(prev => prev.map(blog => 
+      blog.id === article.id ? updatedArticle : blog
+    ));
+    setSelectedArticle(updatedArticle);
+  };
+
+  const renderSidebarContent = () => {
+    if (sidebarContent === 'articles') {
+      return (
+        <div className="flex flex-col h-full">
+          <div className="p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <Button onClick={handleNewArticle} size="sm">
+                <Plus className="w-4 h-4 mr-1" />
+                新建
+              </Button>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索文章..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          
+          <ScrollArea className="flex-1">
+            <div className="p-2">
+              {loadingBlogs ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm">加载中...</p>
+                </div>
+              ) : filteredBlogs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">暂无文章</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredBlogs.map((blog) => (
+                    <div
+                      key={blog.id}
+                      className={cn(
+                        "group block px-3 py-2 rounded-lg transition-all cursor-pointer",
+                        selectedArticle?.id === blog.id ? "bg-theme-blue/10" : "hover:bg-muted"
+                      )}
+                      onClick={() => handleArticleSelect(blog)}
+                    >
+                      <h4 className="font-medium text-foreground group-hover:text-theme-blue transition-colors mb-1 line-clamp-2">
+                        {blog.title}
+                      </h4>
+                      <div className="flex flex-col text-xs text-muted-foreground space-y-1">
+                        <span className="flex items-center">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {new Date(blog.updateTime).toLocaleDateString()}
+                        </span>
+                        <span>{blog.category}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const renderMainContent = () => {
+    if (activeView === 'article-edit' && selectedArticle) {
+      return (
+        <ArticleEditor
+          blogId={selectedArticle.id}
+          onSave={handleArticleSaved}
+          onPublishToggle={handleArticlePublishToggle}
+          compact={true}
+        />
+      );
+    }
+    
+    if (activeView === 'article-create') {
+      return (
+        <ArticleEditor
+          onCreated={handleArticleCreated}
+          compact={true}
+        />
+      );
+    }
+    
+    switch (activeView) {
+      case 'users':
+        return <UserManagement />;
+      case 'profile':
+        return <ProfileManagement />;
+      default:
+        return (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">选择文章开始编辑</h3>
+              <p className="text-sm">从左侧列表选择一篇文章进行编辑，或点击"新建"创建文章</p>
+            </div>
+          </div>
+        );
+    }
+  };
 
   if (authLoading) {
     return (
@@ -55,89 +269,95 @@ export function Dashboard() {
     );
   }
 
-  const renderContent = () => {
-    switch (activeView) {
-      case 'blogs':
-        return <BlogManagement user={user} />;
-      case 'files':
-        return <FileManagement />;
-      case 'users':
-        return <UserManagement />;
-      case 'profile':
-        return <ProfileManagement />;
-      default:
-        return <BlogManagement user={user} />;
-    }
-  };
-
   return (
-    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+    <div className="flex h-[calc(100vh-65px)] relative bg-muted/20">
+      {/* 移动端背景遮罩 */}
+      {isMobile && isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+          onClick={handleSidebarClose}
+        />
+      )}
 
-        {/* side */}
-        <div className="col-span-1 space-y-4">
-          <div className="flex items-center justify-around">
-            {user.avatar && (
-              <img 
-                src={fileService.resolveFileUrl(user.avatar)} 
-                alt={user.username}
-                className="w-12 h-12 rounded-full object-cover cursor-pointer"
-                onError={(e) => {
-                  // 如果头像加载失败，隐藏图片
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            )}
-            <span className="text-xl font-bold text-foreground">欢迎回来，{user.username}</span>
+      {/* 左侧边栏 */}
+      <div className={cn(
+        isMobile 
+          ? 'fixed top-0 left-0 bottom-0 z-50 w-[280px] sm:w-[320px] transform transition-transform duration-300 ease-in-out' 
+          : 'w-80 flex-shrink-0 relative',
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        !isMobile ? 'block' : ''
+      )}>
+        <div className="h-full flex flex-col bg-background border-r border-border">
+
+
+          {/* 内容区域 */}
+          <div className="flex-1 min-h-0">
+            {renderSidebarContent()}
           </div>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex flex-col gap-2">
-                <Button 
-                  onClick={() => setActiveView('blogs')}
-                  className="justify-start"
-                  variant={activeView === 'blogs' ? 'default' : 'outline'}
-                >
-                  <Newspaper className="w-4 h-4 mr-2" />
-                  文章管理
-                </Button>
-                <Button 
-                  onClick={() => setActiveView('files')}
-                  className="justify-start"
-                  variant={activeView === 'files' ? 'default' : 'outline'}
-                >
-                  <File className="w-4 h-4 mr-2" />
-                  文件管理
-                </Button>
+
+          {/* 底部设置区域 */}
+          <div className="p-2 border-t">
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 justify-center"
+                onClick={() => {
+                  setActiveView('profile');
+                  if (isMobile) setIsSidebarOpen(false);
+                }}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+              {user.role === 'admin' && (
                 <Button
-                  onClick={() => setActiveView('profile')}
-                  className="justify-start"
-                  variant={activeView === 'profile' ? 'default' : 'outline'}
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 justify-center"
+                  onClick={() => {
+                    setActiveView('users');
+                    if (isMobile) setIsSidebarOpen(false);
+                  }}
                 >
-                  <User className="w-4 h-4 mr-2" />
-                  账户设置
+                  <Users className="w-4 h-4" />
                 </Button>
-                {/* Admin Section - Only visible to admins */}
-                {user.role === 'admin' && (
-                  <Button 
-                    onClick={() => setActiveView('users')}
-                    className="justify-start"
-                    variant={activeView === 'users' ? 'default' : 'outline'}
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    用户管理
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </div>
         </div>
-        {/* Main Content */}
-        <div className="col-span-1 lg:col-span-4">
-          {renderContent()}
-        </div>
-        
       </div>
+
+      {/* 主要内容区域 */}
+      <div className="flex-1 flex flex-col relative">
+        {/* 移动端汉堡菜单 */}
+        {isMobile && !isSidebarOpen && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="fixed top-[70px] left-2 z-50"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <PanelLeftOpen className="h-5 w-5" />
+          </Button>
+        )}
+
+        {/* 主内容区 */}
+        <div className="flex-1">
+          {renderMainContent()}
+        </div>
+      </div>
+
+      {/* 文件列表弹窗 */}
+      <Dialog open={isFileListOpen} onOpenChange={setIsFileListOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>文件管理</DialogTitle>
+          </DialogHeader>
+          <div className="h-[60vh]">
+            <FileManagement />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

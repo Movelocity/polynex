@@ -87,14 +87,7 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
+            
             <Route 
               path="settings" 
               element={
@@ -106,6 +99,10 @@ function App() {
 
             {/* 404 page */}
             <Route path="*" element={<NotFound />} />
+          </Route>
+
+          <Route path="/dashboard" element={<Layout showFooter={false} />} >
+            <Route index element={<Dashboard />} />
           </Route>
 
           <Route path="/chat" element={<Layout showFooter={false} />} >
