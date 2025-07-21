@@ -15,6 +15,7 @@ import {
 import cn from 'classnames';
 import { AvatarConfig } from '@/types/agent';
 import { AgentAvatar } from './AgentAvatar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // 消息操作栏组件
 interface MessageActionsProps {
@@ -86,16 +87,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   copiedIndex 
 }) => {
   const [isReasoningOpen, setIsReasoningOpen] = useState(defaultReasoningOpen);
-
+  const isMobile = useIsMobile();
+  function fixLatexComments(content: string) {
+    return content.replace(/%(?![^\n]*\n)/g, '%\n');
+  }
   return (
     <div className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}>
       <div className={cn(
-        'flex space-x-1 w-full',
-        message.role === 'user' && 'flex-row-reverse space-x-reverse space-x-3'
+        'flex space-x-2 w-full',
+        message.role === 'user' && 'flex-row-reverse space-x-reverse'
       )}>
         {/* 头像 */}
         {avatar ? (
-          <AgentAvatar avatar={avatar} name={agentName} size="md" />
+          <AgentAvatar avatar={avatar} name={agentName} size='md' />
         ) : (
           <div className={cn(
             'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
@@ -154,14 +158,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   isReasoningOpen ? 'max-h-[1000px]' : 'max-h-0'
                 )}>
                   <span className="whitespace-pre-wrap break-words">
-                    {message.reasoning_content.trim()}
+                  {fixLatexComments(message.reasoning_content.trim())}
                   </span>
                 </div>
               </div>
             )}
             {message.role === 'assistant' ? (
               <div className="prose prose-sm w-full overflow-hidden">
-                <MarkdownPreview content={message.content} hardBreak={true} className="max-w-full" />
+                <MarkdownPreview content={message.content} hardBreak={true} className="max-w-full text-sm sm:text-base" />
               </div>
             ) : (
               <p className="whitespace-pre-wrap m-0 break-words text-[#fffc]">{message.content}</p>

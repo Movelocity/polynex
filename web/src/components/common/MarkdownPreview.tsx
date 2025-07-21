@@ -55,7 +55,7 @@ const extractText = (children: React.ReactNode): string => {
   return '';
 };
 
-// 预处理数学公式，支持更多LaTeX语法
+// 预处理数学公式，支持更多LaTeX语法。TODO: $xxx$ 美元符号内的普通文本会被误识别为数学公式，需要修复
 const preprocessMathContent = (content: string): string => {
   if (!content) return content;
   
@@ -64,7 +64,6 @@ const preprocessMathContent = (content: string): string => {
   
   // 将 \[ ... \] 转换为 $$ ... $$
   processed = processed.replace(/\\\[(.*?)\\\]/gs, '$$$1$$');
-  
   return processed;
 };
 
@@ -242,19 +241,6 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
             }]
           ]}
           components={{
-            // 处理代码块的容器 pre 标签
-            // pre: ({ children, ...props }) => {
-            //   return (
-            //     <CodeBlockContext.Provider value={true}>
-            //       <pre 
-            //         className="bg-muted border border-border rounded-lg overflow-x-auto my-4 shadow-sm" 
-            //         style={{ maxWidth: 'var(--markdown-pre-width)', width: 'var(--markdown-pre-width)' }}
-            //       >
-            //         {children}
-            //       </pre>
-            //     </CodeBlockContext.Provider>
-            //   );
-            // },
             pre: PreCode as any,
             code: CustomCode as any,
             h1: ({ children }) => {
@@ -317,7 +303,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
               </p>
             ),
             blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-primary pl-4 py-2 my-2 bg-muted/50 italic text-muted-foreground break-words overflow-hidden">
+              <blockquote className="border-l-4 border-slate-400 pl-4 py-2 my-2 bg-muted/50 italic text-muted-foreground break-words overflow-hidden">
                 {children}
               </blockquote>
             ),

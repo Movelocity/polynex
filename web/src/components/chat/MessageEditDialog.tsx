@@ -87,11 +87,11 @@ export const MessageEditDialog: React.FC<MessageEditDialogProps> = ({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="输入消息内容..."
-              className="min-h-[400px] resize-none"
+              className="min-h-[400px] resize-none styled_scrollbar"
               maxLength={128000}
             />
-            <div className="text-sm text-muted-foreground text-right absolute bottom-2 right-4">
-              {content.length}/128000
+            <div className="text-sm text-muted-foreground text-right absolute bottom-1 right-5">
+              {content.length}
             </div>
           </div>
         </div>

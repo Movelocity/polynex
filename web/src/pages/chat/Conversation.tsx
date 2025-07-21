@@ -60,12 +60,12 @@ export function Conversation() {
   const { agents, loading: isLoadingAgents } = useAgents();
 
   // 使用自动滚动hook
-  const { endRef } = useAutoScroll(
-    messages, 
-    currentAIResponse, 
-    currentAIReasoning,
-    isStreaming
-  );
+  // const { endRef } = useAutoScroll(
+  //   messages, 
+  //   currentAIResponse, 
+  //   currentAIReasoning,
+  //   isStreaming
+  // );
 
   // 自动选择可用的agent（当hash中没有agent参数时）
   useEffect(() => {
@@ -200,16 +200,16 @@ export function Conversation() {
       </div>
 
       {/* 主要内容区域 */}
-      <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 flex flex-col relative max-w-3xl mx-auto">
         {/* 对话区域 */}
         <ScrollArea className="flex-1">
-          <div className="h-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="h-full max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 relative">
             {/* 移动端汉堡菜单 */}
             {isMobile && !isSidebarOpen && (
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="fixed top-2 left-2 z-50 h-10 w-10"
+                className="fixed top-3 left-2 z-50 h-10 w-10"
                 onClick={() => setIsSidebarOpen(true)}
               >
                 <PanelLeftOpen className="h-6 w-6" />
@@ -217,7 +217,7 @@ export function Conversation() {
             )}
             
             {/* 消息列表 */}
-            <div className="h-full py-8 w-full max-w-[92vw]">
+            <div className="h-full py-8 w-full">
               {messages.map((message, index) => (
                 <MessageBubble
                   key={index}
@@ -248,7 +248,7 @@ export function Conversation() {
                 />
               )}
               
-              <div ref={endRef} />
+              {/* <div ref={endRef} /> */}
             </div>
           </div>
         </ScrollArea>

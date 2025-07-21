@@ -61,9 +61,9 @@ export function HeadBanner({
         <div className={cn("flex justify-between items-center h-16", isMobile && "pl-8")}>
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group mr-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-theme-blue to-theme-purple rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+            {/* <div className="w-8 h-8 bg-gradient-to-br from-theme-blue to-theme-purple rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
               <BookOpen className="w-5 h-5 text-white" />
-            </div>
+            </div> */}
             <h1 className="text-xl font-bold bg-gradient-to-r from-theme-blue to-theme-purple bg-clip-text text-transparent">
               POLYNEX
             </h1>
