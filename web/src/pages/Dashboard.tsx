@@ -106,9 +106,8 @@ export function Dashboard() {
   const handleNewArticle = () => {
     setActiveView('article-create');
     setSelectedArticle(null);
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
+    console.log('handleNewArticle');
+    handleSidebarClose();
   };
 
   const handleArticleCreated = (article: Blog) => {
@@ -143,8 +142,7 @@ export function Dashboard() {
     if (sidebarContent === 'articles') {
       return (
         <div className="flex flex-col h-full">
-          <div className="px-4 pt-4 shadow-sm space-y-3">
-            
+          <div className="px-3 py-2 shadow-sm space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input

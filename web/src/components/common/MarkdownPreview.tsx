@@ -373,7 +373,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
             },
             // 处理表格
             table: ({ children }) => (
-              <div className="overflow-x-auto my-6 max-w-full" style={{ maxWidth: 'var(--markdown-max-width)' }}>
+              <div className="overflow-x-auto my-6 max-w-full" style={{ maxWidth: '100%' }}>
                 <table className="border-collapse border border-border w-full" style={{ maxWidth: '100%' }}>
                   {children}
                 </table>
@@ -441,7 +441,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
                 src={fileService.resolveFileUrl(src)} 
                 alt={alt || ''} 
                 className="max-w-full w-auto h-auto my-4 rounded-md object-contain"
-                style={{ maxWidth: 'var(--markdown-max-width)' }}
+                style={{ maxWidth: '100%' }}
               />
             ),
           }}

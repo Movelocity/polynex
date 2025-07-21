@@ -175,7 +175,7 @@ export const ChatHistoryPanel: React.FC<ChatHistoryPanelProps> = ({
         </TabsContent>
         <TabsContent value="history" className="flex-grow flex flex-col min-h-0">
           {/* 头部 */}
-          <div className="flex-shrink-0 p-4 pb-3">
+          <div className="flex-shrink-0 px-4 pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-baseline space-x-2">
                 <span className="text-sm text-muted-foreground">

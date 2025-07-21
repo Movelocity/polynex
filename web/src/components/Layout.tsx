@@ -51,7 +51,7 @@ export function Layout({ showFooter = true }: LayoutProps) {
       />
 
       {/* Main Content */}
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-16 overflow-hidden">
         <Outlet />
       </main>
 

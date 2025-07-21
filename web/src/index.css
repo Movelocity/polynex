@@ -384,9 +384,9 @@ img {
   }
   
   /* 移动端键盘弹出时的平滑滚动 */
-  body {
+  /* body {
     -webkit-overflow-scrolling: touch;
-  }
+  } */
 }
 
 .item-title {
@@ -427,22 +427,26 @@ img {
 }
 
 .styled_scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary)) hsl(var(--secondary));
+  /* scrollbar-width: thin; */
+  scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--secondary));
 }
 
 .styled_scrollbar::-webkit-scrollbar {
   width: 8px;
 }
 
-.styled_scrollbar::-webkit-scrollbar-track {  
-  background: hsl(var(--secondary));
+/* .styled_scrollbar::-webkit-scrollbar-corner {
+  display: none;
+} */
+
+/* .styled_scrollbar::-webkit-scrollbar-track {  
+  background: hsl(var(--muted));
 }
 
 .styled_scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary));
+  background: hsl(var(--muted-foreground));
 }
 
 .styled_scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary));
-}
+  background: hsl(var(--muted-foreground));
+} */

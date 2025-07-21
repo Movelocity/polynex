@@ -23,8 +23,12 @@ import {
   Globe,
   Lock,
   Eye,
-  Edit
+  Edit,
+  Settings,
+  Trash2
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/x-ui/dialog';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/x-ui/alert-dialog';
 
 interface ArticleEditorProps {
   blogId?: string;
@@ -80,6 +84,14 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   const { user } = useAuth();
   // const navigate = useNavigate();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsDraft, setSettingsDraft] = useState({
+    category: formData.category,
+    tags: [...formData.tags],
+    status: formData.status,
+  });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false); // 新增：控制二次确认
 
   // Load data on mount and when blogId changes
   useEffect(() => {
@@ -391,6 +403,47 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     };
   }, [saveLoading, publishLoading, handleSave]);
 
+  // 打开设置时同步草稿
+  const openSettings = () => {
+    setSettingsDraft({
+      category: formData.category,
+      tags: [...formData.tags],
+      status: formData.status,
+    });
+    setShowSettingsModal(true);
+  };
+  // 保存设置
+  const handleSettingsSave = async () => {
+    setFormData(prev => ({
+      ...prev,
+      category: settingsDraft.category,
+      tags: settingsDraft.tags,
+      status: settingsDraft.status,
+    }));
+    setShowSettingsModal(false);
+    // 可选：自动保存
+    await handleSave();
+  };
+  // 删除文章
+  const handleDelete = async () => {
+    if (!article) return;
+    setDeleteLoading(true);
+    try {
+      const success = await blogService.deleteBlog(article.id);
+      if (success) {
+        toast({ title: '删除成功', description: '文章已被删除' });
+        // 可选：跳转或回调
+      } else {
+        toast({ title: '删除失败', description: '请重试' });
+      }
+    } catch (err) {
+      toast({ title: '删除失败', description: '请检查网络连接后重试' });
+    } finally {
+      setDeleteLoading(false);
+      setShowSettingsModal(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       {error && (
@@ -402,8 +455,8 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
       <div className="flex-1 flex gap-4 min-h-0">
         {/* Editor */}
         <div className="flex-1 min-w-0">
-          <div className="text-xs text-muted-foreground p-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-            <span className="w-full md:w-1/2">
+          <div className="text-xs text-muted-foreground shadow-sm p-2 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+            <span className="w-full lg:w-1/2">
               <input
                 id="title"
                 placeholder="Title..."
@@ -416,20 +469,13 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               <span className="text-sm text-muted-foreground">{article?.createTime?.split('.')[0]?.replace('T', ' ')}</span>
               {isEdit && (
                 <Button 
-                  onClick={handleTogglePublish}
+                  onClick={openSettings}
                   disabled={publishLoading || saveLoading}
                   variant='outline'
-                  size="sm"
+                  size="icon"
+                  title="文章设置"
                 >
-                  {formData.status === 'published' ? (
-                    <>
-                      <Lock className="w-4 h-4 mr-2" />设为草稿
-                    </>
-                  ) : (
-                    <>
-                      <Globe className="w-4 h-4 mr-2" />发布
-                    </>
-                  )}
+                  <Settings className="w-4 h-4" />
                 </Button>
               )}
               <Button 
@@ -452,32 +498,25 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               </Button>
             </span>
           </div>
-          <div className={cn("border-t border-border flex-1 h-[calc(100vh-160px)] md:h-[calc(100vh-120px)] min-h-0")}>
+          <div className={cn("flex-1 h-[calc(100vh-160px)] lg:h-[calc(100vh-120px)] min-h-0")}>
             {activeTab === 'write' && (
-              <div className={cn("relative pb-8 h-full flex flex-col")}>
-                <TextareaAutosize
-                  ref={textareaRef}
-                  id="content"
-                  placeholder="开始编写您的文章... 支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等。支持粘贴图片直接上传。"
-                  value={formData.content}
-                  onChange={(e) => handleInputChange('content', e.target.value)}
-                  onPaste={handlePaste}
-                  className={cn(
-                    "w-full p-4 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc]"
-                  )}
-                  spellCheck={false}
-                  minRows={10}
-                />
-                
-              </div>
+              <textarea
+                ref={textareaRef}
+                id="content" 
+                placeholder="开始编写您的文章... 支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等。支持粘贴图片直接上传。"
+                value={formData.content}
+                onChange={(e) => handleInputChange('content', e.target.value)}
+                onPaste={handlePaste}
+                className={cn(
+                  "w-full p-4 pb-48 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc] h-full styled_scrollbar"
+                )}
+                spellCheck={false}
+              />
             )}
             {activeTab === 'preview' && (
-              <div className={cn("px-2 h-full overflow-auto px-4 py-2 mv-12")}>
-                <MarkdownPreview content={formData.content} />
-              </div>
+              <MarkdownPreview content={formData.content} className="px-2 h-full overflow-auto px-4 pb-48 styled_scrollbar"/>
             )}
           </div>
-          
         </div>
 
         {/* Sidebar */}
@@ -563,6 +602,131 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
           onUpload={handleImageUpload}
         />
       )}
+      {/* Settings Modal */}
+      <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>文章设置</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-foreground">
+            {/* 分类选择 */}
+            <div className="space-y-1">
+              <Label htmlFor="category">选择分类</Label>
+              <Select
+                onValueChange={val => setSettingsDraft(d => ({ ...d, category: val }))}
+                defaultValue={settingsDraft.category}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择文章分类" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* 标签编辑 */}
+            <div className="space-y-1">
+              <Label htmlFor="tagInput">标签</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="tagInput"
+                  placeholder="最多可添加 5 个标签，按回车键快速添加"
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyPress={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const trimmed = tagInput.trim();
+                      if (trimmed && !settingsDraft.tags.includes(trimmed) && settingsDraft.tags.length < 5) {
+                        setSettingsDraft(d => ({ ...d, tags: [...d.tags, trimmed] }));
+                        setTagInput('');
+                      }
+                    }
+                  }}
+                  disabled={settingsDraft.tags.length >= 5}
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const trimmed = tagInput.trim();
+                    if (trimmed && !settingsDraft.tags.includes(trimmed) && settingsDraft.tags.length < 5) {
+                      setSettingsDraft(d => ({ ...d, tags: [...d.tags, trimmed] }));
+                      setTagInput('');
+                    }
+                  }}
+                  disabled={!tagInput.trim() || settingsDraft.tags.length >= 5}
+                >添加</Button>
+              </div>
+              {settingsDraft.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {settingsDraft.tags.map((tag, idx) => (
+                    <Badge key={idx} variant="secondary" className="flex items-center">
+                      {tag}
+                      <button
+                        onClick={() => setSettingsDraft(d => ({ ...d, tags: d.tags.filter(t => t !== tag) }))}
+                        className="ml-1 hover:text-destructive"
+                        type="button"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* 发布状态切换 */}
+            <div className="flex flex-row items-center justify-between gap-2 w-full">
+              <Button 
+                variant="outline" 
+                size="default" 
+                className={cn("w-1/2 hover:text-blue-500", settingsDraft.status === 'published' && 'border-blue-500 text-blue-500')}
+                onClick={() => setSettingsDraft(d => ({ ...d, status: 'published' }))}>
+                <Globe className="w-4 h-4 mr-2" />发布
+              </Button>
+              <Button 
+                variant="outline" 
+                size="default" 
+                className={cn("w-1/2 hover:text-blue-500", settingsDraft.status === 'draft' && 'border-blue-500 text-blue-500')}
+                onClick={() => setSettingsDraft(d => ({ ...d, status: 'draft' }))}
+              >
+                <Lock className="w-4 h-4 mr-2" />草稿
+              </Button>
+            </div>
+          </div>
+          <DialogFooter className="flex flex-row items-center justify-between gap-2">
+            {/* 删除按钮放左侧 */}
+            {isEdit && article && (
+              <Button
+                variant={confirmDelete ? "destructive" : "outline"}
+                size="sm"
+                className="mr-auto"
+                disabled={deleteLoading}
+                onClick={async () => {
+                  if (!confirmDelete) {
+                    setConfirmDelete(true);
+                    setTimeout(() => setConfirmDelete(false), 4000); // 4秒后自动恢复
+                  } else {
+                    await handleDelete();
+                    setConfirmDelete(false);
+                  }
+                }}
+              >
+                {deleteLoading
+                  ? '删除中...'
+                  : confirmDelete
+                    ? '确认删除？'
+                    : (<><Trash2 className="w-4 h-4 mr-2" />删除文章</>)}
+              </Button>
+            )}
+            <div className="flex gap-2 ml-auto">
+              <Button variant="outline" onClick={() => setShowSettingsModal(false)}>取消</Button>
+              <Button onClick={handleSettingsSave} disabled={saveLoading || publishLoading}>保存设置</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
