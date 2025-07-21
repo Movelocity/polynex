@@ -50,7 +50,6 @@ export function Dashboard() {
   const [sidebarContent, setSidebarContent] = useState<SidebarContent>('articles');
   const [selectedArticle, setSelectedArticle] = useState<Blog | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isFileListOpen, setIsFileListOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
@@ -127,15 +126,9 @@ export function Dashboard() {
     setSelectedArticle(newBlog);
   };
 
-  const handleArticlePublishToggle = (article: Blog, isPublished: boolean) => {
-    const updatedArticle = {
-      ...article,
-      status: isPublished ? 'published' as const : 'draft' as const
-    };
-    setBlogs(prev => prev.map(blog => 
-      blog.id === article.id ? updatedArticle : blog
-    ));
-    setSelectedArticle(updatedArticle);
+  const handleArticleDelete = (article: Blog) => {
+    setBlogs(prev => prev.filter(blog => blog.id !== article.id));
+    setSelectedArticle(null);
   };
 
   const renderSidebarContent = () => {
@@ -146,7 +139,7 @@ export function Dashboard() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="搜索文章..."
+                placeholder="过滤标题..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 text-foreground"
@@ -211,9 +204,10 @@ export function Dashboard() {
     if (activeView === 'article-edit' && selectedArticle) {
       return (
         <ArticleEditor
+          key={selectedArticle.id}
           blogId={selectedArticle.id}
           onSave={handleArticleSaved}
-          onPublishToggle={handleArticlePublishToggle}
+          onDelete={handleArticleDelete}
         />
       );
     }
@@ -221,6 +215,7 @@ export function Dashboard() {
     if (activeView === 'article-create') {
       return (
         <ArticleEditor
+          key="article-create"
           onCreated={handleArticleCreated}
         />
       );

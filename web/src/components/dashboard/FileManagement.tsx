@@ -8,11 +8,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/x-ui/dialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { FileUploadArea } from '@/components/common/file/FileUploadArea';
 import { FileList } from '@/components/common/FileList';
 import { FileGrid } from '@/components/common/FileGrid';
-import { Grid, List } from 'lucide-react';
+import { Grid, List, RefreshCw } from 'lucide-react';
 import { fileService } from '@/services';
 import { toast } from '@/hooks/use-toast';
 
@@ -72,9 +72,9 @@ export function FileManagement() {
   };
 
   // 删除文件
-  const handleFileDelete = async (uniqueId: string, extension: string) => {
+  const handleFileDelete = async (uniqueId: string) => {
     try {
-      const success = await fileService.deleteFile(uniqueId, extension);
+      const success = await fileService.deleteFile(uniqueId);
       if (success) {
         // 先从当前列表中移除文件以提供即时反馈
         setUserFiles(prev => prev.filter(file => file.unique_id !== uniqueId));
@@ -189,6 +189,10 @@ export function FileManagement() {
           <CardTitle>文件管理</CardTitle>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={() => loadUserFiles(1, filePagination.page_size || 10)} disabled={loadingFiles} variant="outline" size="sm">
+            <RefreshCw className={`w-4 h-4 mr-2 ${loadingFiles ? 'animate-spin' : ''}`} />
+            {loadingFiles ? '加载中...' : '刷新'}
+          </Button>
           {/* View Mode Toggle */}
           <div className="flex items-center border border-border rounded-md p-1">
             <Button
@@ -235,7 +239,7 @@ export function FileManagement() {
             loading={loadingFiles}
             pagination={filePagination}
             onDelete={handleFileDelete}
-            onRefresh={loadUserFiles}
+            // onRefresh={loadUserFiles}
             onPageChange={handlePageChange}
           />
         ) : (
@@ -244,7 +248,7 @@ export function FileManagement() {
             loading={loadingFiles}
             pagination={filePagination}
             onDelete={handleFileDelete}
-            onRefresh={loadUserFiles}
+            // onRefresh={loadUserFiles}
             onPageChange={handlePageChange}
           />
         )}

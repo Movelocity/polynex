@@ -1,7 +1,5 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import TextareaAutosize from 'react-textarea-autosize';
 import { MarkdownPreview } from '@/components/common/MarkdownPreview';
 import { ImageUploadDialog } from '@/components/common/ImageUploadDialog';
 import { blogService, categoryService, fileService } from '@/services';
@@ -10,30 +8,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { Label } from '@/components/x-ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/CustomSelect';
 import { Badge } from '@/components/x-ui/badge';
 import { Alert, AlertDescription } from '@/components/x-ui/alert';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-
 import { 
-  Save, 
   X,
   Globe,
   Lock,
-  Eye,
-  Edit,
   Settings,
   Trash2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/x-ui/dialog';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/x-ui/alert-dialog';
 
 interface ArticleEditorProps {
   blogId?: string;
   onSave?: (article: Blog) => void;
-  onPublishToggle?: (article: Blog, isPublished: boolean) => void;
+  onDelete?: (article: Blog) => void;
   onCreated?: (article: Blog) => void;
   className?: string;
 }
@@ -54,7 +46,7 @@ const generateSummary = (content: string): string => {
 export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   blogId,
   onSave,
-  onPublishToggle,
+  onDelete,
   onCreated,
   className
 }) => {
@@ -131,31 +123,6 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
       [field]: value
     }));
     if (error) setError('');
-  };
-
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && !formData.tags.includes(trimmedTag) && formData.tags.length < 5) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, trimmedTag]
-      }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
   };
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -322,68 +289,6 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     }
   }, [user, formData, isEdit, article, validateForm, onSave, onCreated]);
 
-  const handleTogglePublish = async () => {
-    if (!user || !article) {
-      setError('请先登录并保存文章');
-      return;
-    }
-
-    if (!validateForm()) {
-      return;
-    }
-
-    if (!isEdit) {
-      toast({
-        title: "请先保存文章",
-        description: "新文章需要先保存后才能发布",
-      });
-      return;
-    }
-
-    setPublishLoading(true);
-    
-    try {
-      const newStatus = formData.status === 'published' ? false : true;
-      const success = await blogService.setPublishStatus(article.id, newStatus);
-      
-      if (success) {
-        const newStatusText = newStatus ? 'published' : 'draft';
-        setFormData(prev => ({
-          ...prev,
-          status: newStatusText as 'published' | 'draft'
-        }));
-        
-        onPublishToggle?.(article, newStatus);
-        
-        toast({
-          title: newStatus ? "发布成功" : "取消发布",
-          description: newStatus ? "文章已公开发布" : "文章已设为草稿状态",
-        });
-      } else {
-        toast({
-          title: "操作失败",
-          description: "请检查网络连接后重试",
-        });
-      }
-    } catch (err: any) {
-      console.error('切换发布状态失败:', err);
-      
-      if (err?.status === 401) {
-        toast({
-          title: "登录已过期",
-          description: "系统将自动跳转到登录页面，请重新登录",
-        });
-      } else {
-        toast({
-          title: "操作失败",
-          description: "请检查网络连接后重试",
-        });
-      }
-    } finally {
-      setPublishLoading(false);
-    }
-  };
-
   // Global save shortcut
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -445,7 +350,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className={cn("h-full flex flex-col", className)}>
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
@@ -467,6 +372,25 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
             </span>
             <span className="flex items-center justify-end gap-2">
               <span className="text-sm text-muted-foreground">{article?.createTime?.split('.')[0]?.replace('T', ' ')}</span>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleSave}
+                disabled={saveLoading || publishLoading}
+                title="保存文章"
+              >
+                保存
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setActiveTab(activeTab === 'write' ? 'preview' : 'write');
+                }}
+                title="切换编辑/预览"
+              >
+                {activeTab === 'write' ? '预览' : '编辑'}
+              </Button>
               {isEdit && (
                 <Button 
                   onClick={openSettings}
@@ -478,24 +402,6 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   <Settings className="w-4 h-4" />
                 </Button>
               )}
-              <Button 
-                variant="default" 
-                size="sm"
-                onClick={handleSave}
-                disabled={saveLoading || publishLoading}
-              >
-                <Save className="w-4 h-4 mr-2" />保存
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setActiveTab(activeTab === 'write' ? 'preview' : 'write');
-                }}
-              >
-                {activeTab === 'write' ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-                {activeTab === 'write' ? '预览' : '编辑'}
-              </Button>
             </span>
           </div>
           <div className={cn("flex-1 h-[calc(100vh-160px)] lg:h-[calc(100vh-120px)] min-h-0")}>
@@ -518,79 +424,6 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
             )}
           </div>
         </div>
-
-        {/* Sidebar */}
-        {/* <div className={sidebarClasses}>
-          <Card className={compact ? "h-full flex flex-col" : "sticky top-20"}>
-            <CardHeader>
-              <CardTitle>文章设置</CardTitle>
-            </CardHeader>
-            <CardContent className={cn("space-y-2", compact && "flex-1 overflow-auto")}>
-              
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="category">选择分类</Label>
-                  <Select onValueChange={(value) => handleInputChange('category', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择文章分类" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="tagInput">添加标签</Label>
-                  <div className="flex space-x-2 mt-2">
-                    <Input
-                      id="tagInput"
-                      placeholder="输入标签名"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      disabled={formData.tags.length >= 5}
-                    />
-                    <Button 
-                      size="sm" 
-                      onClick={handleAddTag}
-                      disabled={!tagInput.trim() || formData.tags.length >= 5}
-                    >
-                      添加
-                    </Button>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    最多可添加 5 个标签，按回车键快速添加
-                  </div>
-                </div>
-                
-                {formData.tags.length > 0 && (
-                  <div>
-                    <Label>已添加的标签</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center">
-                          {tag}
-                          <button
-                            onClick={() => handleRemoveTag(tag)}
-                            className="ml-1 hover:text-destructive"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-            </CardContent>
-          </Card>
-        </div> */}
       </div>
 
       {/* Image Upload Dialog */}
@@ -635,7 +468,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   placeholder="最多可添加 5 个标签，按回车键快速添加"
                   value={tagInput}
                   onChange={e => setTagInput(e.target.value)}
-                  onKeyPress={e => {
+                  onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       const trimmed = tagInput.trim();
@@ -681,17 +514,17 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               <Button 
                 variant="outline" 
                 size="default" 
-                className={cn("w-1/2 hover:text-blue-500", settingsDraft.status === 'published' && 'border-blue-500 text-blue-500')}
-                onClick={() => setSettingsDraft(d => ({ ...d, status: 'published' }))}>
-                <Globe className="w-4 h-4 mr-2" />发布
-              </Button>
-              <Button 
-                variant="outline" 
-                size="default" 
                 className={cn("w-1/2 hover:text-blue-500", settingsDraft.status === 'draft' && 'border-blue-500 text-blue-500')}
                 onClick={() => setSettingsDraft(d => ({ ...d, status: 'draft' }))}
               >
                 <Lock className="w-4 h-4 mr-2" />草稿
+              </Button>
+              <Button 
+                variant="outline" 
+                size="default" 
+                className={cn("w-1/2 hover:text-blue-500", settingsDraft.status === 'published' && 'border-blue-500 text-blue-500')}
+                onClick={() => setSettingsDraft(d => ({ ...d, status: 'published' }))}>
+                <Globe className="w-4 h-4 mr-2" />发布
               </Button>
             </div>
           </div>
@@ -706,6 +539,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                 onClick={async () => {
                   if (!confirmDelete) {
                     setConfirmDelete(true);
+                    onDelete?.(article);
                     setTimeout(() => setConfirmDelete(false), 4000); // 4秒后自动恢复
                   } else {
                     await handleDelete();
@@ -721,8 +555,8 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               </Button>
             )}
             <div className="flex gap-2 ml-auto">
-              <Button variant="outline" onClick={() => setShowSettingsModal(false)}>取消</Button>
-              <Button onClick={handleSettingsSave} disabled={saveLoading || publishLoading}>保存设置</Button>
+              <Button size="sm" variant="outline" onClick={() => setShowSettingsModal(false)}>取消</Button>
+              <Button size="sm" onClick={handleSettingsSave} disabled={saveLoading || publishLoading}>保存设置</Button>
             </div>
           </DialogFooter>
         </DialogContent>

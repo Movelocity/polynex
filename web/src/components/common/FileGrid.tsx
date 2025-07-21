@@ -29,8 +29,7 @@ interface FileGridProps {
   files: FileItem[];
   loading?: boolean;
   pagination?: PaginationInfo;
-  onDelete: (uniqueId: string, extension: string) => Promise<void>;
-  onRefresh: () => Promise<void>;
+  onDelete: (uniqueId: string) => Promise<void>;
   onPageChange?: (page: number) => Promise<void>;
 }
 
@@ -39,7 +38,6 @@ export function FileGrid({
   loading = false, 
   pagination,
   onDelete, 
-  onRefresh,
   onPageChange
 }: FileGridProps) {
   const [deletingFile, setDeletingFile] = useState<string>('');  
@@ -58,7 +56,7 @@ export function FileGrid({
   const handleDelete = async (uniqueId: string, extension: string) => {
     setDeletingFile(uniqueId);
     try {
-      await onDelete(uniqueId, extension);
+      await onDelete(uniqueId);
     } finally {
       setDeletingFile('');
     }
@@ -164,10 +162,10 @@ export function FileGrid({
       <div className="text-center py-8 text-muted-foreground">
         <File className="w-12 h-12 mx-auto mb-4 opacity-50" />
         <p>暂无上传的文件</p>
-        <Button variant="outline" className="mt-4" onClick={onRefresh} disabled={loading}>
+        {/* <Button variant="outline" className="mt-4" onClick={onRefresh} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           {loading ? '加载中...' : '刷新列表'}
-        </Button>
+        </Button> */}
       </div>
     );
   }
@@ -182,10 +180,10 @@ export function FileGrid({
             `您上传的文件列表 (${files.length} 个文件)`
           )}
         </div>
-        <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm">
+        {/* <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm">
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           {loading ? '加载中...' : '刷新'}
-        </Button>
+        </Button> */}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">

@@ -29,8 +29,8 @@ interface FileListProps {
   files: FileItem[];
   loading?: boolean;
   pagination?: PaginationInfo;
-  onDelete: (uniqueId: string, extension: string) => Promise<void>;
-  onRefresh: () => Promise<void>;
+  onDelete: (uniqueId: string) => Promise<void>;
+  // onRefresh: () => Promise<void>;
   onPageChange?: (page: number) => Promise<void>;
 }
 
@@ -39,7 +39,7 @@ export function FileList({
   loading = false, 
   pagination,
   onDelete, 
-  onRefresh,
+  // onRefresh,
   onPageChange
 }: FileListProps) {
   const [deletingFile, setDeletingFile] = useState<string>('');  
@@ -60,7 +60,7 @@ export function FileList({
   const handleDelete = async (uniqueId: string, extension: string) => {
     setDeletingFile(uniqueId);
     try {
-      await onDelete(uniqueId, extension);
+      await onDelete(uniqueId);
     } finally {
       setDeletingFile('');
     }
@@ -179,10 +179,10 @@ export function FileList({
       <div className="text-center py-8 text-muted-foreground">
         <File className="w-12 h-12 mx-auto mb-4 opacity-50" />
         <p>暂无上传的文件</p>
-        <Button variant="outline" className="mt-4" onClick={onRefresh} disabled={loading}>
+        {/* <Button variant="outline" className="mt-4" onClick={onRefresh} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           {loading ? '加载中...' : '刷新列表'}
-        </Button>
+        </Button> */}
       </div>
     );
   }
@@ -191,16 +191,14 @@ export function FileList({
     <>
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-muted-foreground">
-          {pagination ? (
+          {pagination && (
             `第 ${pagination.current_page} 页，共 ${pagination.total_pages} 页，总计 ${pagination.total_items} 个文件`
-          ) : (
-            `您上传的文件列表 (${files.length} 个文件)`
           )}
         </div>
-        <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm">
+        {/* <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm">
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           {loading ? '加载中...' : '刷新'}
-        </Button>
+        </Button> */}
       </div>
 
       <div>

@@ -274,9 +274,9 @@ export class FileApiService {
   /**
    * 删除文件
    */
-  async deleteFile(uniqueId: string, extension: string): Promise<boolean> {
+  async deleteFile(uniqueId: string): Promise<boolean> {
     try {
-      await this.apiClient.delete(`/resources/${uniqueId}.${extension}`);
+      await this.apiClient.delete(`/resources/${uniqueId}`);
       return true;
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
