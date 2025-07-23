@@ -1,7 +1,10 @@
 import os
 from typing import Optional
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import logging
+
+DEFAULT_SECRET_KEY = "your-key-here"
 
 class Settings(BaseSettings):
     """应用配置类"""
@@ -13,7 +16,7 @@ class Settings(BaseSettings):
     max_concurrent_llm_requests: int = 10
     
     # 安全配置
-    secret_key: str = "your-secret-key-here"  # 应该从环境变量获取
+    secret_key: str = DEFAULT_SECRET_KEY  # 应该从环境变量获取
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 10080  # 7天
     
@@ -27,14 +30,15 @@ class Settings(BaseSettings):
     log_file: Optional[str] = None
     
     # CORS配置
-    cors_origins: list = ["http://localhost:5173", "http://localhost:3000"]
-    
-    class Config:
-        env_file = ".env"
-        env_prefix = "BLOG_"
+    # cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
+    cors_origin_list: list[str] = []
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
 
 # 全局设置实例
 settings = Settings()
+settings.cors_origin_list = [item.strip() for item in settings.cors_origins.split(',')]
 
 def get_settings() -> Settings:
     """获取应用设置"""
@@ -71,7 +75,7 @@ def validate_config():
     issues = []
     
     # 检查密钥安全性
-    if settings.secret_key == "your-secret-key-here":
+    if settings.secret_key == DEFAULT_SECRET_KEY:
         issues.append("⚠️  JWT Secret Key 使用默认值 - 生产环境请更改")
     
     return issues

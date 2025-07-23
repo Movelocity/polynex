@@ -18,7 +18,10 @@ import {
   Globe,
   Lock,
   Settings,
-  Trash2
+  Trash2,
+  Save,
+  Eye,
+  Edit
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/x-ui/dialog';
 
@@ -370,17 +373,9 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                 className="text-3xl font-bold outline-none bg-transparent text-foreground w-full"
               />
             </span>
-            <span className="flex items-center justify-end gap-2">
-              <span className="text-sm text-muted-foreground">{article?.createTime?.split('.')[0]?.replace('T', ' ')}</span>
-              <Button 
-                variant="default" 
-                size="sm"
-                onClick={handleSave}
-                disabled={saveLoading || publishLoading}
-                title="保存文章"
-              >
-                保存
-              </Button>
+            <span className="flex items-center justify-start lg:justify-end gap-2 w-full lg:w-1/2">
+              <span className="text-sm text-muted-foreground mr-2">{article?.createTime?.split('.')[0]?.replace('T', ' ')}</span>
+              
               <Button 
                 variant="outline"
                 size="sm"
@@ -389,6 +384,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                 }}
                 title="切换编辑/预览"
               >
+                {activeTab === 'write' ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
                 {activeTab === 'write' ? '预览' : '编辑'}
               </Button>
               {isEdit && (
@@ -396,12 +392,23 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   onClick={openSettings}
                   disabled={publishLoading || saveLoading}
                   variant='outline'
-                  size="icon"
+                  size="sm"
                   title="文章设置"
                 >
                   <Settings className="w-4 h-4" />
+                  设置
                 </Button>
               )}
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleSave}
+                disabled={saveLoading || publishLoading}
+                title="保存文章"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                保存
+              </Button>
             </span>
           </div>
           <div className={cn("flex-1 h-[calc(100vh-160px)] lg:h-[calc(100vh-120px)] min-h-0")}>

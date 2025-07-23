@@ -118,8 +118,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleDeleteFile = async (fileInfo: FileInfo) => {
     try {
-      const extension = fileInfo.extension.startsWith('.') ? fileInfo.extension.slice(1) : fileInfo.extension;
-      await fileService.deleteFile(fileInfo.unique_id, extension);
+      // const extension = fileInfo.extension.startsWith('.') ? fileInfo.extension.slice(1) : fileInfo.extension;
+      await fileService.deleteFile(fileInfo.unique_id);
       setUploadedFiles(prev => prev.filter(f => f.unique_id !== fileInfo.unique_id));
     } catch (error) {
       setError('删除文件失败');
