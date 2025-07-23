@@ -26,6 +26,8 @@ export interface UseImageCropReturn {
   imageDimensions: ImageDimensions | null;
   isLoading: boolean;
   mode: CropperMode; // 新增：当前模式
+  sizeBasis: number; // 新增：宽高基数
+  setSizeBasis: (basis: number) => void; // 新增：设置宽高基数
   loadImage: (base64: string) => Promise<void>;
   updateCropArea: (area: CropArea) => void;
   getCroppedImage: () => Promise<string | null>;
@@ -45,9 +47,15 @@ export function useImageCrop(): UseImageCropReturn {
   const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<CropperMode>('preview'); // 新增
+  const [sizeBasis, setSizeBasis] = useState<number>(1); // 新增
   
   const originalImageRef = useRef<HTMLImageElement | null>(null);
   const proxyImageRef = useRef<HTMLImageElement | null>(null);
+
+  // 对齐到sizeBasis的倍数
+  const alignToBasis = useCallback((value: number, basis: number) => {
+    return Math.round(value / basis) * basis;
+  }, []);
 
   // 创建缩放后的代理图片
   const createProxyImage = useCallback(async (img: HTMLImageElement): Promise<string> => {
@@ -133,31 +141,43 @@ export function useImageCrop(): UseImageCropReturn {
     }
   }, [createProxyImage]);
 
-  // 更新裁剪区域
+  // 更新裁剪区域，自动对齐sizeBasis
   const updateCropArea = useCallback((area: CropArea) => {
-    setCropArea(area);
-  }, []);
+    setCropArea(prev => {
+      const basis = sizeBasis > 1 ? sizeBasis : 1;
+      return {
+        x: alignToBasis(area.x, basis),
+        y: alignToBasis(area.y, basis),
+        width: Math.max(basis, alignToBasis(area.width, basis)),
+        height: Math.max(basis, alignToBasis(area.height, basis)),
+      };
+    });
+  }, [alignToBasis, sizeBasis]);
 
-  // 获取裁剪后的图片
+  // 获取裁剪后的图片，canvas宽高对齐sizeBasis
   const getCroppedImage = useCallback(async (): Promise<string | null> => {
     if (!originalImageRef.current || !imageDimensions) return null;
+
+    const basis = sizeBasis > 1 ? sizeBasis : 1;
+    const scale = imageDimensions.scale;
+    let sourceX = cropArea.x / scale;
+    let sourceY = cropArea.y / scale;
+    let sourceWidth = cropArea.width / scale;
+    let sourceHeight = cropArea.height / scale;
+
+    // 对齐到基数
+    sourceX = alignToBasis(sourceX, basis);
+    sourceY = alignToBasis(sourceY, basis);
+    sourceWidth = Math.max(basis, alignToBasis(sourceWidth, basis));
+    sourceHeight = Math.max(basis, alignToBasis(sourceHeight, basis));
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    // 将显示坐标转换为原图坐标
-    const scale = imageDimensions.scale;
-    const sourceX = cropArea.x / scale;
-    const sourceY = cropArea.y / scale;
-    const sourceWidth = cropArea.width / scale;
-    const sourceHeight = cropArea.height / scale;
-
-    // 设置画布大小为裁剪区域大小
     canvas.width = sourceWidth;
     canvas.height = sourceHeight;
 
-    // 从原图裁剪
     ctx.drawImage(
       originalImageRef.current,
       sourceX,
@@ -171,7 +191,7 @@ export function useImageCrop(): UseImageCropReturn {
     );
 
     return canvas.toDataURL('image/jpeg', 0.95);
-  }, [cropArea, imageDimensions]);
+  }, [cropArea, imageDimensions, sizeBasis, alignToBasis]);
 
   // 新增：开始裁剪模式
   const startCropping = useCallback(() => {
@@ -202,6 +222,7 @@ export function useImageCrop(): UseImageCropReturn {
     setImageDimensions(null);
     setIsLoading(false);
     setMode('preview'); // 新增
+    setSizeBasis(1); // 新增
     originalImageRef.current = null;
     proxyImageRef.current = null;
   }, []);
@@ -214,6 +235,8 @@ export function useImageCrop(): UseImageCropReturn {
     imageDimensions,
     isLoading,
     mode, // 新增
+    sizeBasis, // 新增
+    setSizeBasis, // 新增
     loadImage,
     updateCropArea,
     getCroppedImage,

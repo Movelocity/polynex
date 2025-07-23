@@ -79,8 +79,7 @@ export function ImageDownloader({ imageUrl, onReset }: { imageUrl: string, onRes
         <CardHeader>
           <div className="flex gap-2 items-center">
           <ImageIcon className="w-5 h-5 text-indigo-600" />
-            <span className="text-lg font-bold">下载设置</span>
-            <CardDescription>调整图片尺寸后下载</CardDescription>
+            <span className="text-lg font-bold">下载图片</span>
           </div>
           {/* <CardTitle className="text-lg">下载设置</CardTitle> */}
         </CardHeader>

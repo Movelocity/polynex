@@ -33,7 +33,9 @@ export function ImageCropper() {
     startCropping,
     finishCropping,
     backToPreview,
-    reset
+    reset,
+    sizeBasis,
+    setSizeBasis,
   } = useImageCrop();
 
   const [aspectRatioKey, setAspectRatioKey] = useState<string>('free');
@@ -41,6 +43,10 @@ export function ImageCropper() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [maxWidth, setMaxWidth] = useState(800);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 新增：基数限制相关状态
+  // 宽高基数限制默认启用，1代表未启用
+  // const [sizeBasis, setSizeBasis] = useState(1); // 最小为1，默认1
 
   // 处理窗口尺寸变化
   useEffect(() => {
@@ -178,62 +184,13 @@ export function ImageCropper() {
   }, [cropArea, imageDimensions, updateCropArea]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-foreground">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 主要操作区域 */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <Link 
-                  to="/tools" 
-                  className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-1" />
-                  返回工具列表
-                </Link>
-                <span className="hidden sm:flex items-center space-x-2 ">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-md">
-                    <ImageIcon className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    图片裁剪工具
-                  </span>
-                </span>
-                {mode !== 'cropping' && (
-                  <div className="flex gap-3">
-                    {/* <Button variant="outline" onClick={()=>{mode === 'preview'? reset() : backToPreview()}}>
-                      <RotateCw className="w-4 h-4" />
-                    </Button> */}
-                    <Button variant="pretty" onClick={handleStartCropping} disabled={!proxyImage}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      裁剪
-                    </Button>
-                  </div>
-                  ) 
-                }
-                {mode === 'cropping' && (
-                  <div className="flex gap-3 justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={backToPreview}
-                      disabled={isProcessing}
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      取消
-                    </Button>
-                    <Button
-                      variant="pretty"
-                      onClick={handleFinishCropping}
-                      disabled={isProcessing}
-                    >
-                      <Crop className="w-4 h-4 mr-2" />
-                      {isProcessing ? '处理中...' : '确认裁剪'}
-                    </Button>
-                  </div>
-                  )
-                }
-              </div>
+
             </CardHeader>
             <CardContent className="px-6">
               {!proxyImage ? (
@@ -315,6 +272,156 @@ export function ImageCropper() {
 
         {/* 控制面板 */}
         <div className="space-y-4">
+          <span className="hidden sm:flex items-center justify-center space-x-2 ">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-md">
+              <ImageIcon className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              图片裁剪
+            </span>
+          </span>
+          {/* 裁剪设置 - 只在裁剪模式显示 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
+                裁剪设置
+                {mode === 'cropping' ?(
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={backToPreview}
+                      disabled={isProcessing}
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      variant="pretty"
+                      onClick={handleFinishCropping}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? '处理中...' : '确认裁剪'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-3">
+                    <Button variant="pretty" onClick={handleStartCropping} disabled={!proxyImage}>
+                      <Crop className="w-4 h-4 mr-2" />
+                      裁剪
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
+            </CardHeader>
+            {mode === 'cropping' && (
+            <CardContent className="space-y-4">
+              {/* 宽高比预设 */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">宽高比预设</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {ASPECT_RATIO_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.key}
+                      variant={aspectRatioKey === preset.key ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setPresetAspectRatio(preset.key, preset.ratio)}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 新增：宽高基数限制设置 */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">宽高基数限制</Label>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-muted-foreground">已启用，宽高基数为{sizeBasis}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={sizeBasis}
+                    onChange={e => {
+                      const val = Math.max(1, parseInt(e.target.value) || 1);
+                      setSizeBasis(val);
+                    }}
+                    className="w-20"
+                  />
+                  {/* 预设按钮 */}
+                  {[1, 8, 16, 32, 64].map((preset) => (
+                    <Button
+                      key={preset}
+                      size="sm"
+                      variant={sizeBasis === preset ? 'default' : 'outline'}
+                      onClick={() => setSizeBasis(preset)}
+                    >
+                      {preset}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 裁剪区域信息 */}
+              <div className="text-foreground">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="">原图尺寸：</span>
+                    <span className="font-medium">
+                      {imageDimensions.originalWidth} × {imageDimensions.originalHeight}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="">取景框位置：</span>
+                    <span className="font-medium">
+                      ({Math.round(cropArea.x / imageDimensions.scale)}, {Math.round(cropArea.y / imageDimensions.scale)})
+                    </span>
+                  </div>
+                  {imageDimensions && (
+                    <div className="flex justify-between items-center">
+                      <span className="">取景框尺寸：</span>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          type="number"
+                          min={1}
+                          value={Math.round(cropArea.width / imageDimensions.scale)}
+                          onChange={(e) => {
+                            const val = Math.max(1, parseInt(e.target.value) || 1);
+                            updateCropArea({
+                              ...cropArea,
+                              width: val * imageDimensions.scale
+                            });
+                          }}
+                          className="w-24"
+                          placeholder="宽(px)"
+                          disabled={isProcessing}
+                        />
+                        <span className="self-center">×</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={Math.round(cropArea.height / imageDimensions.scale)}
+                          onChange={(e) => {
+                            const val = Math.max(1, parseInt(e.target.value) || 1);
+                            updateCropArea({
+                              ...cropArea,
+                              height: val * imageDimensions.scale
+                            });
+                          }}
+                          className="w-24"
+                          placeholder="高(px)"
+                          disabled={isProcessing}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </CardContent>
+            )}
+          </Card>
+          
           {/* 图片信息 */}
           {mode === 'result' && croppedImage && (
             <Card>
@@ -327,66 +434,8 @@ export function ImageCropper() {
             </Card>
           )}
 
-          {/* 裁剪设置 - 只在裁剪模式显示 */}
-          {mode === 'cropping' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Settings className="w-5 h-5 mr-2 text-blue-600" />
-                  裁剪设置
-                </CardTitle>
-                {/* <CardDescription>调整裁剪区域和宽高比</CardDescription> */}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 宽高比预设 */}
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">宽高比预设</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {ASPECT_RATIO_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.key}
-                        variant={aspectRatioKey === preset.key ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPresetAspectRatio(preset.key, preset.ratio)}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 裁剪区域信息 */}
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">裁剪区域</Label>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">原始尺寸：</span>
-                      <span className="font-medium">
-                        {imageDimensions.originalWidth} × {imageDimensions.originalHeight}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">位置：</span>
-                      <span className="font-medium">
-                        ({Math.round(cropArea.x / imageDimensions.scale)}, {Math.round(cropArea.y / imageDimensions.scale)})
-                      </span>
-                    </div>
-                    {imageDimensions && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">裁剪尺寸：</span>
-                        <span className="font-medium">
-                          {Math.round(cropArea.width / imageDimensions.scale)} × {Math.round(cropArea.height / imageDimensions.scale)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* 使用说明 */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="text-lg">使用说明</CardTitle>
             </CardHeader>
@@ -415,7 +464,7 @@ export function ImageCropper() {
                 </>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>
