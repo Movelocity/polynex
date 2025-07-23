@@ -203,7 +203,7 @@ export function Conversation() {
       <div className="flex-1 flex flex-col relative max-w-3xl mx-auto">
         {/* 对话区域 */}
         <ScrollArea className="flex-1">
-          <div className="h-full max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 relative">
+          <div className="h-full max-w-4xl mx-auto px-4 sm:px-4 lg:px-6 relative">
             {/* 移动端汉堡菜单 */}
             {isMobile && !isSidebarOpen && (
               <Button 
@@ -232,11 +232,11 @@ export function Conversation() {
               ))}
               
               {/* 显示当前流式AI响应 */}
-              {isStreaming && (currentAIResponse || currentAIReasoning) && (
+              {isStreaming && (
                 <MessageBubble
                   message={{
                     role: 'assistant',
-                    content: currentAIResponse,
+                    content: currentAIResponse || "对方正在输入...",
                     reasoning_content: currentAIReasoning,
                   }}
                   agentName={selectedAgent?.app_preset?.name}

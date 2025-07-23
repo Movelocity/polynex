@@ -1,0 +1,47 @@
+[project]
+name = "polynex"
+version = "0.1.0"
+description = "blog and development platform"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.12",
+    "pydantic>=2.11.5",
+    "pyyaml>=6.0.2",
+    "sqlalchemy>=2.0.41",
+    "uvicorn[standard]>=0.34.3",
+    "loguru>=0.7.0",
+    "requests>=2.31.0",
+    "httpx>=0.28.1",
+    "tqdm>=4.67.1",
+    "openai>=1.86.0",
+    "pydantic-settings>=2.9.0",
+    "python-jose>=3.4.0",
+    "passlib>=1.7.4",
+    "python-multipart>=0.0.20"
+]
+
+[project.optional-dependencies]
+dev = [
+    # "pytest>=8.0.0",
+    # "ruff>=0.6.0",
+]
+
+[project.scripts]
+# 服务器启动命令
+server = "main:main"
+
+# 数据库迁移命令
+# migrate-db = "scripts.migrate_db:main"
+# db-migrate = "scripts.migrate_db:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["server"]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true

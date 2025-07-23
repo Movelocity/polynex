@@ -196,7 +196,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     <div className={cn("", className)}>
       <div className={cn(
         'relative bg-card border border-border rounded-2xl shadow-lg transition-all duration-200',
-        isFocused ? 'ring-2 ring-theme-blue/70 shadow-xl' : 'hover:shadow-xl',
+        isFocused ? 'ring-1 ring-theme-blue/70 shadow-xl' : 'hover:shadow-xl',
         disabled && 'opacity-50'
       )}>
         {/* 输入区域容器 */}
@@ -211,7 +211,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              placeholder="输入消息..."
+              placeholder="请输入问题"
               disabled={disabled || isOverLimit}
               maxLength={maxChars}
               className={cn(
@@ -227,16 +227,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               }}
               rows={1}
             />
-            
-            {/* 字符计数 */}
-            {charCount > 0 && (
-              <div className={cn(
-                'absolute -bottom-1 right-0 text-xs transition-colors',
-                isOverLimit ? 'text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
-              )}>
-                {charCount}/{maxChars}
-              </div>
-            )}
           </div>
         </div>
 
@@ -252,8 +242,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Shift+Enter</kbd>
               <span>换行</span>
             </span>
-          </div>
 
+            {/* 字符计数 */}
+            {isNearLimit && (
+              <div className={cn(
+                'text-xs transition-colors',
+                isOverLimit ? 'text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
+              )}>
+                {charCount}/{maxChars}
+              </div>
+            )}
+          </div>
+          
           {/* 状态指示器 */}
           <div className="flex items-center space-x-2">
             {(isLoading || isStreaming) && (

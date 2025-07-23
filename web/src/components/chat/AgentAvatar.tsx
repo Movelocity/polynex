@@ -17,7 +17,7 @@ const variantClasses = {
   square: 'rounded-lg'
 };
 
-const commonClasses = 'flex items-center justify-center border-2 border-gray-300 dark:border-gray-700';
+const commonClasses = 'flex items-center justify-center border border-gray-300 dark:border-gray-700';
 
 // Agent头像组件
 export const AgentAvatar: React.FC<AgentAvatarProps> = ({ 

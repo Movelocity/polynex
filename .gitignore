@@ -1,3 +1,6 @@
 .env
 archived/
 server/logs/
+.venv
+uv.lock
+__pycache__/

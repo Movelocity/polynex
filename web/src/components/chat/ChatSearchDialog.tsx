@@ -9,7 +9,6 @@ import { Button } from '@/components/x-ui/button';
 import { Input } from '@/components/x-ui/input';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
 import { Badge } from '@/components/x-ui/badge';
-import { Separator } from '@/components/x-ui/separator';
 import { useChatSearch } from '@/hooks/useChatSearch';
 import { ConversationSearchResult } from '@/types';
 import {
