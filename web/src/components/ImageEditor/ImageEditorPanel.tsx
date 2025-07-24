@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useImageEditor } from './useImageEditor';
 import { Button } from '@/components/x-ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
@@ -29,6 +29,9 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [commandType, setCommandType] = useState<'crop' | 'resize' | 'pad'>('crop');
+
+  // 新增：等比例缩放比例
+  const [resizeScale, setResizeScale] = useState(1);
   
   // 裁剪参数
   const [cropParams, setCropParams] = useState({
@@ -37,6 +40,8 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
     width: 100,
     height: 100
   });
+  // 裁剪步长
+  const CROP_STEP = 10;
   
   // 调整大小参数
   const [resizeParams, setResizeParams] = useState({
@@ -52,6 +57,23 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
     left: 10,
     color: '#ffffff'
   });
+  
+  // 自动同步图片尺寸到裁剪和调整大小参数
+  useEffect(() => {
+    if (currentSize.width > 0 && currentSize.height > 0) {
+      setResizeParams({
+        width: currentSize.width,
+        height: currentSize.height
+      });
+      setCropParams({
+        x: 0,
+        y: 0,
+        width: currentSize.width,
+        height: currentSize.height
+      });
+      setResizeScale(1);
+    }
+  }, [currentImageUrl, currentSize.width, currentSize.height]);
   
   // 处理文件上传
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,6 +158,21 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
   
   // 获取当前历史记录
   const currentHistory = currentHistoryIndex >= 0 ? history[currentHistoryIndex] : null;
+
+  const downloadImage = useCallback(() => {
+    if (!currentImageUrl) return;
+    // 获取当前预览图片的URL
+    const url = currentHistory?.previewUrl || currentImageUrl;
+    // 构造文件名
+    const filename = `img-${currentSize.width}x${currentSize.height}.jpg`;
+    // 创建a标签下载
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [currentImageUrl, currentSize.width, currentSize.height]);
   
   return (
     <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${className}`}>
@@ -143,7 +180,25 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>图片编辑器</CardTitle>
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-semibold">图片编辑器</span>
+              {currentImageUrl && (
+                <span className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    更换图片
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={downloadImage}
+                  >
+                    下载图片
+                  </Button>
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {!currentImageUrl ? (
@@ -173,31 +228,23 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
                 />
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">
-                    {images.find(img => img.id === currentImageId)?.name}
-                  </h3>
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    更换图片
-                  </Button>
-                </div>
-                
+              <div className="space-y-4">    
                 <div className="relative w-full h-[500px] bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                   <img
                     src={currentHistory?.previewUrl || currentImageUrl}
                     alt="编辑预览"
                     className="max-w-full max-h-full object-contain"
                   />
-                 {(currentSize.width > 0 && currentSize.height > 0) && (
-                  <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                   尺寸: {currentSize.width || 0}×{currentSize.height || 0}
-                  </div>
-                )}
+                  {(currentSize.width > 0 && currentSize.height > 0) && (
+                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    尺寸: {currentSize.width || 0}×{currentSize.height || 0}
+                    </div>
+                  )}
                 </div>
+
+                <span className="text-sm text-muted-foreground">
+                  {images.find(img => img.id === currentImageId)?.name}
+                </span>
                 
                 <Input
                   ref={fileInputRef}
@@ -247,7 +294,7 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
             {/* 裁剪参数 */}
             {commandType === 'crop' && (
               <div className="space-y-3">
-                <h4 className="font-medium">裁剪参数</h4>
+                {/* <h4 className="font-medium">裁剪参数</h4> */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label htmlFor="crop-x" className="text-xs">X坐标</Label>
@@ -302,13 +349,72 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
                     />
                   </div>
                 </div>
+                {/* 裁剪快捷按钮 */}
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCropParams(p => ({
+                      ...p,
+                      x: Math.min(p.x + CROP_STEP, (p.x + p.width - 1)),
+                      width: Math.max(1, p.width - 2 * CROP_STEP)
+                    }))}
+                  >
+                    水平收缩
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCropParams(p => ({
+                      ...p,
+                      y: Math.min(p.y + CROP_STEP, (p.y + p.height - 1)),
+                      height: Math.max(1, p.height - 2 * CROP_STEP)
+                    }))}
+                  >
+                    垂直收缩
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCropParams({
+                      x: 0,
+                      y: 0,
+                      width: currentSize.width,
+                      height: currentSize.height
+                    })}
+                  >
+                    全图
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // 计算最大16倍数宽高
+                      const max16Width = Math.floor(currentSize.width / 16) * 16;
+                      const max16Height = Math.floor(currentSize.height / 16) * 16;
+                      setCropParams({
+                        x: 0,
+                        y: 0,
+                        width: max16Width,
+                        height: max16Height
+                      });
+                    }}
+                  >
+                    16 整除区域
+                  </Button>
+                </div>
               </div>
             )}
             
             {/* 调整大小参数 */}
             {commandType === 'resize' && (
               <div className="space-y-3">
-                <h4 className="font-medium">调整大小参数</h4>
+                {/* <h4 className="font-medium">调整大小参数</h4> */}
+                
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label htmlFor="resize-width" className="text-xs">宽度</Label>
@@ -317,10 +423,17 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
                       type="number"
                       min="1"
                       value={resizeParams.width}
-                      onChange={(e) => setResizeParams({
-                        ...resizeParams,
-                        width: Math.max(1, parseInt(e.target.value) || 300)
-                      })}
+                      onChange={(e) => {
+                        const width = Math.max(1, parseInt(e.target.value) || 300);
+                        setResizeParams({
+                          ...resizeParams,
+                          width
+                        });
+                        // 反推scale
+                        if (currentSize.width > 0) {
+                          setResizeScale(width / currentSize.width);
+                        }
+                      }}
                     />
                   </div>
                   <div>
@@ -330,11 +443,43 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
                       type="number"
                       min="1"
                       value={resizeParams.height}
-                      onChange={(e) => setResizeParams({
-                        ...resizeParams,
-                        height: Math.max(1, parseInt(e.target.value) || 300)
-                      })}
+                      onChange={(e) => {
+                        const height = Math.max(1, parseInt(e.target.value) || 300);
+                        setResizeParams({
+                          ...resizeParams,
+                          height
+                        });
+                        // 反推scale
+                        if (currentSize.height > 0) {
+                          setResizeScale(height / currentSize.height);
+                        }
+                      }}
                     />
+                  </div>
+                </div>
+
+                {/* 新增：等比例缩放滑动条 */}
+                <div className="mb-2">
+                  <Label htmlFor="resize-scale" className="text-xs">等比例缩放</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="resize-scale"
+                      type="range"
+                      min={0.2}
+                      max={1.8}
+                      step={0.01}
+                      value={resizeScale}
+                      onChange={e => {
+                        const scale = parseFloat(e.target.value);
+                        setResizeScale(scale);
+                        setResizeParams(prev => ({
+                          width: Math.round(currentSize.width * scale),
+                          height: Math.round(currentSize.height * scale)
+                        }));
+                      }}
+                      className="flex-1 cursor-pointer"
+                    />
+                    <span className="w-12 text-right text-xs">{resizeScale.toFixed(2)}x</span>
                   </div>
                 </div>
               </div>
@@ -343,7 +488,7 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
             {/* 填充参数 */}
             {commandType === 'pad' && (
               <div className="space-y-3">
-                <h4 className="font-medium">填充参数</h4>
+                {/* <h4 className="font-medium">填充参数</h4> */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label htmlFor="pad-top" className="text-xs">上边距</Label>
@@ -409,7 +554,7 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
                         ...padParams,
                         color: e.target.value
                       })}
-                      className="w-12 h-10 p-1"
+                      className="w-12 h-10 p-1 cursor-pointer"
                     />
                     <Input
                       type="text"
@@ -473,9 +618,6 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
                 重做
               </Button>
             </div>
-            
-            
-            
           </CardContent>
         </Card>
       </div>
