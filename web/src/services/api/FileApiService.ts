@@ -60,6 +60,11 @@ export interface FileListResponse {
   pagination: PaginationInfo;
 }
 
+export const allowedExtensions = [
+  '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', // 图片
+  '.pdf', '.doc', '.docx', '.txt', '.md', '.rtf', '.log'    // 文档
+];
+
 /**
  * 基于HTTP API的文件服务实现
  */
@@ -290,11 +295,6 @@ export class FileApiService {
    * 检查文件类型是否支持
    */
   isSupportedFileType(file: File): boolean {
-    const allowedExtensions = [
-      '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', // 图片
-      '.pdf', '.doc', '.docx', '.txt', '.md', '.rtf'    // 文档
-    ];
-    
     const fileName = file.name.toLowerCase();
     return allowedExtensions.some(ext => fileName.endsWith(ext));
   }

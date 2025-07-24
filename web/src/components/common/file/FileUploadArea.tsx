@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Button } from '@/components/x-ui/button';
 import { Upload } from 'lucide-react';
+import { allowedExtensions } from '@/services/api/FileApiService';
 
 interface FileUploadAreaProps {
   onFileUpload: (files: FileList | File[]) => Promise<void>;
@@ -16,7 +17,7 @@ export function FileUploadArea({
   uploading = false, 
   uploadProgress = 0,
   maxFileSizeMB = 50,
-  supportedTypes = ['.jpg','.jpeg','.png','.gif','.bmp','.webp','.pdf','.doc','.docx','.txt','.md','.rtf'],
+  supportedTypes = allowedExtensions,
   multiple = true
 }: FileUploadAreaProps) {
   const [dragActive, setDragActive] = useState(false);

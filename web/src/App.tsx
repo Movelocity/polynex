@@ -16,6 +16,7 @@ import { ArticleList } from '@/pages/ArticleList';
 import { UserSettings } from '@/pages/UserSettings';
 import { Tools } from '@/pages/Tools';
 import { ImageCropper } from '@/pages/tools/ImageCropper';
+import { FnImgEditor } from '@/pages/tools/FnImgEditor';
 import { ImageOCR } from '@/pages/tools/ImageOCR';
 import { JsonFormatter } from '@/pages/tools/JsonFormatter';
 import { AIProviderManagement } from '@/pages/chat/AIProviderManagement';
@@ -63,6 +64,7 @@ function App() {
             <Route path="category/:category" element={<CategoryPage />} />
             <Route path="tools" element={<Tools />} />
             <Route path="tools/image-cropper" element={<ImageCropper />} />
+            <Route path="tools/functional-image-editor" element={<FnImgEditor />} />
             <Route path="tools/image-ocr" element={<ImageOCR />} />
             <Route path="tools/json-formatter" element={<JsonFormatter />} />
             

@@ -5,7 +5,7 @@ import { useEffect } from 'react';
  * @param title - 页面标题
  * @param baseTitle - 基础标题，默认为 "Polynex"
  */
-export function usePageTitle(title: string, baseTitle: string = 'Polynex') {
+export function usePageTitle(title: string, baseTitle: string = 'POLYNEX') {
   useEffect(() => {
     // 设置完整的页面标题
     const fullTitle = title ? `${title} - ${baseTitle}` : baseTitle;

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
-import { Crop, ScanText, FileJson, Sparkles, Settings, Bot, MessageCircle } from 'lucide-react';
+import { Crop, ScanText, FileJson, Sparkles, Settings, Bot, MessageCircle, Image } from 'lucide-react';
 
 export function Tools() {
   const tools = [
@@ -10,6 +10,13 @@ export function Tools() {
       icon: Crop,
       path: '/tools/image-cropper',
       color: 'from-theme-blue to-theme-cyan'
+    },
+    {
+      title: '函数式图片编辑器',
+      description: '基于函数指令的图片编辑工具，支持裁剪、调整大小和填充操作',
+      icon: Image,
+      path: '/tools/functional-image-editor',
+      color: 'from-theme-green to-theme-cyan'
     },
     {
       title: '图片OCR',
