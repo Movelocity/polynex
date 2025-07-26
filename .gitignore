@@ -4,3 +4,4 @@ server/logs/
 .venv
 uv.lock
 __pycache__/
+.claude
