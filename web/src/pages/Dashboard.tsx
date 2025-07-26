@@ -14,30 +14,30 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Blog } from '@/types';
 import { cn } from '@/lib/utils';
 import { 
-  User,
-  File,
+  // User,
+  // File,
   Newspaper,
-  Users,
+  // Users,
   PanelLeftOpen,
   Plus,
-  Edit,
-  Settings,
+  // Edit,
+  // Settings,
   FileText,
   Search,
-  Folder,
-  PenTool,
+  // Folder,
+  // PenTool,
   Calendar,
-  Save,
-  Globe,
-  Lock,
-  Tag,
-  Eye,
+  // Save,
+  // Globe,
+  // Lock,
+  // Tag,
+  // Eye,
   RefreshCcw,
 } from 'lucide-react';
 // import { BlogManagement } from '@/components/dashboard/BlogManagement';
 import { FileManagement } from '@/components/dashboard/FileManagement';
-import { UserManagement } from '@/components/dashboard/UserManagement';
-import { ProfileManagement } from '@/components/dashboard/ProfileManagement';
+// import { UserManagement } from '@/components/dashboard/UserManagement';
+// import { ProfileManagement } from '@/components/dashboard/ProfileManagement';
 import { ArticleEditor } from '@/components/dashboard/ArticleEditor';
 
 type ActiveView = 'blogs' | 'files' | 'users' | 'profile' | 'article-edit' | 'article-create';
@@ -146,13 +146,21 @@ export function Dashboard() {
               />
             </div>
             <div className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setActiveView('files');
+                  if (isMobile) setIsSidebarOpen(false);
+                }}
+              >
+                <FileText className="w-4 h-4" /> 文件管理
+              </Button>
               <Button onClick={loadUserBlogs} size="sm" variant="outline" >
-                <RefreshCcw className="w-4 h-4 mr-1" />
-                刷新
+                <RefreshCcw className="w-4 h-4 mr-1" />刷新
               </Button>
               <Button onClick={handleNewArticle} size="sm" variant="outline">
-                <Plus className="w-4 h-4 mr-1" />
-                新建
+                <Plus className="w-4 h-4 mr-1" />新建
               </Button>
             </div>
           </div>
@@ -222,10 +230,10 @@ export function Dashboard() {
     }
     
     switch (activeView) {
-      case 'users':
-        return <UserManagement />;
-      case 'profile':
-        return <ProfileManagement />;
+      // case 'users':
+      //   return <UserManagement />;
+      // case 'profile':
+      //   return <ProfileManagement />;
       case 'files':
         return <FileManagement />;
       default:
@@ -302,19 +310,9 @@ export function Dashboard() {
           </div>
 
           {/* 底部设置区域 */}
-          <div className="p-2">
+          {/* <div className="p-2">
             <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 justify-center"
-                onClick={() => {
-                  setActiveView('files');
-                  if (isMobile) setIsSidebarOpen(false);
-                }}
-              >
-                <FileText className="w-4 h-4" />
-              </Button>
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -340,7 +338,7 @@ export function Dashboard() {
                 </Button>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

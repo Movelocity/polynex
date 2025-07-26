@@ -424,7 +424,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                     value={formData.content}
                     onChange={(e) => handleInputChange('content', e.target.value)}
                     onPaste={handlePaste}
-                    className="w-full resize-none outline-none bg-transparent text-[#000c] dark:text-[#fffc]"
+                    className="w-full resize-none outline-none bg-transparent text-[#000c] dark:text-[#fffc] pb-48"
                     spellCheck={false}
                     minRows={20}
                   />

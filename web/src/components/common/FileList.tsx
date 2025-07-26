@@ -91,14 +91,14 @@ export function FileList({
     }
 
     const { current_page, total_pages } = pagination;
-    const pages = [];
+    // const pages = [];
     
     // 计算显示的页码范围
     const startPage = Math.max(1, current_page - 2);
     const endPage = Math.min(total_pages, current_page + 2);
 
     return (
-      <Pagination className="mt-4">
+      <Pagination className="mt-2">
         <PaginationContent>
           {/* 上一页 */}
           <PaginationItem>
@@ -179,29 +179,19 @@ export function FileList({
       <div className="text-center py-8 text-muted-foreground">
         <File className="w-12 h-12 mx-auto mb-4 opacity-50" />
         <p>暂无上传的文件</p>
-        {/* <Button variant="outline" className="mt-4" onClick={onRefresh} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? '加载中...' : '刷新列表'}
-        </Button> */}
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-muted-foreground">
-          {pagination && (
-            `第 ${pagination.current_page} 页，共 ${pagination.total_pages} 页，总计 ${pagination.total_items} 个文件`
-          )}
-        </div>
-        {/* <Button onClick={onRefresh} disabled={loading} variant="outline" size="sm">
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? '加载中...' : '刷新'}
-        </Button> */}
+      <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
+        {pagination && (
+          `第 ${pagination.current_page} 页，共 ${pagination.total_pages} 页，总计 ${pagination.total_items} 个文件`
+        )}
       </div>
 
-      <div>
+      <div className="overflow-y-scroll styled_scrollbar" style={{maxHeight: "calc(100vh - 200px)"}}>
         {files.map((file) => {
           const fileTypeInfo = fileService.getFileTypeInfo(`${file.unique_id}${file.extension}`);
           const thumbnailUrl = getThumbnailUrl(file);
@@ -257,7 +247,7 @@ export function FileList({
                 
                 {/* 文件信息 */}
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm text-foreground truncate">
+                  <p className="font-medium text-sm text-foreground max-w-[200px] truncate" title={file.original_name || `${file.unique_id}${file.extension}`}>
                     {file.original_name || `${file.unique_id}${file.extension}`}
                   </p>
                   <p className="text-xs text-muted-foreground">

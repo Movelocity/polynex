@@ -194,7 +194,7 @@ export function FileManagement() {
             {loadingFiles ? '加载中...' : '刷新'}
           </Button>
           {/* View Mode Toggle */}
-          <div className="flex items-center border border-border rounded-md p-1">
+          <div className="flex items-center border border-border rounded-md px-1">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
