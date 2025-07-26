@@ -87,7 +87,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   copiedIndex 
 }) => {
   const [isReasoningOpen, setIsReasoningOpen] = useState(defaultReasoningOpen);
-  // const isMobile = useIsMobile();
+  const isMobile = useIsMobile();
   function fixLatexComments(content: string) {
     return content.replace(/%(?![^\n]*\n)/g, '%\n');
   }
@@ -98,19 +98,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         message.role === 'user' && 'flex-row-reverse space-x-reverse'
       )}>
         {/* 头像 */}
-        {avatar ? (
-          <AgentAvatar avatar={avatar} name={agentName} size='md' />
-        ) : (
+        {message.role === 'user' ? (
           <div className={cn(
-            'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-            message.role === 'user' ? 'bg-theme-blue' : 'bg-gray-600'
+            'rounded-full flex items-center justify-center flex-shrink-0',
+            message.role === 'user' ? 'bg-theme-blue' : 'bg-gray-600',
+            isMobile ? 'w-8 h-8' : 'w-10 h-10'
           )}>
-            {message.role === 'user' ? (
-              <User className="h-5 w-5 text-white" />
-            ) : (
-              <Bot className="h-5 w-5 text-white" />
-            )}
+            <User className="h-5 w-5 text-white" />
           </div>
+        ):(
+          <AgentAvatar avatar={avatar} name={agentName} size={isMobile ? 'sm' : 'md'} />
         )}
         
         {/* 消息内容 */}
@@ -135,7 +132,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           
           {/* 消息气泡 */}
           <div className={cn(
-            'rounded-lg px-3 py-2 overflow-hidden max-w-[95%]',
+            'rounded-lg px-3 py-2 overflow-hidden max-w-[94%]',
             message.role === 'user' 
               ? 'bg-[#d6e2ff] dark:bg-[#1f2329] text-[#1f2329] dark:text-[#fffc]' 
               : 'bg-muted/50 text-foreground border border-border'
@@ -165,7 +162,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
             {message.role === 'assistant' ? (
               <div className="prose prose-sm w-full overflow-hidden">
-                <MarkdownPreview content={message.content} hardBreak={true} className="max-w-full text-sm sm:text-base" />
+                <MarkdownPreview content={message.content} hardBreak={true} className="text-sm sm:text-base" />
               </div>
             ) : (
               <p className="whitespace-pre-wrap m-0 break-words text-sm sm:text-base">{message.content}</p>

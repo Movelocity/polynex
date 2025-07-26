@@ -144,7 +144,7 @@ export function HeadBanner({
                   <div>
                     <UserAvatar 
                       user={user}
-                      size="md"
+                      size={isMobile ? "sm" : "md"}
                       clickable
                     />
                   </div>
