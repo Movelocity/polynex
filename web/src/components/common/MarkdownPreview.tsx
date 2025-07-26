@@ -221,7 +221,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
       <div 
         className={cn(
           "prose prose-slate max-w-none w-full overflow-hidden break-words", 
-          "text-[#000c] dark:text-[#fffc]",
+          "text-[#3f4a54] dark:text-[#fffc]",
           className
         )}
         style={{ 
@@ -414,7 +414,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
             ),
             // 处理加粗文本
             strong: ({ children }) => (
-              <strong className="font-bold text-[#000d] dark:text-[#fffd]">
+              <strong className="font-bold">
                 {children}
               </strong>
             ),

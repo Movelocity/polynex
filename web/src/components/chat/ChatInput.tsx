@@ -195,12 +195,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className={cn("", className)}>
       <div className={cn(
-        'relative bg-card border border-border rounded-2xl shadow-lg transition-all duration-200',
+        'relative bg-card border border-border rounded-xl shadow-lg transition-all duration-200',
         isFocused ? 'ring-1 ring-theme-blue/70 shadow-xl' : 'hover:shadow-xl',
         disabled && 'opacity-50'
       )}>
         {/* 输入区域容器 */}
-        <div className="flex items-end px-4 py-2 space-x-3">
+        <div className="flex items-end px-4 py-2 pb-0">
           {/* 文本输入区域 */}
           <div className="flex-1 relative">
             <textarea
@@ -221,7 +221,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 isOverLimit ? 'text-destructive' : 'text-foreground'
               )}
               style={{ 
-                fontSize: '16px', // 防止移动端缩放
+                fontSize: '14px', // 防止移动端缩放
                 lineHeight: '1.5',
                 scrollbarWidth: 'none'
               }}
@@ -233,12 +233,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         {/* 底部工具栏 */}
         <div className="flex items-center justify-between px-2 pb-2">
           {/* 快捷键提示 */}
-          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-            <span className="flex items-center space-x-1">
+          <div className="flex items-center space-x-4 text-xs text-muted-foreground/80">
+            <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Enter</kbd>
               <span>发送</span>
             </span>
-            <span className="flex items-center space-x-1">
+            <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Shift+Enter</kbd>
               <span>换行</span>
             </span>

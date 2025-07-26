@@ -200,9 +200,9 @@ export function Conversation() {
       </div>
 
       {/* 主要内容区域 */}
-      <div className="flex-1 flex flex-col relative max-w-3xl mx-auto">
+      <div className="flex-1 flex flex-col relative mx-auto">
         {/* 对话区域 */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 xl:px-24">
           <div className="h-full max-w-4xl mx-auto px-4 sm:px-4 lg:px-6 relative">
             {/* 移动端汉堡菜单 */}
             {isMobile && !isSidebarOpen && (
@@ -239,6 +239,7 @@ export function Conversation() {
                     content: currentAIResponse || "对方正在输入...",
                     reasoning_content: currentAIReasoning,
                   }}
+                  avatar={selectedAgent?.avatar}
                   agentName={selectedAgent?.app_preset?.name}
                   index={messages.length}
                   onCopy={() => {}}
@@ -256,19 +257,19 @@ export function Conversation() {
         {/* <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-background to-transparent"></div> */}
 
         {/* 建议问题区域 */}
-        <div className="w-full flex justify-center mb-2">
+        <div className="w-full flex justify-center mb-2 xl:px-36">
           {shouldShowSuggestedQuestions && (
             <SuggestedQuestions
               questions={selectedAgent.app_preset.suggested_questions}
               onQuestionClick={handleSuggestedQuestion}
-              className={isMobile ? 'w-screen px-4' : 'w-full mx-2 max-w-3xl'}
+              className={isMobile ? 'w-screen px-4' : 'w-full mx-2'}
             />
           )}
         </div>
         {/* 固定在屏幕底部的输入区域 */}
         <div className={cn(
-          "w-full flex justify-center transition-all duration-300",
-          isMobile ? "mb-0 pb-safe-area-inset-bottom" : "mb-3"
+          "w-full flex justify-center transition-all duration-300 xl:px-36",
+          isMobile ? "mb-2 pb-safe-area-inset-bottom" : "mb-3"
         )}>
           {/* 输入区域 */}
           <ChatInput
@@ -279,7 +280,7 @@ export function Conversation() {
             disabled={isStreaming || !selectedAgent}
             isLoading={isStreaming}
             isStreaming={isStreaming}
-            className="w-full mx-2 max-w-3xl"
+            className="w-full mx-2"
           />
         </div>
       </div>

@@ -87,7 +87,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   copiedIndex 
 }) => {
   const [isReasoningOpen, setIsReasoningOpen] = useState(defaultReasoningOpen);
-  const isMobile = useIsMobile();
+  // const isMobile = useIsMobile();
   function fixLatexComments(content: string) {
     return content.replace(/%(?![^\n]*\n)/g, '%\n');
   }
@@ -135,9 +135,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           
           {/* 消息气泡 */}
           <div className={cn(
-            'rounded-lg px-3 py-2 overflow-hidden',
+            'rounded-lg px-3 py-2 overflow-hidden max-w-[95%]',
             message.role === 'user' 
-              ? 'bg-theme-blue dark:bg-theme-blue/60 text-foreground' 
+              ? 'bg-[#d6e2ff] dark:bg-[#1f2329] text-[#1f2329] dark:text-[#fffc]' 
               : 'bg-muted/50 text-foreground border border-border'
           )}>
             {message.role === 'assistant' && message.reasoning_content && (
@@ -154,7 +154,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   )}
                 </div>
                 <div className={cn(
-                  'mt-2 px-2 overflow-hidden transition-all duration-300 mb-2 w-full',
+                  'mt-2 px-2 overflow-hidden transition-all duration-300 w-full',
                   isReasoningOpen ? 'max-h-[1000px]' : 'max-h-0'
                 )}>
                   <span className="whitespace-pre-wrap break-words">
@@ -168,7 +168,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <MarkdownPreview content={message.content} hardBreak={true} className="max-w-full text-sm sm:text-base" />
               </div>
             ) : (
-              <p className="whitespace-pre-wrap m-0 break-words text-[#fffc]">{message.content}</p>
+              <p className="whitespace-pre-wrap m-0 break-words text-sm sm:text-base">{message.content}</p>
             )}
           </div>
           
