@@ -95,13 +95,8 @@ export function BlogCard({
             </CardDescription>
             
             {/* Author and Time Info */}
-            <div className="flex items-center justify-between gap-2 mb-3 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <div className="flex items-center space-x-2">
-                {/* <UserAvatar 
-                  username={blog.authorName}
-                  size="xs"
-                /> */}
-                {/* <span>{blog.authorName}</span> */}
                 {showStatus && (
                   <Badge 
                     variant={blog.status === 'published' ? 'default' : 'secondary'}

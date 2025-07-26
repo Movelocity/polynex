@@ -1,9 +1,30 @@
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/x-ui/card';
-import { Crop, ScanText, FileJson, Sparkles, Settings, Bot, MessageCircle, Image } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/x-ui/card';
+import { Crop, ScanText, FileJson, Sparkles, MessageSquareText, Bot, Image, PenTool } from 'lucide-react';
 
 export function Tools() {
   const tools = [
+    {
+      title: 'Chat',
+      description: '开始和 Agent 聊天',
+      icon: MessageSquareText,
+      path: '/chat/conversation',
+      color: 'from-theme-orange to-theme-red'
+    },
+    {
+      title: 'AI Agent',
+      description: '创建和管理智能AI Agent，配置个性化对话助手',
+      icon: Bot,
+      path: '/chat/agents',
+      color: 'from-theme-teal to-theme-green'
+    },
+    {
+      title: '写文章',
+      description: '保留旧版文章编辑器页面',
+      icon: PenTool,
+      path: '/write',
+      color: 'from-theme-blue to-theme-cyan'
+    },
     {
       title: '图片裁剪',
       description: '上传图片并裁剪成所需尺寸，支持预设宽高比和自定义尺寸',
@@ -32,44 +53,15 @@ export function Tools() {
       path: '/tools/json-formatter',
       color: 'from-theme-purple to-theme-pink'
     },
-    {
-      title: 'Chat',
-      description: '开始和 Agent 聊天',
-      icon: Settings,
-      path: '/chat/conversation',
-      color: 'from-theme-orange to-theme-red'
-    },
-    {
-      title: 'AI Agent',
-      description: '创建和管理智能AI Agent，配置个性化对话助手',
-      icon: Bot,
-              path: '/chat/agents',
-      color: 'from-theme-teal to-theme-green'
-    },
-    // {
-    //   title: 'AI供应商管理',
-    //   description: '管理和配置AI服务供应商，设置API密钥和模型参数',
-    //   icon: Settings,
-    //   path: '/chat/ai-provider-management',
-    //   color: 'from-theme-orange to-theme-red'
-    // },
-    // {
-    //   title: '对话管理',
-    //   description: '管理AI对话历史，查看和整理您的聊天记录',
-    //   icon: MessageCircle,
-    //   path: '/chat/conversation-management',
-    //   color: 'from-theme-violet to-theme-purple'
-    // }
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">在线工具</h1>
-        <p className="text-muted-foreground">高效便捷的在线工具集合，助力您的日常工作</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">探索</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tools.map((tool) => {
           const IconComponent = tool.icon;
           return (

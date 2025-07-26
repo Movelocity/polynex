@@ -6,11 +6,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Input } from '@/components/x-ui/input';
 // import { Switch } from '@/components/x-ui/switch';
 import { 
-  BookOpen, 
   User, 
   LogOut, 
   Search, 
-  PenTool, 
   Settings,
   Home,
   Menu,
@@ -161,14 +159,6 @@ export function HeadBanner({
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>我的文章</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/write')}>
-                    <PenTool className="mr-2 h-4 w-4" />
-                    <span>写博客</span>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/settings')}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>账户设置</span>
@@ -243,15 +233,6 @@ export function HeadBanner({
               {isAuthenticated ? (
                 <>
                   <Link 
-                    to="/write" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <PenTool className="w-4 h-4" />
-                    <span>写博客</span>
-                  </Link>
-                  
-                  <Link 
                     to="/dashboard" 
                     className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -259,17 +240,6 @@ export function HeadBanner({
                     <User className="w-4 h-4" />
                     <span>管理</span>
                   </Link>
-                  
-                  <button 
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted w-full text-left"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>退出登录</span>
-                  </button>
                 </>
               ) : (
                 <div className="space-y-2 pt-2 border-t border-border">
