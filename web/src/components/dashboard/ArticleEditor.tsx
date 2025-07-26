@@ -24,6 +24,8 @@ import {
   Edit
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/x-ui/dialog';
+// import { TextAreaAutoGrow } from '@/components/x-ui/textarea-autogrow';
+import TextareaAutosize from 'react-textarea-autosize';
 
 interface ArticleEditorProps {
   blogId?: string;
@@ -364,18 +366,18 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
         {/* Editor */}
         <div className="flex-1 min-w-0">
           <div className="text-xs text-muted-foreground shadow-sm p-2 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-            <span className="w-full lg:w-1/2">
-              <input
-                id="title"
-                placeholder="Title..."
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                className="text-3xl font-bold outline-none bg-transparent text-foreground w-full"
-              />
-            </span>
-            <span className="flex items-center justify-start lg:justify-end gap-2 w-full lg:w-1/2">
-              <span className="text-sm text-muted-foreground mr-2">{article?.createTime?.split('.')[0]?.replace('T', ' ')}</span>
-              
+            
+            <span className="flex items-center justify-start lg:justify-end gap-2">  
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleSave}
+                disabled={saveLoading || publishLoading}
+                title="保存文章"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                保存
+              </Button>
               <Button 
                 variant="outline"
                 size="sm"
@@ -399,35 +401,40 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   设置
                 </Button>
               )}
-              <Button 
-                variant="default" 
-                size="sm"
-                onClick={handleSave}
-                disabled={saveLoading || publishLoading}
-                title="保存文章"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                保存
-              </Button>
+              <span className="text-sm text-muted-foreground mr-2">{article?.createTime?.split('.')[0]?.replace('T', ' ')}</span>
+            </span>
+            <span className="">
+              {formData.title}
             </span>
           </div>
-          <div className={cn("flex-1 h-[calc(100vh-160px)] lg:h-[calc(100vh-120px)] min-h-0")}>
+          <div className={cn("flex-1 h-[calc(100vh-160px)] lg:h-[calc(100vh-120px)] min-h-0 overflow-y-scroll styled_scrollbar px-4 lg:px-24")}>
             {activeTab === 'write' && (
-              <textarea
-                ref={textareaRef}
-                id="content" 
-                placeholder="开始编写您的文章... 支持 Markdown 语法：**粗体**、*斜体*、`代码`、[链接](url)、![图片](url) 等。支持粘贴图片直接上传。"
-                value={formData.content}
-                onChange={(e) => handleInputChange('content', e.target.value)}
-                onPaste={handlePaste}
-                className={cn(
-                  "w-full p-4 pb-48 rounded-lg resize-none outline-none bg-secondary text-[#000c] dark:text-[#fffc] h-full styled_scrollbar"
-                )}
-                spellCheck={false}
-              />
+              <div className="flex flex-col min-h-[600px] gap-4">
+                <input
+                  id="title"
+                  placeholder="Title..."
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  className="text-3xl font-bold outline-none bg-transparent text-foreground w-full py-4 border-b border-border"
+                />
+                <TextareaAutosize
+                    ref={textareaRef}
+                    id="content"
+                    placeholder="开始编写您的文章..."
+                    value={formData.content}
+                    onChange={(e) => handleInputChange('content', e.target.value)}
+                    onPaste={handlePaste}
+                    className="w-full resize-none outline-none bg-transparent text-[#000c] dark:text-[#fffc]"
+                    spellCheck={false}
+                    minRows={20}
+                  />
+              </div>
             )}
             {activeTab === 'preview' && (
-              <MarkdownPreview content={formData.content} className="px-2 h-full overflow-auto px-4 pb-48 styled_scrollbar"/>
+              <div className="flex flex-col">
+                <h1 className="text-2xl font-bold text-foreground py-3">{formData.title}</h1>
+                <MarkdownPreview content={formData.content} className="pb-48 styled_scrollbar flex-1"/>
+              </div>
             )}
           </div>
         </div>
@@ -546,11 +553,11 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                 onClick={async () => {
                   if (!confirmDelete) {
                     setConfirmDelete(true);
-                    onDelete?.(article);
                     setTimeout(() => setConfirmDelete(false), 4000); // 4秒后自动恢复
                   } else {
                     await handleDelete();
                     setConfirmDelete(false);
+                    onDelete?.(article);
                   }
                 }}
               >

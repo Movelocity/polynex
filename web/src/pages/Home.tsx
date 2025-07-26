@@ -3,17 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { blogService, categoryService } from '@/services';
 import { Blog, Category } from '@/types';
 import { Button } from '@/components/x-ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
-import { Badge } from '@/components/x-ui/badge';
+// import { Card, CardContent, CardHeader, CardTitle } from '@/components/x-ui/card';
+// import { Badge } from '@/components/x-ui/badge';
 import { BlogCard } from '@/components/common/blog/BlogCard';
 import { useTitle } from '@/hooks/usePageTitle';
 import { 
-  Calendar, 
-  Tag, 
-  TrendingUp,
+  // Calendar, 
+  // Tag, 
+  // TrendingUp,
   BookOpen,
   PenTool,
-  BarChart3
+  // BarChart3
 } from 'lucide-react';
 
 // Temporary formatDate function until we move it to a proper utils file
@@ -75,8 +75,8 @@ export function Home() {
   const currentBlogs = filteredBlogs.slice(startIndex, startIndex + blogsPerPage);
 
   // 统计数据
-  const totalBlogs = blogs.length;
-  const totalViews = blogs.reduce((sum, blog) => sum + blog.views, 0);
+  // const totalBlogs = blogs.length;
+  // const totalViews = blogs.reduce((sum, blog) => sum + blog.views, 0);
 
   if (loading) {
     return (
@@ -179,7 +179,7 @@ export function Home() {
             variant="outline"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(currentPage - 1)}
-            className="hover:bg-slate-100"
+            className="hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             上一页
           </Button>
@@ -193,7 +193,7 @@ export function Home() {
                 onClick={() => setCurrentPage(pageNum)}
                 className={currentPage === pageNum ? 
                   'bg-gradient-to-r from-blue-600 to-purple-600' : 
-                  'hover:bg-slate-100'
+                  'hover:bg-slate-100 dark:hover:bg-slate-800'
                 }
               >
                 {pageNum}
@@ -205,7 +205,7 @@ export function Home() {
             variant="outline"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(currentPage + 1)}
-            className="hover:bg-slate-100"
+            className="hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             下一页
           </Button>

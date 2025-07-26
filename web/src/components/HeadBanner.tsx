@@ -61,9 +61,6 @@ export function HeadBanner({
         <div className={cn("flex justify-between items-center h-16", isMobile && "pl-8")}>
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group mr-4">
-            {/* <div className="w-8 h-8 bg-gradient-to-br from-theme-blue to-theme-purple rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div> */}
             <h1 className="text-xl font-bold bg-gradient-to-r from-theme-blue to-theme-purple bg-clip-text text-transparent">
               POLYNEX
             </h1>
@@ -92,35 +89,21 @@ export function HeadBanner({
               }`}
             >
               <Wrench className="w-4 h-4" />
-              <span>工具</span>
+              <span>探索</span>
             </Link>
             
             {isAuthenticated && (
-              <>
-                {/* <Link 
-                  to="/write" 
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                    isActivePath('/write') 
-                      ? 'bg-theme-blue/10 text-theme-blue' 
-                      : 'text-foreground hover:text-theme-blue hover:bg-theme-blue/5'
-                  }`}
-                >
-                  <PenTool className="w-4 h-4" />
-                  <span>写文章</span>
-                </Link> */}
-                
-                <Link 
-                  to="/dashboard" 
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                    isActivePath('/dashboard') 
-                      ? 'bg-theme-blue/10 text-theme-blue' 
-                      : 'text-foreground hover:text-theme-blue hover:bg-theme-blue/5'
-                  }`}
-                >
-                  <User className="w-4 h-4" />
-                  <span>管理</span>
-                </Link>
-              </>
+              <Link 
+                to="/dashboard" 
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
+                  isActivePath('/dashboard') 
+                    ? 'bg-theme-blue/10 text-theme-blue' 
+                    : 'text-foreground hover:text-theme-blue hover:bg-theme-blue/5'
+                }`}
+              >
+                <User className="w-4 h-4" />
+                <span>管理</span>
+              </Link>
             )}
           </nav>
 
@@ -145,6 +128,16 @@ export function HeadBanner({
                 />
               </form>
             </div>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
 
             {/* User Menu or Auth Buttons */}
             {isAuthenticated && user ? (
@@ -197,16 +190,6 @@ export function HeadBanner({
                 </Button>
               </div>
             )}
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
           </div>
         </div>
 
@@ -254,7 +237,7 @@ export function HeadBanner({
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Wrench className="w-4 h-4" />
-                <span>工具</span>
+                <span>探索</span>
               </Link>
               
               {isAuthenticated ? (

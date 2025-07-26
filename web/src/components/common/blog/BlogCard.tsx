@@ -69,23 +69,9 @@ export function BlogCard({
         <div className="flex flex-col md:flex-row items-start justify-between">
           <div className="flex-1">
             {/* Status and Category Badges */}
-            <div className="flex items-center gap-2 mb-2">
-              {showStatus && (
-                <Badge 
-                  variant={blog.status === 'published' ? 'default' : 'secondary'}
-                  className={blog.status === 'published' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}
-                >
-                  {blog.status === 'published' ? '已发布' : '草稿'}
-                </Badge>
-              )}
-              <Badge variant={showStatus ? 'outline' : 'secondary'}>
-                {blog.category}
-              </Badge>
-              <div className="flex items-center text-muted-foreground text-sm">
-                <Eye className="w-4 h-4 mr-1" />
-                {blog.views}
-              </div>
-            </div>
+            {/* <div className="flex items-center gap-2 mb-2">
+              
+            </div> */}
 
             {/* Title */}
             <CardTitle className={`text-xl mb-2 ${layout === 'grid' ? 'group-hover:text-theme-blue transition-colors' : ''}`}>
@@ -109,25 +95,41 @@ export function BlogCard({
             </CardDescription>
             
             {/* Author and Time Info */}
-            <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center justify-between gap-2 mb-3 text-xs text-muted-foreground">
               <div className="flex items-center space-x-2">
-                <UserAvatar 
+                {/* <UserAvatar 
                   username={blog.authorName}
                   size="xs"
-                />
-                <span className="text-sm text-foreground">{blog.authorName}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="hidden md:flex items-center text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  创建：{formatDate(blog.createTime)}
+                /> */}
+                {/* <span>{blog.authorName}</span> */}
+                {showStatus && (
+                  <Badge 
+                    variant={blog.status === 'published' ? 'default' : 'secondary'}
+                    className={blog.status === 'published' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}
+                  >
+                    {blog.status === 'published' ? '已发布' : '草稿'}
+                  </Badge>
+                )}
+                <Badge variant={showStatus ? 'outline' : 'secondary'}>
+                  {blog.category}
+                </Badge>
+                <div className="flex items-center">
+                  <Eye className="w-4 h-4 mr-1" />
+                  {blog.views}
                 </div>
-                {showUpdateTime && blog.updateTime !== blog.createTime && (
-                  <div className="flex items-center text-sm text-muted-foreground">
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center">
+                  {/* <Calendar className="w-4 h-4 mr-1" /> */}
+                  {formatDate(blog.createTime)}
+                </div>
+                {/* {showUpdateTime && blog.updateTime !== blog.createTime && (
+                  <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-1" />
                     更新：{formatDate(blog.updateTime)}
                   </div>
-                )}
+                )} */}
               </div>
             </div>
             
