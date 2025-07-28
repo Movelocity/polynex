@@ -36,7 +36,7 @@ export function Conversation() {
     currentAIReasoning,
     isStreaming,
     agentId,
-    sessionId,
+    chatTaskId,
     setInputMessage,
     setIsSidebarOpen,
     setEditingMessage,
@@ -130,8 +130,9 @@ export function Conversation() {
 
   // 处理中断生成
   const handleStopGeneration = async () => {
-    if (sessionId) {
-      await abortActiveStream(sessionId);
+    console.log("abortActiveStream", chatTaskId);
+    if (chatTaskId) {
+      await abortActiveStream(chatTaskId);
     }
   };
 

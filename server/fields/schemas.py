@@ -545,4 +545,4 @@ class SessionCreateRequest(BaseModel):
     message: Optional[str] = None
 
 class StreamActionRequest(BaseModel):
-    session_id: str
+    task_id: str

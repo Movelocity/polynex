@@ -230,7 +230,7 @@ class OpenAIProvider:
                 
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"流式聊天错误: {error_msg}")
+            logger.error(f"流式聊天错误: {e}")
             
             yield {
                 "type": "error",

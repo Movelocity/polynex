@@ -215,14 +215,14 @@ export class ConversationApiService implements IConversationService {
   /**
    * 检查会话是否存在后台任务
    * 需要用户权限
-   * @param sessionId 会话ID
+   * @param taskId 会话ID
    */
-  async isActiveSession(sessionId: string): Promise<boolean> {
+  async isActiveSession(taskId: string): Promise<boolean> {
     try {
-      const result = await this.apiClient.get<{is_active: boolean}>(`/conversations/is_active_session`, { session_id: sessionId });
+      const result = await this.apiClient.get<{is_active: boolean}>(`/conversations/is_active_session`, { task_id: taskId });
       return result.is_active;
     } catch (error) {
-      console.error(`Failed to check session activity for ${sessionId}:`, error);
+      console.error(`Failed to check session activity for ${taskId}:`, error);
       return false; // 出错时默认返回非活跃状态
     }
   }
@@ -231,14 +231,14 @@ export class ConversationApiService implements IConversationService {
    * 中止流式任务
    * 客户端可以调用此接口来立即停止AI生成，取消API请求
    * 需要用户权限
-   * @param sessionId 会话ID
+   * @param taskId 会话ID
    */
-  async abortStream(sessionId: string): Promise<boolean> {
+  async abortStream(taskId: string): Promise<boolean> {
     try {
-      const result = await this.apiClient.post<{message: string}>('/conversations/abort', { session_id: sessionId });
+      const result = await this.apiClient.post<{message: string}>('/conversations/abort', { task_id: taskId });
       return result.message.includes('aborted successfully');
     } catch (error) {
-      console.error(`Failed to abort stream for session ${sessionId}:`, error);
+      console.error(`Failed to abort stream for session ${taskId}:`, error);
       return false;
     }
   }

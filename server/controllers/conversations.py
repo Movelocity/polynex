@@ -92,14 +92,14 @@ async def disconnect_stream(
     生成的内容会保存到数据库中，但不会再发送到客户端
     """
     try:
-        success = await chat_service.disconnect_stream(request.session_id)
+        success = await chat_service.disconnect_stream(request.task_id)
         
         if success:
             return {"message": "Stream disconnected successfully, task continues running in background"}
         else:
             return {"message": "No active stream found for the session ID"}
     except Exception as e:
-        logger.error(f"Error disconnecting stream for session {request.session_id}: {str(e)}")
+        logger.error(f"Error disconnecting stream for session {request.task_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to disconnect stream: {str(e)}"
@@ -118,14 +118,14 @@ async def abort_stream(
     客户端可以调用此接口来立即停止AI生成，取消API请求
     """
     try:
-        success = await chat_service.abort_stream(request.session_id)
+        success = await chat_service.abort_stream(request.task_id)
         
         if success:
             return {"message": "Stream task aborted successfully"}
         else:
             return {"message": "No active stream found for the session ID"}
     except Exception as e:
-        logger.error(f"Error aborting stream for session {request.session_id}: {str(e)}")
+        logger.error(f"Error aborting stream for session {request.task_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to abort stream: {str(e)}"
@@ -133,11 +133,11 @@ async def abort_stream(
 
 @router.get("/is_active_session")
 async def is_active_session(
-    session_id: str,
+    task_id: str,
     chat_service: ChatService = Depends(get_chat_service_singleton)
 ):
     """检查会话是否存在后台任务"""
-    return chat_service.is_active_session(session_id)
+    return chat_service.is_active_session(task_id)
 
 
 @router.get("", response_model=List[ConversationSummary])

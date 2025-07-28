@@ -43,7 +43,7 @@ export interface UseConversationReturn {
   isStreaming: boolean;
   agentId: string | null;
   conversations: ConversationType[];
-  sessionId: string | null;
+  chatTaskId: string | null;
   
   // 方法
   setInputMessage: (message: string) => void;
@@ -62,8 +62,8 @@ export interface UseConversationReturn {
   handleKeyPress: (e: React.KeyboardEvent) => void;
   handleSuggestedQuestion: (question: string) => void;
   setAgentHash: (agentId: string) => void;
-  checkActiveSession: (sessionId: string) => Promise<boolean>;
-  abortActiveStream: (sessionId: string) => Promise<boolean>;
+  checkActiveSession: (taskId: string) => Promise<boolean>;
+  abortActiveStream: (taskId: string) => Promise<boolean>;
   
   // 计算属性
   hasOnlyWelcome: boolean;
@@ -75,9 +75,9 @@ export function useConversation(): UseConversationReturn {
   const { getAgent } = useAgents();
   // 状态定义
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
-  // conversationId 用来存储会话历史，sessionId 用来标识流式对话响应
+  // conversationId 用来存储会话历史，chatTaskId 用来标识流式对话响应
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [chatTaskId, setChatTaskId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   // const [isLoading, setIsLoading] = useState(false);
@@ -128,9 +128,9 @@ export function useConversation(): UseConversationReturn {
   };
 
   // 检查会话是否有活跃任务
-  const checkActiveSession = async (sessionId: string): Promise<boolean> => {
+  const checkActiveSession = async (taskId: string): Promise<boolean> => {
     try {
-      return await conversationService.isActiveSession(sessionId);
+      return await conversationService.isActiveSession(taskId);
     } catch (error) {
       console.error('Failed to check session activity:', error);
       return false;
@@ -138,9 +138,9 @@ export function useConversation(): UseConversationReturn {
   };
 
   // 中止流式任务
-  const abortActiveStream = async (sessionId: string): Promise<boolean> => {
+  const abortActiveStream = async (taskId: string): Promise<boolean> => {
     try {
-      const success = await conversationService.abortStream(sessionId);
+      const success = await conversationService.abortStream(taskId);
       if (success) {
         toast.success({title: "已成功中止AI生成"});
         setIsStreaming(false);
@@ -263,7 +263,7 @@ export function useConversation(): UseConversationReturn {
     try {
       const conversation = await conversationService.getConversation(selectConvId);
       setConversationId(selectConvId);
-      setSessionId(conversation.session_id);
+      setChatTaskId(null);
       setMessages(conversation.messages || []);
       
       // 如果对话有关联的agent，加载agent信息
@@ -283,7 +283,7 @@ export function useConversation(): UseConversationReturn {
   // 新建对话
   const handleNewConversation = () => {
     setConversationId(null);
-    setSessionId(null);
+    setChatTaskId(null);
     setMessages([]);
     if (selectedAgent?.app_preset?.greetings) {
       setMessages([{
@@ -344,8 +344,9 @@ export function useConversation(): UseConversationReturn {
               }
               break;
 
-            case 'conversation_created':
+            case 'conversation':
               setConversationId(data.data.conversation_id);
+              setChatTaskId(data.data.task_id);
               break;
               
             case 'done':
@@ -455,7 +456,7 @@ export function useConversation(): UseConversationReturn {
     isStreaming,
     agentId,
     conversations,
-    sessionId,
+    chatTaskId,
     
     // 方法
     setInputMessage,
