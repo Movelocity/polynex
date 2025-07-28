@@ -5,6 +5,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import cn from 'classnames';
+import { toast } from '@/hooks/use-toast';
 
 // 建议问题组件
 interface SuggestedQuestionsProps {
@@ -170,16 +171,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Ctrl/Cmd + Enter 也可以发送
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      onSend();
-      return;
-    }
+    // if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    //   e.preventDefault();
+    //   toast.success({title: "已成功中止AI生成", description: e.key+":"+e.keyCode});
+    //   onSend();
+    //   return;
+    // }
     
     // Enter 发送，Shift + Enter 换行
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      if(e.keyCode === 13) {  // mac 无法区分输入法模式下的 Enter, 必须用 keyCode 来判断
+        toast.success({title: "发送", description: e.key+":"+e.keyCode});
+        onSend();
+      }
       return;
     }
     
@@ -235,7 +240,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {/* 快捷键提示 */}
           <div className="flex items-center space-x-4 text-xs text-muted-foreground/80">
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Enter</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Ctrl/Cmd</kbd>
               <span>发送</span>
             </span>
             <span className="flex items-center gap-1">

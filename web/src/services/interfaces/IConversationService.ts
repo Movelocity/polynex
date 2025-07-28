@@ -103,4 +103,19 @@ export interface IConversationService {
    * @param request 搜索请求参数
    */
   searchConversations(request: SearchRequest): Promise<SearchResponse>;
+  
+  /**
+   * 检查会话是否存在后台任务
+   * 需要用户权限
+   * @param sessionId 会话ID
+   */
+  isActiveSession(sessionId: string): Promise<boolean>;
+  
+  /**
+   * 中止流式任务
+   * 客户端可以调用此接口来立即停止AI生成，取消API请求
+   * 需要用户权限
+   * @param sessionId 会话ID
+   */
+  abortStream(sessionId: string): Promise<boolean>;
 } 
