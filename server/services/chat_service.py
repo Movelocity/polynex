@@ -19,6 +19,7 @@ class TaskState(Enum):
     RUNNING = "running"
     FINISHED = "finished"
     FAILED = "failed"
+    DISCONNECTED = "disconnected"  # 客户端断开连接但任务继续运行
 
 class StreamTask:
     def __init__(self, task_id: str, user_id: str, message: str, agent_id: str, 
@@ -40,6 +41,7 @@ class StreamTask:
         self.finished_at = None
         self.conversation = None
         self.error = None
+        self.cancel_requested = False  # 用于请求中止任务
     
     def set_running(self):
         self.state = TaskState.RUNNING
@@ -53,6 +55,14 @@ class StreamTask:
         self.state = TaskState.FAILED
         self.error = error
         self.finished_at = datetime.now()
+    
+    def set_disconnected(self):
+        """设置任务为断开连接状态（但仍在后台运行）"""
+        self.state = TaskState.DISCONNECTED
+    
+    def request_cancel(self):
+        """请求取消任务"""
+        self.cancel_requested = True
     
     async def put_result(self, data: Dict[str, Any]):
         await self.result_queue.put(data)
@@ -112,6 +122,52 @@ class StreamPool:
             task.clear_queue()
             logger.info(f"Task {task_id} removed from pool")
     
+    def disconnect_task(self, task_id: str) -> bool:
+        """
+        断开任务连接但保持任务继续运行
+        
+        Args:
+            task_id: 任务ID
+            
+        Returns:
+            bool: 是否成功断开连接
+        """
+        task = self.get_task(task_id)
+        if task and task.state == TaskState.RUNNING:
+            task.set_disconnected()
+            logger.info(f"Task {task_id} disconnected but continues running")
+            return True
+        return False
+    
+    async def abort_task(self, task_id: str) -> bool:
+        """
+        中止任务执行
+        
+        Args:
+            task_id: 任务ID
+            
+        Returns:
+            bool: 是否成功中止任务
+        """
+        task = self.get_task(task_id)
+        if not task:
+            return False
+            
+        # 请求取消任务
+        task.request_cancel()
+        
+        # 向队列添加取消消息
+        await task.put_result({
+            "type": "error",
+            "data": {
+                "error": "Task aborted by user",
+                "timestamp": datetime.now().isoformat()
+            }
+        })
+        
+        logger.info(f"Task {task_id} aborted")
+        return True
+    
     async def _worker(self, worker_name: str):
         logger.info(f"StreamPool worker {worker_name} started")
         try:
@@ -134,8 +190,15 @@ class StreamPool:
         logger.info(f"Worker {worker_name} processing task {task.task_id}")
         try:
             task.set_running()
+            # 直接执行流处理，不再创建单独的任务
             await self._execute_stream_task(task)
-            task.set_finished()
+            
+            # 如果任务没有被取消，则标记为完成
+            if not task.cancel_requested:
+                task.set_finished()
+        except asyncio.CancelledError:
+            logger.info(f"Task {task.task_id} was cancelled")
+            task.set_failed("Task was cancelled")
         except Exception as e:
             logger.error(f"Task {task.task_id} failed: {str(e)}")
             task.set_failed(str(e))
@@ -144,13 +207,22 @@ class StreamPool:
                 "data": {"error": str(e), "timestamp": datetime.now().isoformat()}
             })
         finally:
-            await asyncio.sleep(60)
-            self.remove_task(task.task_id)
+            # 如果任务已断开连接或已完成，则延迟删除任务
+            if task.state in [TaskState.FINISHED, TaskState.FAILED, TaskState.DISCONNECTED]:
+                await asyncio.sleep(60)
+                self.remove_task(task.task_id)
     
     async def _execute_stream_task(self, task: StreamTask):
         conversation = None
+        provider_stream = None
+        provider = None
         
         try:
+            # 检查是否请求取消
+            if task.cancel_requested:
+                logger.info(f"Task {task.task_id} cancelled before execution")
+                return
+                
             agent_srv = get_agent_service_singleton()
             agent = await agent_srv.get_agent(task.db, task.agent_id, task.user_id)
             
@@ -252,12 +324,27 @@ class StreamPool:
             assistant_reasoning = ""
             has_done = False
 
-            async for chunk in provider.stream_chat(
+            # 检查是否请求取消
+            if task.cancel_requested:
+                logger.info(f"Task {task.task_id} cancelled before API call")
+                return
+
+            # 启动流式聊天
+            provider_stream = provider.stream_chat(
                 openai_messages,
                 model=model,
                 temperature=temperature,
                 max_tokens=max_tokens
-            ):
+            )
+            
+            async for chunk in provider_stream:
+                # 检查是否请求取消
+                if task.cancel_requested:
+                    logger.info(f"Task {task.task_id} cancelled during streaming")
+                    if provider:
+                        await provider.close()
+                    break
+                    
                 if chunk.get("type") == "content":
                     assistant_response += chunk["data"].get("content", "")
                     assistant_reasoning += chunk["data"].get("reasoning_content", "")
@@ -268,10 +355,13 @@ class StreamPool:
                 elif chunk.get("type") == "done":
                     has_done = True
                 
-                await task.put_result(chunk)
+                # 如果任务已断开连接，不再发送结果，但继续处理流
+                if task.state != TaskState.DISCONNECTED:
+                    await task.put_result(chunk)
             
-            if not has_done:
-                await task.put_result({
+            # 如果流没有正常结束，且不是因为取消，发送完成消息
+            if not has_done and not task.cancel_requested:
+                done_message = {
                     "type": "done",
                     "data": {
                         "finish_reason": "completed",
@@ -279,9 +369,14 @@ class StreamPool:
                         "full_reasoning": assistant_reasoning,
                         "timestamp": datetime.now().isoformat(),
                     }
-                })
+                }
+                
+                # 如果任务已断开连接，不再发送结果
+                if task.state != TaskState.DISCONNECTED:
+                    await task.put_result(done_message)
 
-            if assistant_response:
+            # 即使客户端断开连接，也保存回复到数据库
+            if assistant_response and not task.cancel_requested:
                 assistant_message = {
                     "role": "assistant",
                     "content": assistant_response,
@@ -299,15 +394,25 @@ class StreamPool:
                 
                 logger.info(f"会话 {conversation.id} 保存AI回复成功")
                         
+        except asyncio.CancelledError:
+            logger.info(f"Task {task.task_id} streaming was cancelled")
+            if provider:
+                await provider.close()
+            raise
         except Exception as e:
             logger.error(f"Error in _execute_stream_task: {str(e)}")
-            await task.put_result({
-                "type": "error",
-                "data": {
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                }
-            })
+            # 如果任务未断开连接，发送错误消息
+            if task.state != TaskState.DISCONNECTED:
+                await task.put_result({
+                    "type": "error",
+                    "data": {
+                        "error": str(e),
+                        "timestamp": datetime.now().isoformat()
+                    }
+                })
+            # 确保关闭provider连接
+            if provider:
+                await provider.close()
 
 class ChatService:
     """实时对话服务类"""
@@ -323,14 +428,14 @@ class ChatService:
         self.session_locks: Dict[str, asyncio.Lock] = {}
         
         # 正在进行的流式响应记录
-        self.active_streams: Dict[str, bool] = {}
+        self.active_streams: Dict[str, str] = {}  # 修改为存储 session_id -> task_id 的映射
         
         # 初始化流处理池
         self.stream_pool = StreamPool(max_workers=settings.max_concurrent_llm_requests)
         
         # 启动流处理池的任务
         self._pool_start_task = None
-        
+    
     async def _ensure_pool_started(self):
         """确保流处理池已启动"""
         if not self.stream_pool.running and self._pool_start_task is None:
@@ -343,6 +448,43 @@ class ChatService:
             self.session_locks[session_id] = asyncio.Lock()
         return self.session_locks[session_id]
 
+    def is_active_session(self, session_id: str) -> bool:
+        """检查会话是否存在后台任务"""
+        return session_id in self.active_streams
+    
+    async def disconnect_stream(self, session_id: str) -> bool:
+        """
+        断开客户端连接但保持任务继续运行
+        
+        Args:
+            session_id: 会话ID
+            
+        Returns:
+            bool: 是否成功断开连接
+        """
+        task_id = self.active_streams.pop(session_id, None)
+        if task_id:
+            return self.stream_pool.disconnect_task(task_id)
+        return False
+    
+    async def abort_stream(self, session_id: str) -> bool:
+        """
+        中止流式任务
+        
+        Args:
+            session_id: 会话ID
+            
+        Returns:
+            bool: 是否成功中止任务
+        """
+        task_id = self.active_streams.get(session_id)
+        if task_id:
+            result = await self.stream_pool.abort_task(task_id)
+            if result:
+                self.active_streams.pop(session_id, None)
+            return result
+        return False
+
     async def stream_chat(
         self,
         user_id: str,
@@ -351,7 +493,7 @@ class ChatService:
         conversation_id: Optional[str] = None,
         title: Optional[str] = None,
         db: Session = None,
-        provider_service: AIProviderService = None
+        provider_service: AIProviderService = None,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         流式聊天 - 使用流池处理
@@ -368,6 +510,10 @@ class ChatService:
         Yields:
             Dict[str, Any]: 流式响应数据
         """
+        task_id = None
+        conversation = None
+        session_id = None
+        
         try:
             # 确保流处理池已启动
             await self._ensure_pool_started()
@@ -385,6 +531,16 @@ class ChatService:
                 provider_service=provider_service
             )
             
+            # 如果提供了会话ID，直接使用；否则需要获取或创建会话
+            if conversation_id:
+                conversation_srv = get_conversation_service_singleton()
+                conversation = await conversation_srv.get_conversation(
+                    db, conversation_id, user_id
+                )
+                if conversation:
+                    session_id = conversation.session_id
+                    self.active_streams[session_id] = task_id
+            
             # 提交任务到流池
             await self.stream_pool.submit_task(task)
             
@@ -393,6 +549,14 @@ class ChatService:
                 try:
                     # 等待结果，超时后检查任务状态
                     result = await asyncio.wait_for(task.get_result(), timeout=30.0)
+                    
+                    # 如果收到会话创建事件，记录会话ID
+                    if result.get("type") == "conversation_created" and not session_id:
+                        conversation_data = result.get("data", {})
+                        session_id = conversation_data.get("session_id")
+                        if session_id:
+                            self.active_streams[session_id] = task_id
+                    
                     yield result
                     
                     # 如果收到完成或错误信息，结束流
@@ -406,6 +570,13 @@ class ChatService:
                     # 如果任务还在运行但没有新结果，继续等待
                     continue
                     
+        except asyncio.CancelledError:
+            # 客户端断开连接，但保持任务继续运行
+            if task_id:
+                self.stream_pool.disconnect_task(task_id)
+            logger.info(f"Client connection cancelled for task {task_id}, but task continues running")
+            # 重新抛出异常，让FastAPI处理连接关闭
+            raise
         except Exception as e:
             logger.error(f"Error in stream_chat: {str(e)}")
             yield {
@@ -415,6 +586,12 @@ class ChatService:
                     "timestamp": datetime.now().isoformat()
                 }
             }
+        finally:
+            # 如果任务完成或失败，从活跃流中移除
+            if session_id and task_id:
+                current_task_id = self.active_streams.get(session_id)
+                if current_task_id == task_id:
+                    self.active_streams.pop(session_id, None)
 
 _chat_service_singleton = None
 

@@ -537,3 +537,12 @@ class TestProviderRequest(BaseModel):
     model: Optional[str] = None
     message: str = "Hello, this is a test message."
 
+# ===== 流式控制相关模型 =====
+
+class SessionCreateRequest(BaseModel):
+    agent_id: Optional[str] = None
+    title: Optional[str] = None
+    message: Optional[str] = None
+
+class StreamActionRequest(BaseModel):
+    session_id: str

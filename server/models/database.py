@@ -123,7 +123,7 @@ class Conversation(Base):
     __tablename__ = "conversations"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    session_id = Column(String(100), nullable=False, unique=True)  # 会话唯一标识
+    session_id = Column(String(100), nullable=False, unique=True)  # 会话请求+响应唯一标识
     user_id = Column(String, nullable=False)  # 用户ID
     agent_id = Column(String, nullable=True)  # 关联的agent ID
     title = Column(String(200), nullable=False, default="新对话")

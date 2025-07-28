@@ -9,7 +9,8 @@ import logging
 from models.database import get_db
 from fields.schemas import (
     ConversationSummary, ConversationDetail, ChatRequest, Message, 
-    ConversationContextUpdate, SearchRequest, SearchResponse, ConversationSearchResult
+    ConversationContextUpdate, SearchRequest, SearchResponse, ConversationSearchResult,
+    SessionCreateRequest, StreamActionRequest
 )
 from services import (
     get_conversation_service_singleton, ChatService, 
@@ -20,11 +21,6 @@ from libs.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/conversations", tags=["对话管理"])
-
-class SessionCreateRequest(BaseModel):
-    agent_id: Optional[str] = None
-    title: Optional[str] = None
-    message: Optional[str] = None
 
 
 @router.post("/chat")
@@ -43,6 +39,7 @@ async def chat(
             yield "event: heartbeat\ndata: {\"type\": \"heartbeat\"}\n\n"
             
             has_done = False
+            
             async for chunk in chat_service.stream_chat(
                 conversation_id=chat_request.conversationId,
                 agent_id=chat_request.agentId,
@@ -80,6 +77,67 @@ async def chat(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process chat request: {str(e)}"
         )
+
+
+@router.post("/disconnect")
+async def disconnect_stream(
+    request: StreamActionRequest,
+    current_user_id: str = Depends(get_current_user_id),  # 登录token自动验证
+    chat_service: ChatService = Depends(get_chat_service_singleton)
+):
+    """
+    断开流式连接但保持后台任务继续运行
+    
+    客户端可以调用此接口来安全断开连接，同时保持AI生成继续运行，
+    生成的内容会保存到数据库中，但不会再发送到客户端
+    """
+    try:
+        success = await chat_service.disconnect_stream(request.session_id)
+        
+        if success:
+            return {"message": "Stream disconnected successfully, task continues running in background"}
+        else:
+            return {"message": "No active stream found for the session ID"}
+    except Exception as e:
+        logger.error(f"Error disconnecting stream for session {request.session_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to disconnect stream: {str(e)}"
+        )
+
+
+@router.post("/abort")
+async def abort_stream(
+    request: StreamActionRequest,
+    current_user_id: str = Depends(get_current_user_id),
+    chat_service: ChatService = Depends(get_chat_service_singleton)
+):
+    """
+    中止流式任务
+    
+    客户端可以调用此接口来立即停止AI生成，取消API请求
+    """
+    try:
+        success = await chat_service.abort_stream(request.session_id)
+        
+        if success:
+            return {"message": "Stream task aborted successfully"}
+        else:
+            return {"message": "No active stream found for the session ID"}
+    except Exception as e:
+        logger.error(f"Error aborting stream for session {request.session_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to abort stream: {str(e)}"
+        )
+
+@router.get("/is_active_session")
+async def is_active_session(
+    session_id: str,
+    chat_service: ChatService = Depends(get_chat_service_singleton)
+):
+    """检查会话是否存在后台任务"""
+    return chat_service.is_active_session(session_id)
 
 
 @router.get("", response_model=List[ConversationSummary])
