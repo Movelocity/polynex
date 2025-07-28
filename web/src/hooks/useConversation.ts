@@ -43,6 +43,7 @@ export interface UseConversationReturn {
   isStreaming: boolean;
   agentId: string | null;
   conversations: ConversationType[];
+  sessionId: string | null;
   
   // 方法
   setInputMessage: (message: string) => void;
@@ -454,6 +455,7 @@ export function useConversation(): UseConversationReturn {
     isStreaming,
     agentId,
     conversations,
+    sessionId,
     
     // 方法
     setInputMessage,

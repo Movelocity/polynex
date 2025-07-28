@@ -3,6 +3,7 @@ import { Button } from '@/components/x-ui/button';
 import { 
   Send, 
   Loader2,
+  Square,
 } from 'lucide-react';
 import cn from 'classnames';
 import { toast } from '@/hooks/use-toast';
@@ -49,6 +50,7 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
+  onStop?: () => void;
   disabled: boolean;
   isLoading: boolean;
   isStreaming?: boolean;
@@ -60,6 +62,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onChange,
   onSend,
   onKeyPress,
+  onStop,
   disabled,
   isLoading,
   isStreaming,
@@ -182,7 +185,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if(e.keyCode === 13) {  // mac 无法区分输入法模式下的 Enter, 必须用 keyCode 来判断
-        toast.success({title: "发送", description: e.key+":"+e.keyCode});
+        // toast.success({title: "发送", description: e.key+":"+e.keyCode});
         onSend();
       }
       return;
@@ -269,19 +272,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             )}
             {/* 发送按钮 */}
             <div className="flex-shrink-0">
-              <Button 
-                variant="attractive"
-                onClick={onSend}
-                disabled={disabled || !value.trim() || isOverLimit}
-                size="icon"
-                className="rounded-xl"
-              >
-                {(isLoading || isStreaming) ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5 " />
-                )}
-              </Button>
+              {isStreaming && onStop ? (
+                <Button 
+                  variant="destructive"
+                  onClick={onStop}
+                  size="icon"
+                  className="rounded-xl"
+                  title="中断生成"
+                >
+                  <Square className="h-5 w-5" />
+                </Button>
+              ) : (
+                <Button 
+                  variant="attractive"
+                  onClick={onSend}
+                  disabled={disabled || !value.trim() || isOverLimit}
+                  size="icon"
+                  className="rounded-xl"
+                >
+                  {(isLoading || isStreaming) ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Send className="h-5 w-5 " />
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>

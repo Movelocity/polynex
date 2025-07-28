@@ -36,6 +36,7 @@ export function Conversation() {
     currentAIReasoning,
     isStreaming,
     agentId,
+    sessionId,
     setInputMessage,
     setIsSidebarOpen,
     setEditingMessage,
@@ -54,6 +55,7 @@ export function Conversation() {
     // hasOnlyWelcome,
     shouldShowSuggestedQuestions,
     setAgentHash,
+    abortActiveStream,
   } = useConversation();
 
   // 使用Agent管理hook
@@ -123,6 +125,13 @@ export function Conversation() {
     handleNewConversation();
     if (isMobile) {
       setIsSidebarOpen(false);
+    }
+  };
+
+  // 处理中断生成
+  const handleStopGeneration = async () => {
+    if (sessionId) {
+      await abortActiveStream(sessionId);
     }
   };
 
@@ -277,6 +286,7 @@ export function Conversation() {
             onChange={setInputMessage}
             onSend={handleSendMessage}
             onKeyPress={handleKeyPress}
+            onStop={handleStopGeneration}
             disabled={isStreaming || !selectedAgent}
             isLoading={isStreaming}
             isStreaming={isStreaming}
