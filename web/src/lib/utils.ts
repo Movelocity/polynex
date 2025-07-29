@@ -9,7 +9,7 @@ export function copyToClipboard(text: string) {
   let textArea: HTMLTextAreaElement | null = null;
   let success = false;
   try {
-    const textArea = document.createElement("textarea");
+    textArea = document.createElement("textarea");
     textArea.value = text;
     // 使文本区域在屏幕外，防止干扰视图
     textArea.style.position = 'fixed';

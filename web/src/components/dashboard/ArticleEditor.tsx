@@ -26,6 +26,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/x-ui/dialog';
 // import { TextAreaAutoGrow } from '@/components/x-ui/textarea-autogrow';
 import TextareaAutosize from 'react-textarea-autosize';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface ArticleEditorProps {
   blogId?: string;
@@ -65,11 +66,9 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   
   const [tagInput, setTagInput] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  // const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
-  const [publishLoading, setPublishLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('write');
+  const [activeTab, setActiveTab] = useLocalStorage('activeTab', 'write');
   const [isEdit, setIsEdit] = useState(false);
   const [article, setArticle] = useState<Blog | null>(null);
   
@@ -88,7 +87,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     status: formData.status,
   });
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false); // 新增：控制二次确认
+  const [confirmDelete, setConfirmDelete] = useState(false); // 控制二次确认
 
   // Load data on mount and when blogId changes
   useEffect(() => {
@@ -130,6 +129,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     if (error) setError('');
   };
 
+  // 粘贴图片待上传
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = Array.from(e.clipboardData.items);
     const imageItem = items.find(item => item.type.startsWith('image/'));
@@ -299,7 +299,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
         event.preventDefault();
-        if (saveLoading || publishLoading) {
+        if (saveLoading) {
           return;
         }
         handleSave();
@@ -307,11 +307,10 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [saveLoading, publishLoading, handleSave]);
+  }, [saveLoading, handleSave]);
 
   // 打开设置时同步草稿
   const openSettings = () => {
@@ -341,7 +340,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     try {
       const success = await blogService.deleteBlog(article.id);
       if (success) {
-        toast({ title: '删除成功', description: '文章已被删除' });
+        toast({ title: '删除成功', description: `【${article.title}】已被删除` });
         // 可选：跳转或回调
       } else {
         toast({ title: '删除失败', description: '请重试' });
@@ -372,7 +371,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                 variant="default" 
                 size="sm"
                 onClick={handleSave}
-                disabled={saveLoading || publishLoading}
+                disabled={saveLoading}
                 title="保存文章"
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -392,7 +391,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               {isEdit && (
                 <Button 
                   onClick={openSettings}
-                  disabled={publishLoading || saveLoading}
+                  disabled={saveLoading}
                   variant='outline'
                   size="sm"
                   title="文章设置"
@@ -432,7 +431,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
             )}
             {activeTab === 'preview' && (
               <div className="flex flex-col">
-                <h1 className="text-2xl font-bold text-foreground py-3">{formData.title}</h1>
+                <h1 className="text-3xl font-bold text-foreground py-3 border-b border-border mb-3">{formData.title}</h1>
                 <MarkdownPreview content={formData.content} className="pb-48 styled_scrollbar flex-1"/>
               </div>
             )}
@@ -570,7 +569,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
             )}
             <div className="flex gap-2 ml-auto">
               <Button size="sm" variant="outline" onClick={() => setShowSettingsModal(false)}>取消</Button>
-              <Button size="sm" onClick={handleSettingsSave} disabled={saveLoading || publishLoading}>保存设置</Button>
+              <Button size="sm" onClick={handleSettingsSave} disabled={saveLoading}>保存设置</Button>
             </div>
           </DialogFooter>
         </DialogContent>

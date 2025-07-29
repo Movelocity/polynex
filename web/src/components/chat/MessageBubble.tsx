@@ -162,7 +162,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
             {message.role === 'assistant' ? (
               <div className="prose prose-sm w-full overflow-hidden">
-                <MarkdownPreview content={message.content} hardBreak={true} className="text-sm sm:text-base" />
+                <MarkdownPreview content={message.content} hardBreak={true} className="text-sm sm:text-base text-[#3f4a54] dark:text-[#fffc]" />
               </div>
             ) : (
               <p className="whitespace-pre-wrap m-0 break-words text-sm sm:text-base">{message.content}</p>

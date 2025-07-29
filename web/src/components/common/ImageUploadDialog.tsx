@@ -81,8 +81,7 @@ export function ImageUploadDialog({ open, onOpenChange, imageFile, onUpload }: I
           )}
           
           {previewUrl && (
-            
-            <div className="border rounded-lg p-2 bg-muted">
+            <div className="rounded-lg p-2 bg-muted">
               <img 
                 src={previewUrl} 
                 alt="Preview" 
@@ -95,7 +94,10 @@ export function ImageUploadDialog({ open, onOpenChange, imageFile, onUpload }: I
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="altText" className="text-foreground">图片描述（Alt文本）</Label>
+            <Label htmlFor="altText" className="text-foreground">
+              图片描述
+              <span className="text-xs text-muted-foreground">（Alt文本，有助于提高可访问性和SEO）</span>
+            </Label>
             <Input
               id="altText"
               placeholder="为图片添加描述（可选）"
@@ -104,9 +106,6 @@ export function ImageUploadDialog({ open, onOpenChange, imageFile, onUpload }: I
               disabled={uploading}
               className="text-foreground"
             />
-            <div className="text-xs text-muted-foreground">
-              图片描述有助于提高可访问性和SEO效果
-            </div>
           </div>
         </div>
         

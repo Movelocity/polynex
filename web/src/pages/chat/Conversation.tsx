@@ -272,7 +272,7 @@ export function Conversation() {
             <SuggestedQuestions
               questions={selectedAgent.app_preset.suggested_questions}
               onQuestionClick={handleSuggestedQuestion}
-              className={isMobile ? 'w-screen px-4' : 'w-full mx-2'}
+              className={isMobile ? 'w-screen px-4' : 'w-full mx-2 max-w-4xl'}
             />
           )}
         </div>
@@ -291,7 +291,7 @@ export function Conversation() {
             disabled={isStreaming || !selectedAgent}
             isLoading={isStreaming}
             isStreaming={isStreaming}
-            className="w-full mx-2"
+            className="w-full max-w-4xl mx-2"
           />
         </div>
       </div>

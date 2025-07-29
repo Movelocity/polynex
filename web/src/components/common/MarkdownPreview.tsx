@@ -168,7 +168,7 @@ const CustomCode = (props: { children: any; className?: string }) => {
   if (!isInCodeBlock) {
     // 内联代码样式 - 使用主题色
     return (
-      <code className="bg-gray-200 dark:bg-gray-700 font-semibold px-1 mx-0.5 rounded break-all" style={{fontSize: '16px'}}>
+      <code className="bg-gray-200 dark:bg-gray-700 font-medium px-1 mx-0.5 rounded break-all" style={{fontSize: '16px'}}>
         {props.children}
       </code>
     );
@@ -220,8 +220,7 @@ export function MarkdownPreview({ content, hardBreak = false, className }: { con
     <>
       <div 
         className={cn(
-          "prose prose-slate max-w-none w-full overflow-hidden break-words", 
-          "text-[#3f4a54] dark:text-[#fffc]",
+          "prose prose-slate max-w-none w-full overflow-hidden break-words text-foreground", 
           className
         )}
         style={{ 

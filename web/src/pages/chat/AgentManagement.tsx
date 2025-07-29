@@ -200,7 +200,7 @@ export function AgentManagement() {
       {/* Agent列表 */}
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <Card className="grid-cols-1">
+          <Card className="grid-cols-1 shadow-none hover:shadow-md transition-all duration-300">
             <CardContent className="flex flex-col justify-start gap-2 py-4">
               {/* <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" /> */}
               <span className="text-md font-medium text-foreground mb-2">创建Agent</span>
@@ -223,7 +223,7 @@ export function AgentManagement() {
           {agents.map((agent) => (
             <Card 
               key={agent.agent_id} 
-              className="relative grid-cols-1 cursor-pointer"
+              className="relative grid-cols-1 cursor-pointer shadow-none hover:shadow-md transition-all duration-300"
               onClick={() => {
                 if(!canEditAgent(agent, user.id)) return;
                 handleEditAgent(agent.agent_id);

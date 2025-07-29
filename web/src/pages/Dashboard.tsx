@@ -4,11 +4,11 @@ import { fileService, blogService } from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/x-ui/button';
-import { Card, CardContent } from '@/components/x-ui/card';
+// import { Card, CardContent } from '@/components/x-ui/card';
 import { ScrollArea } from '@/components/x-ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/x-ui/dialog';
+// import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/x-ui/dialog';
 import { Input } from '@/components/x-ui/input';
-import { Badge } from '@/components/x-ui/badge';
+// import { Badge } from '@/components/x-ui/badge';
 import { useTitle } from '@/hooks/usePageTitle';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Blog } from '@/types';
@@ -44,7 +44,7 @@ type ActiveView = 'blogs' | 'files' | 'users' | 'profile' | 'article-edit' | 'ar
 type SidebarContent = 'articles' | 'files';
 
 export function Dashboard() {
-  useTitle('管理中心');
+  useTitle('文章管理');
   
   const [activeView, setActiveView] = useState<ActiveView>('article-create');
   const [sidebarContent, setSidebarContent] = useState<SidebarContent>('articles');

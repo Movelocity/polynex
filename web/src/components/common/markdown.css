@@ -180,6 +180,10 @@ Touched: 2022
 .prose .hljs-strong {
   font-weight: 700;
 }
+.prose input[type='checkbox'] {
+  vertical-align: middle;
+  cursor: default;
+}
 
 .mermaid {
   border: var(--border);

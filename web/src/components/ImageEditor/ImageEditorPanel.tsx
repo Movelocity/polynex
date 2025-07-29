@@ -163,6 +163,8 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
     if (!currentImageUrl) return;
     // 获取当前预览图片的URL
     const url = currentHistory?.previewUrl || currentImageUrl;
+    // console.log("previewUrl", currentHistory?.previewUrl);
+    // console.log("currentImageUrl", currentImageUrl);
     // 构造文件名
     const filename = `img-${currentSize.width}x${currentSize.height}.jpg`;
     // 创建a标签下载
@@ -172,7 +174,7 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [currentImageUrl, currentSize.width, currentSize.height]);
+  }, [currentHistory?.previewUrl, currentSize.width, currentSize.height]);
   
   return (
     <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${className}`}>
@@ -183,20 +185,12 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
             <div className="flex items-center justify-between">
               <span className="text-lg font-semibold">图片编辑器</span>
               {currentImageUrl && (
-                <span className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    更换图片
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={downloadImage}
-                  >
-                    下载图片
-                  </Button>
-                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  更换图片
+                </Button>
               )}
             </div>
           </CardHeader>
@@ -620,6 +614,15 @@ export function ImageEditorPanel({ className = '' }: ImageEditorPanelProps) {
             </div>
           </CardContent>
         </Card>
+
+        {currentImageUrl && (
+          <Button
+            variant="default"
+            onClick={downloadImage}
+          >
+            下载图片
+          </Button>
+          )}
       </div>
     </div>
   );
