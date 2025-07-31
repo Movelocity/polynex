@@ -27,7 +27,6 @@ router = APIRouter(prefix="/api/conversations", tags=["对话管理"])
 async def chat(
     chat_request: ChatRequest,
     current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
     chat_service: ChatService = Depends(get_chat_service_singleton),
     provider_service: AIProviderService = Depends(get_ai_provider_service_singleton)
 ):
@@ -45,7 +44,6 @@ async def chat(
                 agent_id=chat_request.agentId,
                 user_id=current_user_id,
                 message=chat_request.message,
-                db=db,
                 provider_service=provider_service
             ):
                 # 根据chunk类型发送不同的事件

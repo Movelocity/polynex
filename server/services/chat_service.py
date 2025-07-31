@@ -24,14 +24,14 @@ class TaskState(Enum):
 class StreamTask:
     def __init__(self, task_id: str, user_id: str, message: str, agent_id: str, 
                  conversation_id: Optional[str] = None, title: Optional[str] = None,
-                 db: Session = None, provider_service: AIProviderService = None):
+                 provider_service: AIProviderService = None):
         self.task_id = task_id
         self.user_id = user_id
         self.message = message
         self.agent_id = agent_id
         self.conversation_id = conversation_id
         self.title = title
-        self.db = db
+        # 移除长时间持有的数据库会话，改为按需获取
         self.provider_service = provider_service
         
         self.state = TaskState.CREATED
@@ -220,37 +220,61 @@ class StreamPool:
                 logger.info(f"Task {task.task_id} cancelled before execution")
                 return
                 
-            agent_srv = get_agent_service_singleton()
-            agent = await agent_srv.get_agent(task.db, task.agent_id, task.user_id)
+            # 使用临时数据库会话获取agent信息
+            from models.database import DatabaseManager
             
-            if not agent:
-                await task.put_result({
-                    "type": "error",
-                    "data": {"error": f"未找到 ID 为 {task.agent_id} 的 Agent"}
-                })
-                return
-            
-            provider = task.provider_service.get_provider_by_name(task.db, agent.provider)
-            if not provider:
-                await task.put_result({
-                    "type": "error",
-                    "data": {"error": f"Agent provider '{agent.provider}' not found or not supported"}
-                })
-                return
-            
-            conversation_srv = get_conversation_service_singleton()
-            
-            if task.conversation_id:
-                conversation = await conversation_srv.get_conversation(
-                    task.db, task.conversation_id, task.user_id
-                )
-                if not conversation or conversation.status != ConversationStatus.ACTIVE:
+            with DatabaseManager() as db:
+                agent_srv = get_agent_service_singleton()
+                agent = await agent_srv.get_agent(db, task.agent_id, task.user_id)
+                
+                if not agent:
                     await task.put_result({
                         "type": "error",
-                        "data": {"error": "会话不存在或已失效"}
+                        "data": {"error": f"未找到 ID 为 {task.agent_id} 的 Agent"}
                     })
                     return
+                
+                provider = task.provider_service.get_provider_by_name(db, agent.provider)
+                if not provider:
+                    await task.put_result({
+                        "type": "error",
+                        "data": {"error": f"Agent provider '{agent.provider}' not found or not supported"}
+                    })
+                    return
+            
+            # 使用临时数据库会话处理对话
+            conversation_srv = get_conversation_service_singleton()
+            
+            with DatabaseManager() as db:
+                if task.conversation_id:
+                    conversation = await conversation_srv.get_conversation(
+                        db, task.conversation_id, task.user_id
+                    )
+                    if not conversation or conversation.status != ConversationStatus.ACTIVE:
+                        await task.put_result({
+                            "type": "error",
+                            "data": {"error": "会话不存在或已失效"}
+                        })
+                        return
+                    else:
+                        await task.put_result({
+                            "type": "conversation",
+                            "data": {
+                                "conversation_id": conversation.id,
+                                "title": conversation.title,
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        })
                 else:
+                    conversation = await conversation_srv.create_conversation(
+                        user_id=task.user_id,
+                        agent_id=task.agent_id,
+                        title=task.title if task.title else "新对话",
+                        db=db
+                    )
+                    
+                    logger.info(f"用户 {task.user_id} 创建了会话 {conversation.id}")
+                    
                     await task.put_result({
                         "type": "conversation",
                         "data": {
@@ -259,24 +283,6 @@ class StreamPool:
                             "timestamp": datetime.now().isoformat()
                         }
                     })
-            else:
-                conversation = await conversation_srv.create_conversation(
-                    user_id=task.user_id,
-                    agent_id=task.agent_id,
-                    title=task.title if task.title else "新对话",
-                    db=task.db
-                )
-                
-                logger.info(f"用户 {task.user_id} 创建了会话 {conversation.id}")
-                
-                await task.put_result({
-                    "type": "conversation",
-                    "data": {
-                        "conversation_id": conversation.id,
-                        "title": conversation.title,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                })
             
             task.conversation = conversation
             # 获取历史消息记录
@@ -312,13 +318,15 @@ class StreamPool:
             messages.append(user_message)
             save_messages.append(user_message)
             
-            await conversation_srv.add_messages_to_conversation(
-                db=task.db,
-                conversation_id=conversation.id,
-                user_id=task.user_id,
-                messages=save_messages,
-            )
-            logger.info(f"Saved user message to conversation {conversation.id}")
+            # 使用临时数据库会话保存用户消息
+            with DatabaseManager() as db:
+                await conversation_srv.add_messages_to_conversation(
+                    db=db,
+                    conversation_id=conversation.id,
+                    user_id=task.user_id,
+                    messages=save_messages,
+                )
+                logger.info(f"Saved user message to conversation {conversation.id}")
             
             openai_messages = [
                 {"role": msg["role"], "content": msg["content"]}
@@ -388,14 +396,16 @@ class StreamPool:
                     "timestamp": datetime.now().isoformat(),
                     "tokens": chunk["data"].get("token_count") if 'chunk' in locals() else None
                 }
-                await conversation_srv.add_messages_to_conversation(
-                    db=task.db,
-                    conversation_id=conversation.id,
-                    user_id=task.user_id,
-                    messages=[assistant_message],
-                )
-                
-                logger.info(f"会话 {conversation.id} 保存AI回复成功")
+                # 使用临时数据库会话保存助手回复
+                with DatabaseManager() as db:
+                    await conversation_srv.add_messages_to_conversation(
+                        db=db,
+                        conversation_id=conversation.id,
+                        user_id=task.user_id,
+                        messages=[assistant_message],
+                    )
+                    
+                    logger.info(f"会话 {conversation.id} 保存AI回复成功")
                         
         except asyncio.CancelledError:
             logger.info(f"Task {task.task_id} streaming was cancelled")
@@ -518,7 +528,7 @@ class ChatService:
             # 确保流处理池已启动
             await self._ensure_pool_started()
             
-            # 创建流任务
+            # 创建流任务（不再传递数据库会话，改为按需获取）
             task_id = str(uuid.uuid4())
             task = StreamTask(
                 task_id=task_id,
@@ -527,7 +537,6 @@ class ChatService:
                 agent_id=agent_id,
                 conversation_id=conversation_id,
                 title=title,
-                db=db,
                 provider_service=provider_service
             )
             

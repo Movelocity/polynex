@@ -172,7 +172,18 @@ class Agent(Base):
 
 # 数据库配置
 database_url = get_settings().database_url
-engine = create_engine(database_url, echo=False)
+engine = create_engine(
+    database_url, 
+    echo=False,
+    # 连接池配置
+    pool_size=20,           # 连接池大小从默认5增加到20
+    max_overflow=30,        # 溢出连接数从默认10增加到30
+    pool_timeout=60,        # 连接超时时间从默认30秒增加到60秒
+    pool_recycle=3600,      # 连接回收时间：1小时
+    pool_pre_ping=True,     # 连接前先ping，确保连接有效
+    # 对于SQLite，添加一些优化配置
+    connect_args={"check_same_thread": False} if "sqlite" in database_url else {}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_tables():
