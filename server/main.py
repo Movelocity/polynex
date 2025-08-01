@@ -146,7 +146,19 @@ async def api_root():
 @app.get("/health")
 async def health_check():
     """健康检查接口"""
-    return {"status": "healthy", "message": "服务运行正常"}
+    from models.database import check_database_health, get_connection_pool_status
+    
+    db_healthy = check_database_health()
+    pool_status = get_connection_pool_status()
+    
+    return {
+        "status": "healthy" if db_healthy else "degraded",
+        "message": "服务运行正常" if db_healthy else "数据库连接异常",
+        "database": {
+            "healthy": db_healthy,
+            "connection_pool": pool_status
+        }
+    }
 
 # 前端SPA路由 - 捕获所有非API路由
 @app.get("/{full_path:path}")

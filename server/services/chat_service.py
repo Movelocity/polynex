@@ -39,7 +39,8 @@ class StreamTask:
         self.created_at = datetime.now()
         self.started_at = None
         self.finished_at = None
-        self.conversation = None
+        # 移除conversation对象，改为保存基本信息
+        self.conversation_title = None
         self.error = None
         self.cancel_requested = False  # 用于请求中止任务
     
@@ -220,30 +221,37 @@ class StreamPool:
                 logger.info(f"Task {task.task_id} cancelled before execution")
                 return
                 
-            # 使用临时数据库会话获取agent信息
+            # 使用临时数据库会话获取agent和provider信息（使用DTO避免会话绑定问题）
             from models.database import DatabaseManager
+            
+            agent_dto = None
+            provider_config_dto = None
             
             with DatabaseManager() as db:
                 agent_srv = get_agent_service_singleton()
-                agent = await agent_srv.get_agent(db, task.agent_id, task.user_id)
+                agent_dto = await agent_srv.get_agent_dto(db, task.agent_id, task.user_id)
                 
-                if not agent:
+                if not agent_dto:
                     await task.put_result({
                         "type": "error",
                         "data": {"error": f"未找到 ID 为 {task.agent_id} 的 Agent"}
                     })
                     return
                 
-                provider = task.provider_service.get_provider_by_name(db, agent.provider)
-                if not provider:
+                # 获取provider配置DTO
+                provider_config_dto = task.provider_service.get_provider_config_dto_by_name(db, agent_dto.provider)
+                if not provider_config_dto:
                     await task.put_result({
                         "type": "error",
-                        "data": {"error": f"Agent provider '{agent.provider}' not found or not supported"}
+                        "data": {"error": f"Agent provider '{agent_dto.provider}' not found or not supported"}
                     })
                     return
             
             # 使用临时数据库会话处理对话
             conversation_srv = get_conversation_service_singleton()
+            conversation_id = None
+            conversation_title = None
+            messages = []
             
             with DatabaseManager() as db:
                 if task.conversation_id:
@@ -257,11 +265,16 @@ class StreamPool:
                         })
                         return
                     else:
+                        # 在会话关闭前提取需要的数据
+                        conversation_id = conversation.id
+                        conversation_title = conversation.title
+                        messages = conversation.messages.copy() if conversation.messages else []
+                        
                         await task.put_result({
                             "type": "conversation",
                             "data": {
-                                "conversation_id": conversation.id,
-                                "title": conversation.title,
+                                "conversation_id": conversation_id,
+                                "title": conversation_title,
                                 "timestamp": datetime.now().isoformat()
                             }
                         })
@@ -273,38 +286,45 @@ class StreamPool:
                         db=db
                     )
                     
-                    logger.info(f"用户 {task.user_id} 创建了会话 {conversation.id}")
+                    # 在会话关闭前提取需要的数据
+                    conversation_id = conversation.id
+                    conversation_title = conversation.title
+                    messages = conversation.messages.copy() if conversation.messages else []
+                    
+                    logger.info(f"用户 {task.user_id} 创建了会话 {conversation_id}")
                     
                     await task.put_result({
                         "type": "conversation",
                         "data": {
-                            "conversation_id": conversation.id,
-                            "title": conversation.title,
+                            "conversation_id": conversation_id,
+                            "title": conversation_title,
                             "timestamp": datetime.now().isoformat()
                         }
                     })
             
-            task.conversation = conversation
+            # 保存会话信息供后续使用
+            task.conversation_id = conversation_id
+            task.conversation_title = conversation_title
+            
             # 获取历史消息记录
-            messages = conversation.messages.copy() if conversation.messages else []
             is_new_conversation = len(messages) == 0
 
-            if agent.preset_messages:
+            if agent_dto.preset_messages:
                 preset_msgs = [
                     {"role": msg.get("role", "system"), "content": msg.get("content", "")}
-                    for msg in agent.preset_messages
+                    for msg in agent_dto.preset_messages
                 ]
                 messages = preset_msgs + messages
 
-            model = agent.model
-            temperature = agent.temperature
-            max_tokens = agent.max_tokens
+            model = agent_dto.model
+            temperature = agent_dto.temperature
+            max_tokens = agent_dto.max_tokens
             
             save_messages = []
-            if agent.app_preset.get("send_greetings_to_ai", False) and is_new_conversation:
+            if agent_dto.app_preset.get("send_greetings_to_ai", False) and is_new_conversation:
                 welcome_msg = {
                     "role": "assistant",
-                    "content": agent.app_preset.get("greetings", ""),
+                    "content": agent_dto.app_preset.get("greetings", ""),
                     "timestamp": datetime.now().isoformat()
                 }
                 messages.append(welcome_msg)
@@ -322,11 +342,11 @@ class StreamPool:
             with DatabaseManager() as db:
                 await conversation_srv.add_messages_to_conversation(
                     db=db,
-                    conversation_id=conversation.id,
+                    conversation_id=conversation_id,
                     user_id=task.user_id,
                     messages=save_messages,
                 )
-                logger.info(f"Saved user message to conversation {conversation.id}")
+                logger.info(f"Saved user message to conversation {conversation_id}")
             
             openai_messages = [
                 {"role": msg["role"], "content": msg["content"]}
@@ -343,6 +363,15 @@ class StreamPool:
             # 检查是否请求取消
             if task.cancel_requested:
                 logger.info(f"Task {task.task_id} cancelled before API call")
+                return
+
+            # 从DTO创建provider实例（避免数据库会话绑定问题）
+            provider = task.provider_service.create_provider_from_dto(provider_config_dto)
+            if not provider:
+                await task.put_result({
+                    "type": "error",
+                    "data": {"error": f"Failed to create provider from DTO"}
+                })
                 return
 
             # 启动流式聊天
@@ -400,12 +429,12 @@ class StreamPool:
                 with DatabaseManager() as db:
                     await conversation_srv.add_messages_to_conversation(
                         db=db,
-                        conversation_id=conversation.id,
+                        conversation_id=conversation_id,
                         user_id=task.user_id,
                         messages=[assistant_message],
                     )
                     
-                    logger.info(f"会话 {conversation.id} 保存AI回复成功")
+                    logger.info(f"会话 {conversation_id} 保存AI回复成功")
                         
         except asyncio.CancelledError:
             logger.info(f"Task {task.task_id} streaming was cancelled")

@@ -142,6 +142,57 @@ class AIProviderService:
         config = self.get_provider_config_by_name(db, name)
         return OpenAIProvider(config) if config else None
     
+    def get_provider_config_dto_by_name(self, db: Session, name: str):
+        """
+        根据供应商名称获取配置DTO
+        
+        Args:
+            db: 数据库会话
+            name: 供应商名称
+            
+        Returns:
+            AIProviderConfigDTO: 配置DTO对象或None
+        """
+        from libs.dto import AIProviderConfigDTO
+        
+        config = self.get_provider_config_by_name(db, name)
+        return AIProviderConfigDTO.from_db_model(config) if config else None
+    
+    def create_provider_from_dto(self, config_dto) -> Optional[OpenAIProvider]:
+        """
+        从DTO创建Provider实例
+        
+        Args:
+            config_dto: AIProviderConfigDTO对象
+            
+        Returns:
+            OpenAIProvider: Provider实例或None
+        """
+        if not config_dto:
+            return None
+        
+        # 创建一个临时的配置对象来与现有的OpenAIProvider兼容
+        # 这是一个简单的对象，只包含OpenAIProvider需要的属性
+        class TempConfig:
+            def __init__(self, dto):
+                self.id = dto.id
+                self.name = dto.name
+                self.provider_type = dto.provider_type
+                self.base_url = dto.base_url
+                self.api_key = dto.api_key
+                self.proxy = dto.proxy
+                self.models = dto.models
+                self.rpm = dto.rpm
+                self.extra_config = dto.extra_config
+                self.description = dto.description
+                self.creator_id = dto.creator_id
+                self.access_level = dto.access_level
+                self.create_time = dto.create_time
+                self.update_time = dto.update_time
+        
+        temp_config = TempConfig(config_dto)
+        return OpenAIProvider(temp_config)
+    
     def get_all_provider_configs(self, db: Session, user_id: str = None) -> List[AIProviderConfig]:
         """
         获取所有供应商配置

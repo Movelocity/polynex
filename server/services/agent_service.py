@@ -174,6 +174,28 @@ class AgentService:
             logger.error(f"Error getting agent {agent_id}: {str(e)}")
             raise
     
+    async def get_agent_dto(
+        self,
+        db: Session,
+        agent_id: str,
+        user_id: str
+    ):
+        """
+        获取指定Agent的DTO
+        
+        Args:
+            db: 数据库会话
+            agent_id: Agent ID
+            user_id: 用户ID
+            
+        Returns:
+            AgentDTO: Agent DTO对象或None
+        """
+        from libs.dto import AgentDTO
+        
+        agent = await self.get_agent(db, agent_id, user_id)
+        return AgentDTO.from_db_model(agent) if agent else None
+    
     async def get_agent_by_agent_id(
         self,
         db: Session,

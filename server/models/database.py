@@ -200,7 +200,12 @@ def get_db():
         db.rollback()
         raise e
     finally:
-        db.close()
+        # 确保连接正确关闭
+        try:
+            db.close()
+        except Exception as close_error:
+            import logging
+            logging.error(f"Error closing database session: {close_error}")
 
 def get_db_session():
     """获取数据库会话（同步版本，用于非FastAPI环境）
@@ -232,6 +237,57 @@ class DatabaseManager:
         return self.db
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            self.db.rollback()
-        self.db.close() 
+        if self.db:
+            try:
+                if exc_type is not None:
+                    self.db.rollback()
+                else:
+                    # 正常情况下提交事务
+                    self.db.commit()
+            except Exception as e:
+                import logging
+                logging.error(f"Error in database transaction: {e}")
+                try:
+                    self.db.rollback()
+                except Exception as rollback_error:
+                    logging.error(f"Error rolling back transaction: {rollback_error}")
+            finally:
+                # 确保连接正确关闭
+                try:
+                    self.db.close()
+                except Exception as close_error:
+                    import logging
+                    logging.error(f"Error closing database session: {close_error}")
+                self.db = None
+
+
+# 新增：数据库连接健康检查函数
+def check_database_health():
+    """检查数据库连接健康状态"""
+    try:
+        with DatabaseManager() as db:
+            # 执行一个简单的查询来检查连接
+            db.execute("SELECT 1")
+            return True
+    except Exception as e:
+        import logging
+        logging.error(f"Database health check failed: {e}")
+        return False
+
+
+# 新增：获取连接池状态信息
+def get_connection_pool_status():
+    """获取数据库连接池状态信息"""
+    try:
+        pool = engine.pool
+        return {
+            "pool_size": pool.size(),
+            "checked_in": pool.checkedin(),
+            "checked_out": pool.checkedout(),
+            "overflow": pool.overflow(),
+            "invalid": pool.invalid()
+        }
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to get connection pool status: {e}")
+        return None 
