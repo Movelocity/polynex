@@ -13,6 +13,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
 from constants import get_settings
+import nanoid
 
 Base = declarative_base()
 
@@ -63,7 +64,7 @@ class User(Base):
     """用户表"""
     __tablename__ = "users"
     
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
     username = Column(String(100), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
@@ -75,7 +76,7 @@ class SiteConfig(Base):
     """网站配置表"""
     __tablename__ = "site_config"
     
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
     key = Column(String(100), unique=True, nullable=False)  # 配置键
     value = Column(Text, nullable=True)  # 配置值
     description = Column(Text, nullable=True)  # 配置描述
@@ -86,7 +87,7 @@ class Blog(Base):
     """博客表"""
     __tablename__ = "blogs"
     
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
     title = Column(String(500), nullable=False)
     content = Column(Text, nullable=False)
     summary = Column(Text, nullable=True)
@@ -102,7 +103,7 @@ class Category(Base):
     """分类表"""
     __tablename__ = "categories"
     
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     count = Column(Integer, nullable=False, default=0)
@@ -111,7 +112,7 @@ class FileRecord(Base):
     """文件记录表"""
     __tablename__ = "files"
     
-    unique_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    unique_id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
     original_name = Column(String(255), nullable=False)
     extension = Column(String(20), nullable=False)
     size = Column(Integer, nullable=False)
@@ -122,7 +123,7 @@ class Conversation(Base):
     """对话会话表"""
     __tablename__ = "conversations"
     
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
     session_id = Column(String(100), nullable=False, unique=True)  # 会话请求+响应唯一标识
     user_id = Column(String, nullable=False)  # 用户ID
     agent_id = Column(String, nullable=True)  # 关联的agent ID
@@ -132,12 +133,25 @@ class Conversation(Base):
     create_time = Column(DateTime, nullable=False, default=datetime.now)
     update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
+class Message(Base):
+    __tablename__ = "messages"
+    msg_id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
+    conv_id = Column(String, nullable=False)
+    role = Column(String(100), nullable=False)  # user | assistant | admin
+    sender = Column(String(100), nullable=False)  # user_id | agent_id
+    type = Column(String(100), nullable=False)  # text | summary | image | audio | file | any
+    status = Column(String(100), nullable=False)  # active | send failed | deleted
+    content = Column(Text, nullable=False)
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
+    update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+
 class AIProviderConfig(Base):
     """AI供应商配置表"""
     __tablename__ = "ai_providers"
     
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
     name = Column(String(100), nullable=False, unique=True)  # 配置显示名称，如 "OpenAI主账户"，同时作为唯一标识符
+    # todo: unique 改为 false，只有id是唯一
     provider_type = Column(SQLEnum(AIProviderType), nullable=False)  # 供应商技术类型
     base_url = Column(String(500), nullable=False)  # API基础URL
     api_key = Column(String(500), nullable=False)  # API密钥（应该加密存储）
@@ -158,6 +172,7 @@ class Agent(Base):
     agent_id = Column(String(100), primary_key=True)  # agent唯一标识作为主键
     creator_id = Column(String, nullable=False)  # 创建者ID
     provider = Column(String(100), nullable=False)  # 关联的供应商名称（对应AIProviderConfig.name）
+    # todo: 需要添加provider_id
     model = Column(String(100), nullable=False)  # 使用的模型名称
     top_p = Column(Float, nullable=True)  # top_p参数
     temperature = Column(Float, nullable=True)  # 温度参数
@@ -210,17 +225,17 @@ def get_db_session():
     """
     return SessionLocal()
 
-class DatabaseManager:
-    """数据库管理器，提供上下文管理器支持"""
+# class DatabaseManager:
+#     """数据库管理器，提供上下文管理器支持"""
     
-    def __init__(self):
-        self.db = None
+#     def __init__(self):
+#         self.db = None
     
-    def __enter__(self):
-        self.db = SessionLocal()
-        return self.db
+#     def __enter__(self):
+#         self.db = SessionLocal()
+#         return self.db
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            self.db.rollback()
-        self.db.close() 
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         if exc_type is not None:
+#             self.db.rollback()
+#         self.db.close() 

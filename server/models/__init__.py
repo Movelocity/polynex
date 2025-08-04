@@ -17,5 +17,5 @@ __all__ = [
     'Base', 'engine', 'SessionLocal',
     
     # 工具函数
-    'create_tables', 'get_db', 'get_db_session', 'DatabaseManager'
+    'create_tables', 'get_db', 'get_db_session',
 ] 
