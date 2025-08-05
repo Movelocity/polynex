@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS messages (
     content TEXT NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_conversation
-        FOREIGN KEY(conv_id)
-        REFERENCES conversations(id)
-        ON DELETE CASCADE
+    -- CONSTRAINT fk_conversation
+    --     FOREIGN KEY(conv_id)
+    --     REFERENCES conversations(id)
+    --     ON DELETE CASCADE
 );
 
 -- 创建索引以提高查询性能

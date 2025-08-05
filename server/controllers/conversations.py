@@ -159,12 +159,12 @@ async def get_conversations(
         
         return [
             ConversationSummary(
-                id=conv.id,
-                session_id=conv.session_id,
+                id=conv.conv_id,
+                session_id=conv.conv_id,  # 使用conv_id作为session_id
                 user_id=conv.user_id,
                 agent_id=conv.agent_id,
                 title=conv.title,
-                message_count=len(conv.messages),
+                message_count=conv.msg_count,  # 使用msg_count字段
                 status=conv.status,
                 create_time=conv.create_time.isoformat() + 'Z',
                 update_time=conv.update_time.isoformat() + 'Z'
@@ -240,25 +240,38 @@ async def get_conversation(
 ):
     """获取指定对话的详细信息"""
     try:
-        conversation = await conversation_service.get_conversation(
+        conversation_data = await conversation_service.get_conversation(
             db,
             conversation_id,
             current_user_id
         )
         
-        if not conversation:
+        if not conversation_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found"
             )
         
+        conversation = conversation_data['conversation']
+        messages = conversation_data['messages']
+        
+        # 转换消息格式
+        message_list = []
+        for msg in messages:
+            message_list.append(Message(
+                role=msg.role,
+                content=msg.content,
+                timestamp=msg.create_time.isoformat() + 'Z',
+                tokens=None  # 如果需要token信息，可以在Message表中添加字段
+            ))
+        
         return ConversationDetail(
-            id=conversation.id,
-            session_id=conversation.session_id,
+            id=conversation.conv_id,
+            session_id=conversation.conv_id,  # 使用conv_id作为session_id
             user_id=conversation.user_id,
             agent_id=conversation.agent_id,
             title=conversation.title,
-            messages=[Message(**msg) for msg in conversation.messages],
+            messages=message_list,
             status=conversation.status,
             create_time=conversation.create_time.isoformat() + 'Z',
             update_time=conversation.update_time.isoformat() + 'Z'

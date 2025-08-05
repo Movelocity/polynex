@@ -4,6 +4,8 @@
 -- 1. Create the new conversation table
 CREATE TABLE IF NOT EXISTS conversation (
     conv_id VARCHAR PRIMARY KEY,
+    user_id VARCHAR NOT NULL,
+    agent_id VARCHAR NOT NULL,
     title TEXT NOT NULL DEFAULT '新对话',
     msg_count INTEGER NOT NULL DEFAULT 0,
     status VARCHAR NOT NULL DEFAULT 'active',
@@ -23,6 +25,8 @@ INSERT INTO conversation (
 SELECT 
     c.id as conv_id,
     c.title,
+    c.user_id,
+    c.agent_id,
     (SELECT COUNT(*) FROM messages m WHERE m.conv_id = c.id) as msg_count,
     c.status,
     c.create_time,

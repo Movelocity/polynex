@@ -2,18 +2,24 @@
 数据库模型和表结构定义
 
 包含所有SQLAlchemy模型，定义数据库表结构和关系。
+支持SQLite WAL模式和线程锁机制。
 """
 
 import json
 import enum
 import uuid
+import threading
 from datetime import datetime
-from sqlalchemy import Column, String, Text, Integer, DateTime, JSON, Enum as SQLEnum, Boolean, Float, Numeric, ForeignKey, TypeDecorator
+from contextlib import contextmanager
+from sqlalchemy import Column, String, Text, Integer, DateTime, JSON, Enum as SQLEnum, Boolean, Float, Numeric, ForeignKey, TypeDecorator, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
 from constants import get_settings
 import nanoid
+import logging
+
+logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -120,7 +126,7 @@ class FileRecord(Base):
     uploader_id = Column(String, nullable=True)  # 允许为空，表示未知上传者
 
 class Conversation(Base):
-    """对话会话表"""
+    """对话会话表(deprecate in next version)"""
     __tablename__ = "conversations"
     
     id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
@@ -129,6 +135,19 @@ class Conversation(Base):
     agent_id = Column(String, nullable=True)  # 关联的agent ID
     title = Column(String(200), nullable=False, default="新对话")
     messages = Column(UnicodeJSON, nullable=False, default=list)  # 存储消息历史的JSON字符串
+    status = Column(SQLEnum(ConversationStatus), nullable=False, default=ConversationStatus.ACTIVE)
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
+    update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+
+class ConversationRecord(Base):
+    """对话记录表"""
+    __tablename__ = "conversation"
+    
+    conv_id = Column(String, primary_key=True, default=lambda: str(nanoid.generate()))
+    user_id = Column(String, nullable=False)  # 关联的用户ID
+    agent_id = Column(String, nullable=True)  # 关联的Agent ID
+    title = Column(String(200), nullable=False, default="新对话")
+    msg_count = Column(Integer, nullable=False, default=0)
     status = Column(SQLEnum(ConversationStatus), nullable=False, default=ConversationStatus.ACTIVE)
     create_time = Column(DateTime, nullable=False, default=datetime.now)
     update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
@@ -185,14 +204,84 @@ class Agent(Base):
     update_time = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
 
+# 线程锁用于数据库写操作互斥
+_db_write_lock = threading.Lock()
+
 # 数据库配置
 database_url = get_settings().database_url
-engine = create_engine(database_url, echo=False)
+is_sqlite = database_url.startswith("sqlite:")
+
+# SQLite特殊配置
+sqlite_params = {}
+if is_sqlite:
+    # 启用WAL模式、外键约束和连接池
+    sqlite_params = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "connect_args": {
+            "check_same_thread": False,  # 允许多线程访问
+            "timeout": 30,  # 连接超时时间
+        }
+    }
+
+engine = create_engine(
+    database_url, 
+    echo=False,
+    **sqlite_params
+)
+
+# 为SQLite启用WAL模式和外键约束
+@event.listens_for(engine, "connect")
+def enable_sqlite_features(dbapi_connection, connection_record):
+    """为SQLite连接启用WAL模式和外键约束"""
+    if is_sqlite:
+        with dbapi_connection:
+            # 启用WAL模式
+            dbapi_connection.execute("PRAGMA journal_mode=WAL")
+            # 启用外键约束
+            dbapi_connection.execute("PRAGMA foreign_keys=ON")
+            # 设置同步模式
+            dbapi_connection.execute("PRAGMA synchronous=NORMAL")
+            # 设置缓存大小
+            dbapi_connection.execute("PRAGMA cache_size=-64000")  # 64MB
+        logger.info("SQLite WAL模式和外键约束已启用")
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+@contextmanager
+def db_write_lock():
+    """数据库写操作锁上下文管理器
+    
+    用于确保数据库写操作的线程安全，特别适用于SQLite的单连接场景。
+    所有写操作（INSERT, UPDATE, DELETE）都应该使用此锁。
+    
+    使用方式：
+    ```python
+    with db_write_lock():
+        db = get_db_session()
+        try:
+            # 执行写操作
+            db.add(obj)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+    ```
+    """
+    _db_write_lock.acquire()
+    try:
+        logger.debug("获取数据库写锁")
+        yield
+    finally:
+        _db_write_lock.release()
+        logger.debug("释放数据库写锁")
 
 def create_tables():
     """创建所有表"""
-    Base.metadata.create_all(bind=engine)
+    with db_write_lock():
+        Base.metadata.create_all(bind=engine)
 
 def get_db():
     """获取数据库会话（用于FastAPI依赖注入）。"""
@@ -225,17 +314,28 @@ def get_db_session():
     """
     return SessionLocal()
 
-# class DatabaseManager:
-#     """数据库管理器，提供上下文管理器支持"""
+def safe_db_write(operation):
+    """安全的数据库写操作装饰器
     
-#     def __init__(self):
-#         self.db = None
+    自动处理写锁、异常处理和会话管理
     
-#     def __enter__(self):
-#         self.db = SessionLocal()
-#         return self.db
-    
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         if exc_type is not None:
-#             self.db.rollback()
-#         self.db.close() 
+    Args:
+        operation: 数据库写操作函数，接受db参数
+        
+    Returns:
+        操作结果
+    """
+    def wrapper(*args, **kwargs):
+        with db_write_lock():
+            db = get_db_session()
+            try:
+                result = operation(db, *args, **kwargs)
+                db.commit()
+                return result
+            except Exception as e:
+                db.rollback()
+                logger.error(f"数据库写操作失败: {str(e)}")
+                raise
+            finally:
+                db.close()
+    return wrapper

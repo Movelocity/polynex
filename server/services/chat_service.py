@@ -241,20 +241,21 @@ class StreamPool:
             conversation_srv = get_conversation_service_singleton()
             
             if task.conversation_id:
-                conversation = await conversation_srv.get_conversation(
+                conversation_data = await conversation_srv.get_conversation(
                     task.db, task.conversation_id, task.user_id
                 )
-                if not conversation or conversation.status != ConversationStatus.ACTIVE:
+                if not conversation_data or conversation_data['status'] != ConversationStatus.ACTIVE:
                     await task.put_result({
                         "type": "error",
                         "data": {"error": "会话不存在或已失效"}
                     })
                     return
                 else:
+                    conversation = conversation_data['conversation']  # 获取ConversationRecord对象
                     await task.put_result({
                         "type": "conversation",
                         "data": {
-                            "conversation_id": conversation.id,
+                            "conversation_id": conversation.conv_id,
                             "title": conversation.title,
                             "timestamp": datetime.now().isoformat()
                         }
@@ -267,12 +268,12 @@ class StreamPool:
                     db=task.db
                 )
                 
-                logger.info(f"用户 {task.user_id} 创建了会话 {conversation.id}")
+                logger.info(f"用户 {task.user_id} 创建了会话 {conversation.conv_id}")
                 
                 await task.put_result({
                     "type": "conversation",
                     "data": {
-                        "conversation_id": conversation.id,
+                        "conversation_id": conversation.conv_id,
                         "title": conversation.title,
                         "timestamp": datetime.now().isoformat()
                     }
@@ -280,7 +281,22 @@ class StreamPool:
             
             task.conversation = conversation
             # 获取历史消息记录
-            messages = conversation.messages.copy() if conversation.messages else []
+            if task.conversation_id:
+                # 从数据库获取消息列表并转换为字典格式
+                message_records = await conversation_srv.get_conversation_messages(
+                    task.db, conversation.conv_id, task.user_id
+                )
+                messages = []
+                for msg in message_records:
+                    messages.append({
+                        "role": msg.role,
+                        "content": msg.content,
+                        "timestamp": msg.create_time.isoformat(),
+                        "sender": msg.sender,
+                        "type": msg.type
+                    })
+            else:
+                messages = []
             is_new_conversation = len(messages) == 0
 
             if agent.preset_messages:
@@ -314,11 +330,11 @@ class StreamPool:
             
             await conversation_srv.add_messages_to_conversation(
                 db=task.db,
-                conversation_id=conversation.id,
+                conversation_id=conversation.conv_id,
                 user_id=task.user_id,
                 messages=save_messages,
             )
-            logger.info(f"Saved user message to conversation {conversation.id}")
+            logger.info(f"Saved user message to conversation {conversation.conv_id}")
             
             openai_messages = [
                 {"role": msg["role"], "content": msg["content"]}
@@ -358,7 +374,7 @@ class StreamPool:
                     assistant_reasoning += chunk["data"].get("reasoning_content", "")
 
                 elif chunk.get("type") == "error":
-                    logger.error(f"会话 {conversation.id} 流式处理错误: {chunk['data']['error']}")
+                    logger.error(f"会话 {conversation.conv_id} 流式处理错误: {chunk['data']['error']}")
                 
                 elif chunk.get("type") == "done":
                     has_done = True
@@ -390,12 +406,12 @@ class StreamPool:
                 }
                 await conversation_srv.add_messages_to_conversation(
                     db=task.db,
-                    conversation_id=conversation.id,
+                    conversation_id=conversation.conv_id,
                     user_id=task.user_id,
                     messages=[assistant_message],
                 )
                 
-                logger.info(f"会话 {conversation.id} 保存AI回复成功")
+                logger.info(f"会话 {conversation.conv_id} 保存AI回复成功")
                         
         except asyncio.CancelledError:
             logger.info(f"Task {task.task_id} streaming was cancelled")
