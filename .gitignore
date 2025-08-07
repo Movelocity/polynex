@@ -5,3 +5,5 @@ server/logs/
 uv.lock
 __pycache__/
 .claude
+*.db-shm
+*.db-wal

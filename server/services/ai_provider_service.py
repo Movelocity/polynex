@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from libs.prividers.OpenAIProvider import OpenAIProvider
 from models.database import AIProviderConfig, AIProviderType
-from sqlalchemy import or_
 
 
 logger = logging.getLogger(__name__)

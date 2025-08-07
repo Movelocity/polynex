@@ -472,7 +472,7 @@ class ConversationSearchResult(BaseModel):
 
 class SearchResponse(BaseModel):
     """搜索响应模型"""
-    results: List[ConversationSearchResult]
+    results: List[dict]
     total_count: int
     query: str
 

@@ -278,6 +278,19 @@ def db_write_lock():
         _db_write_lock.release()
         logger.debug("释放数据库写锁")
 
+@contextmanager
+def db_read_context():
+    """数据库会话上下文管理器"""
+    db = SessionLocal()
+    try:
+        yield db
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+
 def create_tables():
     """创建所有表"""
     with db_write_lock():

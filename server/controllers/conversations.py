@@ -79,33 +79,6 @@ async def chat(
         )
 
 
-@router.post("/disconnect")
-async def disconnect_stream(
-    request: StreamActionRequest,
-    current_user_id: str = Depends(get_current_user_id),  # 登录token自动验证
-    chat_service: ChatService = Depends(get_chat_service_singleton)
-):
-    """
-    断开流式连接但保持后台任务继续运行
-    
-    客户端可以调用此接口来安全断开连接，同时保持AI生成继续运行，
-    生成的内容会保存到数据库中，但不会再发送到客户端
-    """
-    try:
-        success = await chat_service.disconnect_stream(request.task_id)
-        
-        if success:
-            return {"message": "Stream disconnected successfully, task continues running in background"}
-        else:
-            return {"message": "No active stream found for the session ID"}
-    except Exception as e:
-        logger.error(f"Error disconnecting stream for session {request.task_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to disconnect stream: {str(e)}"
-        )
-
-
 @router.post("/abort")
 async def abort_stream(
     request: StreamActionRequest,
@@ -211,12 +184,12 @@ async def search_conversations(
             offset
         )
         
-        search_results = [
-            ConversationSearchResult(**item) for item in result['results']
-        ]
+        # search_results = [
+        #     ConversationSearchResult(**item) for item in result['results']
+        # ]
         
         return SearchResponse(
-            results=search_results,
+            results=result['results'],#search_results,
             total_count=result['total_count'],
             query=query.strip()
         )

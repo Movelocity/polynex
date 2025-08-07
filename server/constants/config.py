@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     
     # 服务器配置
     host: str = "localhost"
-    port: int = 8766
+    port: int = 8765
     debug: bool = False
     
     # 日志配置
