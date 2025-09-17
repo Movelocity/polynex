@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, Dict
 from pydantic import BaseModel
+import asyncio
 from sqlalchemy.orm import Session
 import json
 import logging
@@ -57,6 +58,8 @@ async def chat(
             # 补充发送完成事件
             if not has_done:
                 yield "event: done\ndata: {\"type\": \"done\", \"data\": {\"content\": \"\"}}\n\n"
+
+            await asyncio.sleep(1)
         
         return StreamingResponse(
             generate(),
